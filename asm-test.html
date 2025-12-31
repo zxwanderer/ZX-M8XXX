@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Z80 Assembler Tests v0.6.0</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #252540;
+            --bg-tertiary: #0a0a15;
+            --text-primary: #eee;
+            --text-secondary: #888;
+            --border-color: #444;
+            --cyan: #0ff;
+            --yellow: #ff0;
+            --green: #0f0;
+            --red: #f44;
+            --button-bg: #0a84ff;
+            --button-hover: #0070e0;
+        }
+        body.light-theme {
+            --bg-primary: #e8e8f0;
+            --bg-secondary: #d0d0e0;
+            --bg-tertiary: #f5f5fa;
+            --text-primary: #222;
+            --text-secondary: #666;
+            --border-color: #aaa;
+            --cyan: #0088aa;
+            --yellow: #aa8800;
+            --green: #008800;
+            --red: #cc0000;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: monospace;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--cyan); margin-bottom: 5px; }
+        .version { color: var(--text-secondary); }
+        h2 { color: var(--yellow); margin-top: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .test-resources {
+            background: var(--bg-secondary);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .test-resources h3 { margin: 0 0 10px 0; color: var(--cyan); }
+        .test-resources p { margin: 5px 0; }
+        .test-resources a { color: var(--cyan); }
+        #summary { font-size: 1.2em; margin: 10px 0; }
+        #log { white-space: pre-wrap; word-wrap: break-word; height: 500px; overflow: auto; background: var(--bg-tertiary); padding: 10px; }
+        .pass { color: var(--green); }
+        .fail { color: var(--red); }
+        .info { color: var(--cyan); }
+        .section { color: var(--yellow); font-weight: bold; margin-top: 15px; }
+        button { margin: 5px; padding: 10px 20px; background: var(--button-bg); color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: var(--button-hover); }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .theme-btn { float: right; background: var(--bg-secondary); border: none; font-size: 16px; padding: 5px 10px; cursor: pointer; border-radius: 3px; margin: 0; color: inherit; }
+        .theme-btn:hover { background: var(--button-bg); }
+    </style>
+</head>
+<body>
+    <h1>Z80 Assembler Tests <span class="version">v0.6.2</span></h1>
+    <div class="test-resources">
+        <p><a href="system-test.html">System Tests</a> |
+        <a href="fuse-test.html">FUSE CPU Tests</a> |
+        <a href="index.html">Main Emulator</a></p>
+    </div>
+
+    <button id="runAll">Run All Tests</button>
+    <button id="runInstructions">Instructions</button>
+    <button id="runDirectives">Directives</button>
+    <button id="runLabels">Labels</button>
+    <button id="runExpressions">Expressions</button>
+    <button id="runMacros">Macros</button>
+    <button id="runConditionals">Conditionals</button>
+    <button class="theme-btn" id="themeToggle" title="Toggle light/dark theme"></button>
+
+    <div id="summary"></div>
+    <div id="log"></div>
+
+    <!-- Assembler dependencies (order matters) -->
+    <script src="sjasmplus/errors.js"></script>
+    <script src="sjasmplus/lexer.js"></script>
+    <script src="sjasmplus/expression.js"></script>
+    <script src="sjasmplus/instructions.js"></script>
+    <script src="sjasmplus/instructions2.js"></script>
+    <script src="sjasmplus/instructions3.js"></script>
+    <script src="sjasmplus/labels.js"></script>
+    <script src="sjasmplus/parser.js"></script>
+    <script src="sjasmplus/preprocessor.js"></script>
+    <script src="sjasmplus/vfs.js"></script>
+    <script src="sjasmplus/md5.js"></script>
+    <script src="sjasmplus/memory.js"></script>
+    <script src="sjasmplus/output.js"></script>
+    <script src="sjasmplus/assembler.js"></script>
+    <script>
+        const TEST_VERSION = '0.6.2';
+
+        const logEl = document.getElementById('log');
+        const summaryEl = document.getElementById('summary');
+
+        let totalPassed = 0;
+        let totalFailed = 0;
+
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = msg;
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function clearLog() {
+            logEl.innerHTML = '';
+            totalPassed = 0;
+            totalFailed = 0;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const total = totalPassed + totalFailed;
+            const rate = total > 0 ? (100 * totalPassed / total).toFixed(1) : '0.0';
+            summaryEl.innerHTML = `v${TEST_VERSION} | <span class="pass">Pass: ${totalPassed}</span> | <span class="fail">Fail: ${totalFailed}</span> | Total: ${total} | Rate: ${rate}%`;
+        }
+
+        function assert(condition, testName, details = '') {
+            if (condition) {
+                log(`  ${testName}`, 'pass');
+                totalPassed++;
+            } else {
+                log(`  ${testName}${details ? ': ' + details : ''}`, 'fail');
+                totalFailed++;
+            }
+            updateSummary();
+            return condition;
+        }
+
+        function assertEqual(actual, expected, testName) {
+            const passed = actual === expected;
+            assert(passed, testName, passed ? '' : `expected ${expected}, got ${actual}`);
+            return passed;
+        }
+
+        function assertBytes(actual, expected, testName) {
+            const actualStr = actual ? Array.from(actual).map(b => b.toString(16).padStart(2, '0')).join(' ') : 'null';
+            const expectedStr = expected.map(b => b.toString(16).padStart(2, '0')).join(' ');
+            const passed = actualStr === expectedStr;
+            assert(passed, testName, passed ? '' : `expected [${expectedStr}], got [${actualStr}]`);
+            return passed;
+        }
+
+        function section(name) {
+            log(`\n ${name} `, 'section');
+        }
+
+        // Helper to assemble and get bytes
+        function asm(source) {
+            return Assembler.assemble(source);
+        }
+
+        function bytes(source) {
+            const result = asm(source);
+            return result.success ? result.output : null;
+        }
+
+        // ==================== INSTRUCTION TESTS ====================
+
+        async function runInstructionTests() {
+            section('LD 8-bit Instructions');
+
+            assertBytes(bytes('LD A, B'), [0x78], 'LD A, B');
+            assertBytes(bytes('LD B, C'), [0x41], 'LD B, C');
+            assertBytes(bytes('LD (HL), A'), [0x77], 'LD (HL), A');
+            assertBytes(bytes('LD A, (HL)'), [0x7E], 'LD A, (HL)');
+            assertBytes(bytes('LD A, 42'), [0x3E, 42], 'LD A, 42');
+            assertBytes(bytes('LD B, $FF'), [0x06, 0xFF], 'LD B, $FF');
+            assertBytes(bytes('LD (HL), 123'), [0x36, 123], 'LD (HL), n');
+
+            section('LD 16-bit Instructions');
+
+            assertBytes(bytes('LD BC, $1234'), [0x01, 0x34, 0x12], 'LD BC, $1234');
+            assertBytes(bytes('LD HL, $4000'), [0x21, 0x00, 0x40], 'LD HL, $4000');
+            assertBytes(bytes('LD SP, $FFFF'), [0x31, 0xFF, 0xFF], 'LD SP, $FFFF');
+            assertBytes(bytes('LD IX, $1234'), [0xDD, 0x21, 0x34, 0x12], 'LD IX, nn');
+            assertBytes(bytes('LD IY, $5678'), [0xFD, 0x21, 0x78, 0x56], 'LD IY, nn');
+
+            section('LD Indirect Instructions');
+
+            assertBytes(bytes('LD (BC), A'), [0x02], 'LD (BC), A');
+            assertBytes(bytes('LD (DE), A'), [0x12], 'LD (DE), A');
+            assertBytes(bytes('LD A, (BC)'), [0x0A], 'LD A, (BC)');
+            assertBytes(bytes('LD A, (DE)'), [0x1A], 'LD A, (DE)');
+            assertBytes(bytes('LD ($4000), A'), [0x32, 0x00, 0x40], 'LD (nn), A');
+            assertBytes(bytes('LD A, ($4000)'), [0x3A, 0x00, 0x40], 'LD A, (nn)');
+            assertBytes(bytes('LD ($5000), HL'), [0x22, 0x00, 0x50], 'LD (nn), HL');
+            assertBytes(bytes('LD HL, ($5000)'), [0x2A, 0x00, 0x50], 'LD HL, (nn)');
+            assertBytes(bytes('LD SP, HL'), [0xF9], 'LD SP, HL');
+
+            section('LD Indexed Instructions');
+
+            assertBytes(bytes('LD (IX+5), A'), [0xDD, 0x77, 0x05], 'LD (IX+d), A');
+            assertBytes(bytes('LD (IY-3), B'), [0xFD, 0x70, 0xFD], 'LD (IY+d), B');
+            assertBytes(bytes('LD A, (IX+10)'), [0xDD, 0x7E, 0x0A], 'LD A, (IX+d)');
+            assertBytes(bytes('LD C, (IY+0)'), [0xFD, 0x4E, 0x00], 'LD C, (IY+d)');
+            assertBytes(bytes('LD (IX+2), 99'), [0xDD, 0x36, 0x02, 99], 'LD (IX+d), n');
+
+            section('LD Special Registers');
+
+            assertBytes(bytes('LD A, I'), [0xED, 0x57], 'LD A, I');
+            assertBytes(bytes('LD A, R'), [0xED, 0x5F], 'LD A, R');
+            assertBytes(bytes('LD I, A'), [0xED, 0x47], 'LD I, A');
+            assertBytes(bytes('LD R, A'), [0xED, 0x4F], 'LD R, A');
+
+            section('ALU 8-bit Instructions');
+
+            assertBytes(bytes('ADD A, B'), [0x80], 'ADD A, B');
+            assertBytes(bytes('ADD A, (HL)'), [0x86], 'ADD A, (HL)');
+            assertBytes(bytes('ADD A, 10'), [0xC6, 10], 'ADD A, n');
+            assertBytes(bytes('SUB B'), [0x90], 'SUB B');
+            assertBytes(bytes('SUB 5'), [0xD6, 5], 'SUB n');
+            assertBytes(bytes('AND C'), [0xA1], 'AND C');
+            assertBytes(bytes('XOR A'), [0xAF], 'XOR A');
+            assertBytes(bytes('OR (HL)'), [0xB6], 'OR (HL)');
+            assertBytes(bytes('CP $FF'), [0xFE, 0xFF], 'CP n');
+            assertBytes(bytes('ADC A, (IX+5)'), [0xDD, 0x8E, 0x05], 'ADC A, (IX+d)');
+
+            section('ALU 16-bit Instructions');
+
+            assertBytes(bytes('ADD HL, BC'), [0x09], 'ADD HL, BC');
+            assertBytes(bytes('ADD HL, HL'), [0x29], 'ADD HL, HL');
+            assertBytes(bytes('ADD HL, SP'), [0x39], 'ADD HL, SP');
+            assertBytes(bytes('ADC HL, DE'), [0xED, 0x5A], 'ADC HL, DE');
+            assertBytes(bytes('SBC HL, BC'), [0xED, 0x42], 'SBC HL, BC');
+            assertBytes(bytes('ADD IX, BC'), [0xDD, 0x09], 'ADD IX, BC');
+            assertBytes(bytes('ADD IY, IY'), [0xFD, 0x29], 'ADD IY, IY');
+
+            section('INC/DEC Instructions');
+
+            assertBytes(bytes('INC B'), [0x04], 'INC B');
+            assertBytes(bytes('INC (HL)'), [0x34], 'INC (HL)');
+            assertBytes(bytes('DEC A'), [0x3D], 'DEC A');
+            assertBytes(bytes('INC BC'), [0x03], 'INC BC');
+            assertBytes(bytes('DEC SP'), [0x3B], 'DEC SP');
+            assertBytes(bytes('INC IX'), [0xDD, 0x23], 'INC IX');
+            assertBytes(bytes('DEC (IX+3)'), [0xDD, 0x35, 0x03], 'DEC (IX+d)');
+
+            section('Jump Instructions');
+
+            assertBytes(bytes('JP $8000'), [0xC3, 0x00, 0x80], 'JP nn');
+            assertBytes(bytes('JP NZ, $9000'), [0xC2, 0x00, 0x90], 'JP NZ, nn');
+            assertBytes(bytes('JP Z, $A000'), [0xCA, 0x00, 0xA0], 'JP Z, nn');
+            assertBytes(bytes('JP (HL)'), [0xE9], 'JP (HL)');
+            assertBytes(bytes('JP (IX)'), [0xDD, 0xE9], 'JP (IX)');
+
+            // JR with relative addressing
+            assertBytes(bytes('ORG $8000\nJR $8010'), [0x18, 0x0E], 'JR forward');
+            assertBytes(bytes('ORG $8000\nJR $7FF0'), [0x18, 0xEE], 'JR backward');
+            assertBytes(bytes('ORG $8000\nJR NZ, $8005'), [0x20, 0x03], 'JR NZ, forward');
+            assertBytes(bytes('ORG $8010\nDJNZ $8000'), [0x10, 0xEE], 'DJNZ backward');
+
+            section('Call/Return Instructions');
+
+            assertBytes(bytes('CALL $1234'), [0xCD, 0x34, 0x12], 'CALL nn');
+            assertBytes(bytes('CALL NZ, $5678'), [0xC4, 0x78, 0x56], 'CALL NZ, nn');
+            assertBytes(bytes('RET'), [0xC9], 'RET');
+            assertBytes(bytes('RET Z'), [0xC8], 'RET Z');
+            assertBytes(bytes('RET NC'), [0xD0], 'RET NC');
+            assertBytes(bytes('RST $38'), [0xFF], 'RST $38');
+            assertBytes(bytes('RST $00'), [0xC7], 'RST $00');
+            assertBytes(bytes('RST $10'), [0xD7], 'RST $10');
+
+            section('Stack Instructions');
+
+            assertBytes(bytes('PUSH BC'), [0xC5], 'PUSH BC');
+            assertBytes(bytes('PUSH AF'), [0xF5], 'PUSH AF');
+            assertBytes(bytes('POP HL'), [0xE1], 'POP HL');
+            assertBytes(bytes('PUSH IX'), [0xDD, 0xE5], 'PUSH IX');
+            assertBytes(bytes('POP IY'), [0xFD, 0xE1], 'POP IY');
+
+            section('Exchange Instructions');
+
+            assertBytes(bytes('EX DE, HL'), [0xEB], 'EX DE, HL');
+            assertBytes(bytes("EX AF, AF'"), [0x08], "EX AF, AF'");
+            assertBytes(bytes('EX (SP), HL'), [0xE3], 'EX (SP), HL');
+            assertBytes(bytes('EX (SP), IX'), [0xDD, 0xE3], 'EX (SP), IX');
+            assertBytes(bytes('EXX'), [0xD9], 'EXX');
+
+            section('Rotate/Shift Instructions');
+
+            assertBytes(bytes('RLCA'), [0x07], 'RLCA');
+            assertBytes(bytes('RRCA'), [0x0F], 'RRCA');
+            assertBytes(bytes('RLA'), [0x17], 'RLA');
+            assertBytes(bytes('RRA'), [0x1F], 'RRA');
+            assertBytes(bytes('RLC B'), [0xCB, 0x00], 'RLC B');
+            assertBytes(bytes('RRC C'), [0xCB, 0x09], 'RRC C');
+            assertBytes(bytes('RL (HL)'), [0xCB, 0x16], 'RL (HL)');
+            assertBytes(bytes('SLA A'), [0xCB, 0x27], 'SLA A');
+            assertBytes(bytes('SRA B'), [0xCB, 0x28], 'SRA B');
+            assertBytes(bytes('SRL C'), [0xCB, 0x39], 'SRL C');
+            assertBytes(bytes('SLL A'), [0xCB, 0x37], 'SLL A (undocumented)');
+            assertBytes(bytes('RLC (IX+5)'), [0xDD, 0xCB, 0x05, 0x06], 'RLC (IX+d)');
+
+            section('Bit Instructions');
+
+            assertBytes(bytes('BIT 0, A'), [0xCB, 0x47], 'BIT 0, A');
+            assertBytes(bytes('BIT 7, (HL)'), [0xCB, 0x7E], 'BIT 7, (HL)');
+            assertBytes(bytes('SET 3, B'), [0xCB, 0xD8], 'SET 3, B');
+            assertBytes(bytes('RES 5, C'), [0xCB, 0xA9], 'RES 5, C');
+            assertBytes(bytes('BIT 2, (IX+3)'), [0xDD, 0xCB, 0x03, 0x56], 'BIT n, (IX+d)');
+
+            section('I/O Instructions');
+
+            assertBytes(bytes('IN A, ($FE)'), [0xDB, 0xFE], 'IN A, (n)');
+            assertBytes(bytes('IN B, (C)'), [0xED, 0x40], 'IN B, (C)');
+            assertBytes(bytes('OUT ($FE), A'), [0xD3, 0xFE], 'OUT (n), A');
+            assertBytes(bytes('OUT (C), D'), [0xED, 0x51], 'OUT (C), D');
+
+            section('Miscellaneous Instructions');
+
+            assertBytes(bytes('NOP'), [0x00], 'NOP');
+            assertBytes(bytes('HALT'), [0x76], 'HALT');
+            assertBytes(bytes('DI'), [0xF3], 'DI');
+            assertBytes(bytes('EI'), [0xFB], 'EI');
+            assertBytes(bytes('CPL'), [0x2F], 'CPL');
+            assertBytes(bytes('NEG'), [0xED, 0x44], 'NEG');
+            assertBytes(bytes('SCF'), [0x37], 'SCF');
+            assertBytes(bytes('CCF'), [0x3F], 'CCF');
+            assertBytes(bytes('DAA'), [0x27], 'DAA');
+            assertBytes(bytes('IM 0'), [0xED, 0x46], 'IM 0');
+            assertBytes(bytes('IM 1'), [0xED, 0x56], 'IM 1');
+            assertBytes(bytes('IM 2'), [0xED, 0x5E], 'IM 2');
+            assertBytes(bytes('RETI'), [0xED, 0x4D], 'RETI');
+            assertBytes(bytes('RETN'), [0xED, 0x45], 'RETN');
+
+            section('Block Instructions');
+
+            assertBytes(bytes('LDI'), [0xED, 0xA0], 'LDI');
+            assertBytes(bytes('LDIR'), [0xED, 0xB0], 'LDIR');
+            assertBytes(bytes('LDD'), [0xED, 0xA8], 'LDD');
+            assertBytes(bytes('LDDR'), [0xED, 0xB8], 'LDDR');
+            assertBytes(bytes('CPI'), [0xED, 0xA1], 'CPI');
+            assertBytes(bytes('CPIR'), [0xED, 0xB1], 'CPIR');
+            assertBytes(bytes('INI'), [0xED, 0xA2], 'INI');
+            assertBytes(bytes('OUTI'), [0xED, 0xA3], 'OUTI');
+            assertBytes(bytes('OTIR'), [0xED, 0xB3], 'OTIR');
+        }
+
+        // ==================== DIRECTIVE TESTS ====================
+
+        async function runDirectiveTests() {
+            section('ORG Directive');
+
+            let result = asm('ORG $8000\nNOP');
+            assertEqual(result.outputStart, 0x8000, 'ORG sets start address');
+
+            result = asm('ORG $8000\nNOP\nORG $8100\nNOP');
+            assertEqual(result.outputStart, 0x8000, 'Multiple ORGs - first is start');
+            assertEqual(result.output.length, 257, 'Multiple ORGs - gap filled');
+
+            section('EQU Directive');
+
+            assertBytes(bytes('SCREEN EQU $4000\nLD HL, SCREEN'), [0x21, 0x00, 0x40], 'EQU constant');
+            assertBytes(bytes('BASE EQU $4000\nOFFSET EQU 256\nLD HL, BASE + OFFSET'), [0x21, 0x00, 0x41], 'EQU with expression');
+
+            section('DB/DEFB Directive');
+
+            assertBytes(bytes('DB 42'), [42], 'DB single byte');
+            assertBytes(bytes('DB 1, 2, 3'), [1, 2, 3], 'DB multiple bytes');
+            assertBytes(bytes('DB "ABC"'), [65, 66, 67], 'DB string');
+            assertBytes(bytes('DB "Hi", 13, 10, 0'), [72, 105, 13, 10, 0], 'DB mixed');
+            assertBytes(bytes('DEFB 1, 2'), [1, 2], 'DEFB alias');
+
+            section('DW/DEFW Directive');
+
+            assertBytes(bytes('DW $1234'), [0x34, 0x12], 'DW single word');
+            assertBytes(bytes('DW $1234, $5678'), [0x34, 0x12, 0x78, 0x56], 'DW multiple words');
+            assertBytes(bytes('ORG $8000\nDW target\ntarget:'), [0x02, 0x80], 'DW with label');
+
+            section('DS/DEFS Directive');
+
+            result = bytes('DS 5');
+            assertEqual(result.length, 5, 'DS reserve space');
+            assertBytes(bytes('DS 3, $FF'), [0xFF, 0xFF, 0xFF], 'DS with fill');
+
+            section('DZ Directive');
+
+            assertBytes(bytes('DZ "Hi"'), [72, 105, 0], 'DZ zero-terminated string');
+
+            section('DC Directive');
+
+            assertBytes(bytes('DC "ABC"'), [0x41, 0x42, 0xC3], 'DC high-bit terminated');
+            assertBytes(bytes('DC "X"'), [0xD8], 'DC single char');
+
+            section('ALIGN Directive');
+
+            result = bytes('ORG $8001\nDB 1\nALIGN 4\nDB 2');
+            assertEqual(result.length, 4, 'ALIGN pads correctly');
+            assertEqual(result[0], 1, 'ALIGN - data before');
+            assertEqual(result[3], 2, 'ALIGN - data after');
+
+            result = bytes('ORG $8001\nDB 1\nALIGN 4, $FF\nDB 2');
+            assertEqual(result[1], 0xFF, 'ALIGN with fill byte');
+
+            section('$ Current Address');
+
+            assertBytes(bytes('ORG $8000\nLD HL, $'), [0x21, 0x00, 0x80], '$ in expression');
+            assertBytes(bytes('ORG $8000\nJP $ + 10'), [0xC3, 0x0A, 0x80], '$ + offset');
+
+            section('ASSERT Directive');
+
+            result = asm('ASSERT 1');
+            assert(result.success, 'ASSERT true passes');
+
+            result = asm('VAL EQU 5\nASSERT VAL > 3');
+            assert(result.success, 'ASSERT with expression');
+        }
+
+        // ==================== LABEL TESTS ====================
+
+        async function runLabelTests() {
+            section('Basic Labels');
+
+            let result = asm('ORG $8000\nstart:\nNOP');
+            const startSym = result.symbols.find(s => s.name === 'start');
+            assertEqual(startSym ? startSym.value : null, 0x8000, 'Label at address');
+
+            assertBytes(bytes('ORG $8000\nJP forward\nforward:\nNOP'), [0xC3, 0x03, 0x80, 0x00], 'Forward reference');
+            assertBytes(bytes('ORG $8000\nstart:\nJP start'), [0xC3, 0x00, 0x80], 'Backward reference');
+
+            section('JR with Labels');
+
+            result = bytes('ORG $8000\nJR skip\nNOP\nNOP\nskip:\nNOP');
+            assertEqual(result[0], 0x18, 'JR forward - opcode');
+            assertEqual(result[1], 0x02, 'JR forward - offset');
+
+            result = bytes('ORG $8000\nloop:\nNOP\nJR loop');
+            assertEqual(result[0], 0x00, 'JR backward - NOP');
+            assertEqual(result[1], 0x18, 'JR backward - opcode');
+            assertEqual(result[2], 0xFD, 'JR backward - offset (-3)');
+
+            section('Label Without Colon');
+
+            result = asm('ORG $8000\nmylabel NOP');
+            let sym = result.symbols.find(s => s.name === 'mylabel');
+            assertEqual(sym ? sym.value : null, 0x8000, 'Label without colon (before instruction)');
+
+            result = asm('ORG $8000\nmylabel\nNOP');
+            sym = result.symbols.find(s => s.name === 'mylabel');
+            assertEqual(sym ? sym.value : null, 0x8000, 'Label without colon (standalone)');
+
+            assertBytes(bytes('ORG $8000\nJP target\ntarget\nRET'), [0xC3, 0x03, 0x80, 0xC9], 'Label without colon (forward ref)');
+
+            section('Local Labels');
+
+            result = bytes(`
+                ORG $8000
+                func1:
+                .loop:
+                    NOP
+                    JR .loop
+                func2:
+                .loop:
+                    NOP
+                    JR .loop
+            `);
+            assertEqual(result.length, 6, 'Local labels - total size');
+
+            section('Temporary Labels');
+
+            result = bytes('ORG $8000\n1: NOP\nJR 1F\nNOP\n1: NOP');
+            assertEqual(result[0], 0x00, 'Temp labels forward - first NOP');
+            assertEqual(result[1], 0x18, 'Temp labels forward - JR');
+            assertEqual(result[2], 0x01, 'Temp labels forward - offset');
+
+            result = bytes('ORG $8000\n1: NOP\nJR 1B');
+            assertEqual(result[0], 0x00, 'Temp labels backward - NOP');
+            assertEqual(result[1], 0x18, 'Temp labels backward - JR');
+            assertEqual(result[2], 0xFD, 'Temp labels backward - offset (-3)');
+
+            section('Multi-digit Temporary Labels');
+
+            result = bytes('ORG $8000\nJR 10F\nNOP\n10: NOP');
+            assertEqual(result[0], 0x18, 'Multi-digit temp 10F - JR');
+            assertEqual(result[1], 0x01, 'Multi-digit temp 10F - offset');
+
+            result = bytes('ORG $8000\n10: NOP\nJR 10B');
+            assertEqual(result[0], 0x00, 'Multi-digit temp 10B - NOP');
+            assertEqual(result[1], 0x18, 'Multi-digit temp 10B - JR');
+            assertEqual(result[2], 0xFD, 'Multi-digit temp 10B - offset');
+        }
+
+        // ==================== EXPRESSION TESTS ====================
+
+        async function runExpressionTests() {
+            section('Arithmetic Expressions');
+
+            assertBytes(bytes('DB 2 + 3'), [5], 'Addition');
+            assertBytes(bytes('DB 10 - 3'), [7], 'Subtraction');
+            assertBytes(bytes('DB 4 * 5'), [20], 'Multiplication');
+            assertBytes(bytes('DB 20 / 4'), [5], 'Division');
+            assertBytes(bytes('DB 17 % 5'), [2], 'Modulo');
+            assertBytes(bytes('DB -5 & 255'), [251], 'Negative value');
+
+            section('Bitwise Expressions');
+
+            assertBytes(bytes('DB $F0 & $0F'), [0], 'Bitwise AND');
+            assertBytes(bytes('DB $F0 | $0F'), [0xFF], 'Bitwise OR');
+            assertBytes(bytes('DB $FF ^ $0F'), [0xF0], 'Bitwise XOR');
+            assertBytes(bytes('DB ~$00 & $FF'), [0xFF], 'Bitwise NOT');
+            assertBytes(bytes('DB 1 << 4'), [16], 'Shift left');
+            assertBytes(bytes('DB $80 >> 4'), [8], 'Shift right');
+
+            section('Comparison Expressions');
+
+            assertBytes(bytes('DB 5 > 3'), [1], 'Greater than (true)');
+            assertBytes(bytes('DB 3 > 5'), [0], 'Greater than (false)');
+            assertBytes(bytes('DB 5 < 3'), [0], 'Less than (false)');
+            assertBytes(bytes('DB 3 < 5'), [1], 'Less than (true)');
+            assertBytes(bytes('DB 5 == 5'), [1], 'Equal (true)');
+            assertBytes(bytes('DB 5 != 3'), [1], 'Not equal (true)');
+
+            section('Logical Expressions');
+
+            assertBytes(bytes('DB 1 && 1'), [1], 'Logical AND (true)');
+            assertBytes(bytes('DB 1 && 0'), [0], 'Logical AND (false)');
+            assertBytes(bytes('DB 0 || 1'), [1], 'Logical OR (true)');
+            assertBytes(bytes('DB !0'), [1], 'Logical NOT');
+
+            section('Parentheses and Precedence');
+
+            assertBytes(bytes('DB 2 + 3 * 4'), [14], 'Operator precedence');
+            assertBytes(bytes('DB (2 + 3) * 4'), [20], 'Parentheses');
+
+            section('Number Formats');
+
+            assertBytes(bytes('DB $FF'), [255], 'Hex with $');
+            assertBytes(bytes('DB 0xFF'), [255], 'Hex with 0x');
+            assertBytes(bytes('DB 0FFh'), [255], 'Hex with h suffix');
+            assertBytes(bytes('DB %11110000'), [240], 'Binary with %');
+            assertBytes(bytes('DB 0b11110000'), [240], 'Binary with 0b');
+            assertBytes(bytes('DB 255'), [255], 'Decimal');
+
+            section('Character Constants');
+
+            assertBytes(bytes("DB 'A'"), [65], 'Single char');
+            assertBytes(bytes("CP 'a'"), [0xFE, 0x61], 'Char in instruction (lowercase)');
+            assertBytes(bytes("CP 'Z'"), [0xFE, 0x5A], 'Char in instruction (uppercase)');
+            assertBytes(bytes("CP '\\\\'"), [0xFE, 0x5C], 'Escaped backslash');
+        }
+
+        // ==================== MACRO TESTS ====================
+
+        async function runMacroTests() {
+            section('Simple Macros');
+
+            let result = bytes('MACRO NOP2\nNOP\nNOP\nENDM\nNOP2');
+            assertEqual(result.length, 2, 'Simple macro expansion');
+
+            result = bytes('MACRO LOAD, val\nLD A, val\nENDM\nLOAD 42');
+            assertBytes(result, [0x3E, 42], 'Macro with param (comma)');
+
+            result = bytes('MACRO LOAD val\nLD A, val\nENDM\nLOAD 42');
+            assertBytes(result, [0x3E, 42], 'Macro with param (space)');
+
+            section('Alternative Macro Syntax');
+
+            result = bytes('NOP2 MACRO\nNOP\nNOP\nENDM\nNOP2');
+            assertEqual(result.length, 2, 'Label-style macro definition');
+
+            section('Multiple Parameters');
+
+            result = bytes('MACRO TEXT y, x, txt\nDEFB y, x\nENDM\nTEXT 5, 12, 65');
+            assertBytes(result, [5, 12], 'Macro with multiple params');
+
+            section('Multiple Calls');
+
+            result = bytes('MACRO INC2\nINC A\nINC A\nENDM\nINC2\nINC2');
+            assertEqual(result.length, 4, 'Multiple macro calls');
+
+            section('REPT/DUP');
+
+            result = bytes('REPT 3\nNOP\nENDR');
+            assertEqual(result.length, 3, 'REPT simple');
+
+            result = bytes('COUNT EQU 4\nREPT COUNT\nNOP\nENDR');
+            assertEqual(result.length, 4, 'REPT with expression');
+
+            result = bytes('DUP 2\nRET\nEDUP');
+            assertEqual(result.length, 2, 'DUP alias');
+        }
+
+        // ==================== CONDITIONAL TESTS ====================
+
+        async function runConditionalTests() {
+            section('IF/ENDIF');
+
+            let result = bytes('IF 1\nNOP\nENDIF');
+            assertEqual(result.length, 1, 'IF true includes code');
+            assertEqual(result[0], 0x00, 'IF true - correct byte');
+
+            result = bytes('IF 0\nNOP\nENDIF');
+            assertEqual(result.length, 0, 'IF false excludes code');
+
+            section('IF/ELSE/ENDIF');
+
+            result = bytes('IF 0\nNOP\nELSE\nRET\nENDIF');
+            assertEqual(result.length, 1, 'IF/ELSE - else branch');
+            assertEqual(result[0], 0xC9, 'IF/ELSE - correct byte (RET)');
+
+            result = bytes('IF 1\nNOP\nELSE\nRET\nENDIF');
+            assertEqual(result.length, 1, 'IF/ELSE - if branch');
+            assertEqual(result[0], 0x00, 'IF/ELSE - correct byte (NOP)');
+
+            section('IFDEF/IFNDEF');
+
+            result = bytes('DEBUG EQU 1\nIFDEF DEBUG\nNOP\nENDIF');
+            assertEqual(result.length, 1, 'IFDEF defined');
+
+            result = bytes('IFNDEF UNDEFINED\nNOP\nENDIF');
+            assertEqual(result.length, 1, 'IFNDEF undefined');
+
+            result = bytes('IFDEF UNDEFINED\nNOP\nENDIF');
+            assertEqual(result.length, 0, 'IFDEF undefined');
+
+            section('Nested Conditionals');
+
+            result = bytes('IF 1\nIF 1\nNOP\nENDIF\nENDIF');
+            assertEqual(result.length, 1, 'Nested IF (both true)');
+
+            result = bytes('IF 1\nIF 0\nNOP\nENDIF\nENDIF');
+            assertEqual(result.length, 0, 'Nested IF (inner false)');
+
+            result = bytes('IF 0\nIF 1\nNOP\nENDIF\nENDIF');
+            assertEqual(result.length, 0, 'Nested IF (outer false)');
+
+            section('DEFINE');
+
+            result = bytes('DEFINE DEBUG\nIFDEF DEBUG\nNOP\nENDIF');
+            assertEqual(result.length, 1, 'DEFINE simple');
+
+            result = bytes('DEFINE VERSION 5\nLD A, VERSION');
+            assertBytes(result, [0x3E, 5], 'DEFINE with value (space)');
+
+            result = bytes('DEFINE VERSION, 10\nLD A, VERSION');
+            assertBytes(result, [0x3E, 10], 'DEFINE with value (comma)');
+        }
+
+        // ==================== RUN ALL ====================
+
+        async function runAllTests() {
+            clearLog();
+            log('Running all assembler tests...', 'info');
+
+            await runInstructionTests();
+            await runDirectiveTests();
+            await runLabelTests();
+            await runExpressionTests();
+            await runMacroTests();
+            await runConditionalTests();
+
+            log('\n=== COMPLETE ===', 'section');
+        }
+
+        // Button handlers
+        document.getElementById('runAll').onclick = runAllTests;
+        document.getElementById('runInstructions').onclick = () => { clearLog(); runInstructionTests(); };
+        document.getElementById('runDirectives').onclick = () => { clearLog(); runDirectiveTests(); };
+        document.getElementById('runLabels').onclick = () => { clearLog(); runLabelTests(); };
+        document.getElementById('runExpressions').onclick = () => { clearLog(); runExpressionTests(); };
+        document.getElementById('runMacros').onclick = () => { clearLog(); runMacroTests(); };
+        document.getElementById('runConditionals').onclick = () => { clearLog(); runConditionalTests(); };
+
+        // Theme handling
+        const themeBtn = document.getElementById('themeToggle');
+
+        function updateTheme() {
+            const isLight = document.body.classList.contains('light-theme');
+            themeBtn.textContent = isLight ? '\u263C' : '\u263E';
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+        updateTheme();
+
+        themeBtn.onclick = () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateTheme();
+        };
+
+        // Run tests on load
+        runAllTests();
+    </script>
+</body>
+</html>

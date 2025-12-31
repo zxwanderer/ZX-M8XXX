@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ULA 128K Timing Diagnostic</title>
+    <style>
+        body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 20px; }
+        h1 { color: #0ff; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px 20px; margin: 5px; background: #0a84ff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0070e0; }
+        #output { background: #0a0a15; padding: 15px; height: 400px; overflow: auto; white-space: pre; font-size: 12px; }
+        #canvas-container { margin: 20px 0; }
+        canvas { border: 1px solid #444; image-rendering: pixelated; }
+        .highlight { color: #ff0; }
+        .error { color: #f44; }
+        .info { color: #0ff; }
+        .section { color: #0f0; font-weight: bold; margin-top: 10px; }
+        table { border-collapse: collapse; margin: 10px 0; }
+        td, th { border: 1px solid #444; padding: 5px 10px; text-align: left; }
+        th { background: #252540; }
+        .param-input { width: 80px; background: #252540; color: #fff; border: 1px solid #444; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>ULA 128K Timing Diagnostic</h1>
+
+    <div class="controls">
+        <div style="margin-bottom: 10px;">
+            <label>TOP_LEFT_PIXEL_TSTATE: <input type="number" id="topLeftPixel" class="param-input" value="14362"></label>
+            <label style="margin-left: 20px;">Border change offset: <input type="number" id="borderOffset" class="param-input" value="4"></label>
+            <label style="margin-left: 20px;">Lines to trace: <input type="number" id="linesToTrace" class="param-input" value="10"></label>
+        </div>
+        <button onclick="runDiagnostic()">Run Diagnostic</button>
+        <button onclick="compareTimings()">Compare Timing Models</button>
+        <button onclick="traceFirstLines()">Trace First Screen Lines</button>
+        <button onclick="clearOutput()">Clear</button>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="screen" width="352" height="311"></canvas>
+    </div>
+
+    <div id="output"></div>
+
+<script>
+// Minimal Z80 state for diagnostic
+class DiagCPU {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.a = 0; this.f = 0;
+        this.b = 0; this.c = 0;
+        this.d = 0; this.e = 0;
+        this.h = 0; this.l = 0;
+        this.pc = 0;
+        this.sp = 0xFFFF;
+        this.tStates = 0;
+        this.halted = false;
+    }
+
+    get bc() { return (this.b << 8) | this.c; }
+    set bc(v) { this.b = (v >> 8) & 0xff; this.c = v & 0xff; }
+    get de() { return (this.d << 8) | this.e; }
+    set de(v) { this.d = (v >> 8) & 0xff; this.e = v & 0xff; }
+    get hl() { return (this.h << 8) | this.l; }
+    set hl(v) { this.h = (v >> 8) & 0xff; this.l = v & 0xff; }
+}
+
+// ULA test code - extracted key sequences
+const ULA_TEST_CODE = {
+    // After HALT and delay loop, the test executes these OUT sequences
+    // Each line is 228 T-states = 19 OUTs of 12 T-states each
+
+    // Line pattern: 19 OUT instructions, each 12 T-states
+    // OUT (C),r is 12 T-states
+    // Pattern varies per line to create the test image
+};
+
+// Timing parameters
+const TSTATES_PER_LINE = 228;
+const LINES_PER_FRAME = 311;
+const TSTATES_PER_FRAME = TSTATES_PER_LINE * LINES_PER_FRAME; // 70908
+
+// Border colors
+const COLORS = ['black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white'];
+const RGB = [
+    [0,0,0], [0,0,215], [215,0,0], [215,0,215],
+    [0,215,0], [0,215,215], [215,215,0], [215,215,215]
+];
+
+let output = document.getElementById('output');
+let canvas = document.getElementById('screen');
+let ctx = canvas.getContext('2d');
+
+function log(msg, cls = '') {
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = msg + '\n';
+    output.appendChild(span);
+    output.scrollTop = output.scrollHeight;
+}
+
+function clearOutput() {
+    output.innerHTML = '';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Calculate line start T-state using our current formula
+function calcLineStartTstate(visY, topLeftPixel, borderTop, leftBorderTstates) {
+    const firstPaperLineBorderStart = topLeftPixel - leftBorderTstates;
+    const lineTimesBase = firstPaperLineBorderStart - (borderTop * TSTATES_PER_LINE);
+    return lineTimesBase + (visY * TSTATES_PER_LINE);
+}
+
+// Calculate which line and X position a T-state maps to
+function tstateToPosition(tstate, topLeftPixel, borderTop, leftBorderTstates) {
+    const firstPaperLineBorderStart = topLeftPixel - leftBorderTstates;
+    const lineTimesBase = firstPaperLineBorderStart - (borderTop * TSTATES_PER_LINE);
+
+    // Find which line this T-state is on
+    const relativeT = tstate - lineTimesBase;
+    const visY = Math.floor(relativeT / TSTATES_PER_LINE);
+    const lineStartT = lineTimesBase + visY * TSTATES_PER_LINE;
+    const pixelX = Math.floor((tstate - lineStartT) * 2); // 2 pixels per T-state
+
+    return { visY, pixelX, lineStartT };
+}
+
+function compareTimings() {
+    clearOutput();
+    log('=== Timing Model Comparison ===', 'section');
+
+    const models = [
+        { name: 'Fuse/libspectrum', topLeft: 14362 },
+        { name: 'Swan', topLeft: 14361 },
+        { name: 'worldofspectrum', topLeft: 14365 },
+        { name: 'ZXMAK2 (frame-abs)', topLeft: 14428 },
+        { name: 'Our current', topLeft: parseInt(document.getElementById('topLeftPixel').value) }
+    ];
+
+    const borderTop = 63; // Full border
+    const leftBorder = 24;
+
+    log('\nFirst paper line (line 63) timing:', 'info');
+    log('─'.repeat(80));
+
+    for (const model of models) {
+        const lineStart = calcLineStartTstate(63, model.topLeft, borderTop, leftBorder);
+        const lineEnd = lineStart + 176; // 352 pixels = 176 T-states
+        const frameLine = Math.floor(model.topLeft / TSTATES_PER_LINE);
+        const posInLine = model.topLeft % TSTATES_PER_LINE;
+
+        log(`${model.name.padEnd(20)} TOP_LEFT=${model.topLeft}`);
+        log(`  Paper at frame line ${frameLine}, position ${posInLine} within line`);
+        log(`  visY=63 visible range: [${lineStart}, ${lineEnd}]`);
+        log(`  Frame line 63 range: [${63*228}, ${64*228-1}]`);
+
+        // Check if visible range overlaps with frame line correctly
+        const frameLineStart = 63 * TSTATES_PER_LINE;
+        const frameLineEnd = 64 * TSTATES_PER_LINE - 1;
+        const overlap = Math.max(0, Math.min(lineEnd, frameLineEnd) - Math.max(lineStart, frameLineStart));
+        log(`  Overlap with frame line 63: ${overlap} T-states`);
+        log('');
+    }
+
+    // Show what happens with a border change at specific T-state
+    log('\nBorder change at T=14400 maps to:', 'info');
+    log('─'.repeat(80));
+
+    for (const model of models) {
+        const pos = tstateToPosition(14400, model.topLeft, borderTop, leftBorder);
+        log(`${model.name.padEnd(20)} → visY=${pos.visY}, x=${pos.pixelX}`);
+    }
+}
+
+function traceFirstLines() {
+    clearOutput();
+    const topLeftPixel = parseInt(document.getElementById('topLeftPixel').value);
+    const borderOffset = parseInt(document.getElementById('borderOffset').value);
+    const linesToTrace = parseInt(document.getElementById('linesToTrace').value);
+
+    log('=== First Screen Lines Trace ===', 'section');
+    log(`TOP_LEFT_PIXEL_TSTATE = ${topLeftPixel}`, 'info');
+    log(`Border change offset = +${borderOffset}`, 'info');
+    log('');
+
+    const borderTop = 63;
+    const leftBorder = 24;
+    const totalWidth = 352;
+
+    // Simulate the delay after HALT
+    // From disasm: BC=$0138 (312), loop is 28 T-states each
+    // Plus setup: 10 + 67 = 77 T-states before first OUT
+    const delayLoopIterations = 0x138; // 312
+    const loopTstates = 28;
+    const setupTstates = 10 + 67; // LD BC + post-loop setup
+    const haltWakeT = 0; // Assume HALT wakes at T=0 after interrupt
+
+    const delayTotal = delayLoopIterations * loopTstates + setupTstates;
+    const firstOutStart = haltWakeT + delayTotal;
+
+    log(`Delay calculation:`, 'info');
+    log(`  HALT wakes at: T=${haltWakeT}`);
+    log(`  Delay loop: ${delayLoopIterations} × ${loopTstates} = ${delayLoopIterations * loopTstates}`);
+    log(`  Setup: ${setupTstates}`);
+    log(`  First OUT starts at: T=${firstOutStart}`);
+    log('');
+
+    // Trace border changes for first N screen lines
+    // Each line has 19 OUTs (12 T-states each = 228 total)
+    log('Border changes for first screen lines:', 'section');
+    log('─'.repeat(100));
+
+    let currentT = firstOutStart;
+    const changes = [];
+
+    // Simplified pattern: alternate colors
+    const linePatterns = [
+        [1,0,1,2,0,0,3,0,4,0,5,0,0,6,0,0,0,0,0], // Line pattern example
+    ];
+
+    for (let screenLine = 0; screenLine < linesToTrace; screenLine++) {
+        const lineChanges = [];
+
+        // 19 OUTs per line, each 12 T-states
+        for (let outIdx = 0; outIdx < 19; outIdx++) {
+            const outStartT = currentT;
+            const borderChangeT = outStartT + borderOffset;
+
+            // Simplified: just log the T-states
+            lineChanges.push({ t: borderChangeT, outStart: outStartT });
+
+            currentT += 12; // OUT (C),r is 12 T-states
+        }
+
+        // Map to visual position
+        const firstChange = lineChanges[0];
+        const pos = tstateToPosition(firstChange.t, topLeftPixel, borderTop, leftBorder);
+
+        log(`Screen line ${screenLine}:`);
+        log(`  First OUT at T=${firstChange.outStart}, border change at T=${firstChange.t}`);
+        log(`  Maps to: visY=${pos.visY}, x=${pos.pixelX}`);
+
+        // Check if this is the expected line
+        const expectedVisY = borderTop + screenLine;
+        if (pos.visY !== expectedVisY) {
+            log(`  ERROR: Expected visY=${expectedVisY}, got ${pos.visY}!`, 'error');
+            log(`  Difference: ${pos.visY - expectedVisY} lines`, 'error');
+        }
+
+        // Show line T-state range
+        const lineStart = calcLineStartTstate(expectedVisY, topLeftPixel, borderTop, leftBorder);
+        const lineEnd = lineStart + 176;
+        log(`  Expected line ${expectedVisY} range: [${lineStart}, ${lineEnd}]`);
+        log(`  Change at ${firstChange.t} ${firstChange.t > lineStart && firstChange.t <= lineEnd ? 'IS' : 'NOT'} in range`);
+        log('');
+    }
+}
+
+function runDiagnostic() {
+    clearOutput();
+    const topLeftPixel = parseInt(document.getElementById('topLeftPixel').value);
+    const borderOffset = parseInt(document.getElementById('borderOffset').value);
+
+    log('=== ULA 128K Timing Diagnostic ===', 'section');
+    log(`Parameters:`, 'info');
+    log(`  TOP_LEFT_PIXEL_TSTATE = ${topLeftPixel}`);
+    log(`  TSTATES_PER_LINE = ${TSTATES_PER_LINE}`);
+    log(`  TSTATES_PER_FRAME = ${TSTATES_PER_FRAME}`);
+    log(`  Border change offset = +${borderOffset}`);
+    log('');
+
+    // Calculate key values
+    const borderTop = 63; // Full border mode
+    const leftBorder = 24; // 48 pixels = 24 T-states
+
+    const firstPaperLineBorderStart = topLeftPixel - leftBorder;
+    const lineTimesBase = firstPaperLineBorderStart - (borderTop * TSTATES_PER_LINE);
+
+    log('Calculated values:', 'info');
+    log(`  firstPaperLineBorderStart = ${topLeftPixel} - ${leftBorder} = ${firstPaperLineBorderStart}`);
+    log(`  LINE_TIMES_BASE = ${firstPaperLineBorderStart} - (${borderTop} × ${TSTATES_PER_LINE}) = ${lineTimesBase}`);
+    log('');
+
+    // Show timing for key lines
+    log('Line timing (full border mode, BORDER_TOP=63):', 'section');
+    log('─'.repeat(80));
+
+    const keyLines = [0, 1, 62, 63, 64, 65, 126, 127, 254, 255];
+    for (const visY of keyLines) {
+        const lineStart = lineTimesBase + visY * TSTATES_PER_LINE;
+        const lineEnd = lineStart + 176; // 352 pixels visible
+        const frameLine = Math.floor((lineStart + TSTATES_PER_FRAME) % TSTATES_PER_FRAME / TSTATES_PER_LINE);
+        const screenLine = visY - borderTop;
+        const region = screenLine < 0 ? 'top border' : (screenLine >= 192 ? 'bottom border' : 'screen');
+
+        log(`visY=${String(visY).padStart(3)}: T=[${String(lineStart).padStart(6)}, ${String(lineEnd).padStart(6)}] ` +
+            `frameLine≈${String(frameLine).padStart(3)} (${region}${screenLine >= 0 && screenLine < 192 ? ' line ' + screenLine : ''})`);
+    }
+
+    log('');
+    log('Frame line vs visible line mapping:', 'section');
+    log('─'.repeat(80));
+
+    // Show where frame lines map to
+    for (let frameLine = 61; frameLine <= 66; frameLine++) {
+        const frameStart = frameLine * TSTATES_PER_LINE;
+        const frameEnd = (frameLine + 1) * TSTATES_PER_LINE - 1;
+
+        // Find which visY this maps to
+        const pos = tstateToPosition(frameStart + 50, topLeftPixel, borderTop, leftBorder);
+
+        log(`Frame line ${frameLine}: T=[${frameStart}, ${frameEnd}] → visY≈${pos.visY}`);
+    }
+
+    // Draw a test pattern on canvas
+    drawTestPattern(topLeftPixel, borderTop, leftBorder, borderOffset);
+}
+
+function drawTestPattern(topLeftPixel, borderTop, leftBorder, borderOffset) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const lineTimesBase = topLeftPixel - leftBorder - (borderTop * TSTATES_PER_LINE);
+
+    // Draw some reference lines
+    for (let visY = 0; visY < canvas.height; visY++) {
+        const lineStart = lineTimesBase + visY * TSTATES_PER_LINE;
+
+        // Alternate colors every 8 lines for visibility
+        const colorIdx = Math.floor(visY / 8) % 8;
+        ctx.fillStyle = `rgb(${RGB[colorIdx].join(',')})`;
+
+        // Draw a stripe in the border area
+        const stripeWidth = 20;
+        ctx.fillRect(10, visY, stripeWidth, 1);
+        ctx.fillRect(canvas.width - 30, visY, stripeWidth, 1);
+    }
+
+    // Mark key positions
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    ctx.fillText(`TOP_LEFT=${topLeftPixel}`, 60, 15);
+    ctx.fillText(`visY=63 (first screen)`, 60, borderTop + 10);
+
+    // Draw line markers
+    ctx.strokeStyle = '#ff0';
+    ctx.beginPath();
+    ctx.moveTo(0, borderTop);
+    ctx.lineTo(canvas.width, borderTop);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#0f0';
+    ctx.beginPath();
+    ctx.moveTo(0, borderTop + 192);
+    ctx.lineTo(canvas.width, borderTop + 192);
+    ctx.stroke();
+}
+
+// Initial run
+compareTimings();
+</script>
+</body>
+</html>

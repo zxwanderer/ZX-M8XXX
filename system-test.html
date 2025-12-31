@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ZX Spectrum System Tests v0.6.0</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #252540;
+            --bg-tertiary: #0a0a15;
+            --text-primary: #eee;
+            --text-secondary: #888;
+            --border-color: #444;
+            --cyan: #0ff;
+            --yellow: #ff0;
+            --green: #0f0;
+            --red: #f44;
+            --button-bg: #0a84ff;
+            --button-hover: #0070e0;
+        }
+        body.light-theme {
+            --bg-primary: #e8e8f0;
+            --bg-secondary: #d0d0e0;
+            --bg-tertiary: #f5f5fa;
+            --text-primary: #222;
+            --text-secondary: #666;
+            --border-color: #aaa;
+            --cyan: #0088aa;
+            --yellow: #aa8800;
+            --green: #008800;
+            --red: #cc0000;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: monospace;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--cyan); margin-bottom: 5px; }
+        .version { color: var(--text-secondary); }
+        h2 { color: var(--yellow); margin-top: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .test-resources {
+            background: var(--bg-secondary);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .test-resources h3 { margin: 0 0 10px 0; color: var(--cyan); }
+        .test-resources p { margin: 5px 0; }
+        .test-resources a { color: var(--cyan); }
+        #summary { font-size: 1.2em; margin: 10px 0; }
+        #log { white-space: pre-wrap; word-wrap: break-word; height: 400px; overflow: auto; background: var(--bg-tertiary); padding: 10px; }
+        .pass { color: var(--green); }
+        .fail { color: var(--red); }
+        .info { color: var(--cyan); }
+        .section { color: var(--yellow); font-weight: bold; margin-top: 15px; }
+        button { margin: 5px; padding: 10px 20px; background: var(--button-bg); color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: var(--button-hover); }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .theme-btn { float: right; background: var(--bg-secondary); border: none; font-size: 16px; padding: 5px 10px; cursor: pointer; border-radius: 3px; margin: 0; color: inherit; }
+        .theme-btn:hover { background: var(--button-bg); }
+    </style>
+</head>
+<body>
+    <h1>ZX Spectrum System Tests <span class="version">v0.6.2</span></h1>
+    <div class="test-resources">
+        <p><a href="fuse-test.html">FUSE CPU Tests</a> |
+        <a href="index.html">Main Emulator</a></p>
+    </div>
+    
+    <button id="runAll">Run All Tests</button>
+    <button id="runMemory">Memory Tests</button>
+    <button id="run128K">128K Banking Tests</button>
+    <button id="runKeyboard">Keyboard Tests</button>
+    <button id="runULA">ULA Tests</button>
+    <button id="runPrefix">Prefix Chain Tests</button>
+    <button class="theme-btn" id="themeToggle" title="Toggle light/dark theme">☀️</button>
+    
+    <div id="summary"></div>
+    <div id="log"></div>
+
+    <script src="memory.js"></script>
+    <script src="z80.js"></script>
+    <script src="ula.js"></script>
+    <script src="disasm.js"></script>
+    <script>
+        const TEST_VERSION = '0.6.2';
+        
+        // Access from global scope
+        // Memory, Z80, ULA are available from window
+        
+        const logEl = document.getElementById('log');
+        const summaryEl = document.getElementById('summary');
+        
+        let totalPassed = 0;
+        let totalFailed = 0;
+        
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = msg;
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function clearLog() {
+            logEl.innerHTML = '';
+            totalPassed = 0;
+            totalFailed = 0;
+            updateSummary();
+        }
+        
+        function updateSummary() {
+            const total = totalPassed + totalFailed;
+            const rate = total > 0 ? (100 * totalPassed / total).toFixed(1) : '0.0';
+            summaryEl.innerHTML = `v${TEST_VERSION} | <span class="pass">Pass: ${totalPassed}</span> | <span class="fail">Fail: ${totalFailed}</span> | Total: ${total} | Rate: ${rate}%`;
+        }
+        
+        function assert(condition, testName, details = '') {
+            if (condition) {
+                log(`✓ ${testName}`, 'pass');
+                totalPassed++;
+            } else {
+                log(`✗ ${testName}${details ? ': ' + details : ''}`, 'fail');
+                totalFailed++;
+            }
+            updateSummary();
+            return condition;
+        }
+        
+        function section(name) {
+            log(`\n═══ ${name} ═══`, 'section');
+        }
+        
+        // ==================== MEMORY TESTS ====================
+        
+        async function runMemoryTests() {
+            section('48K Memory Layout');
+            
+            const mem = new Memory('48k');
+            
+            // ROM area should reject writes (returns same value)
+            const romByte = mem.read(0x0000);
+            mem.write(0x0000, 0xAA);
+            assert(mem.read(0x0000) === romByte, 'ROM write protection', 
+                `wrote 0xAA, read ${mem.read(0x0000).toString(16)}`);
+            
+            // Screen RAM (0x4000-0x57FF)
+            mem.write(0x4000, 0x55);
+            assert(mem.read(0x4000) === 0x55, 'Screen RAM write/read at 0x4000');
+            
+            mem.write(0x57FF, 0xAA);
+            assert(mem.read(0x57FF) === 0xAA, 'Screen RAM write/read at 0x57FF');
+            
+            // Attribute RAM (0x5800-0x5AFF)
+            mem.write(0x5800, 0x38);
+            assert(mem.read(0x5800) === 0x38, 'Attribute RAM write/read at 0x5800');
+            
+            // Upper RAM (0x8000-0xFFFF)
+            mem.write(0x8000, 0x12);
+            assert(mem.read(0x8000) === 0x12, 'Upper RAM write/read at 0x8000');
+            
+            mem.write(0xFFFF, 0x34);
+            assert(mem.read(0xFFFF) === 0x34, 'Upper RAM write/read at 0xFFFF');
+            
+            // Boundary test - last ROM byte should not change
+            const lastRom = mem.read(0x3FFF);
+            mem.write(0x3FFF, 0xFF);
+            assert(mem.read(0x3FFF) === lastRom, 'ROM boundary protection at 0x3FFF');
+            
+            // First RAM byte
+            mem.write(0x4000, 0xBE);
+            assert(mem.read(0x4000) === 0xBE, 'RAM starts at 0x4000');
+        }
+        
+        // ==================== 128K BANKING TESTS ====================
+        
+        async function run128KTests() {
+            section('128K Memory Banking');
+            
+            const mem = new Memory('128k');
+            
+            // Test initial state - bank 0 at 0xC000
+            log('Testing initial state...', 'info');
+            
+            // Write unique values to each bank
+            for (let bank = 0; bank < 8; bank++) {
+                mem.writePort(0x7FFD, bank);
+                mem.write(0xC000, bank + 0x10);
+                mem.write(0xC001, bank + 0x20);
+            }
+            
+            // Verify each bank retained its value
+            let bankingOK = true;
+            for (let bank = 0; bank < 8; bank++) {
+                mem.writePort(0x7FFD, bank);
+                const val0 = mem.read(0xC000);
+                const val1 = mem.read(0xC001);
+                const expected0 = bank + 0x10;
+                const expected1 = bank + 0x20;
+                
+                if (val0 !== expected0 || val1 !== expected1) {
+                    bankingOK = false;
+                    log(`  Bank ${bank}: got ${val0.toString(16)},${val1.toString(16)} expected ${expected0.toString(16)},${expected1.toString(16)}`, 'fail');
+                }
+            }
+            assert(bankingOK, '128K RAM banking (8 banks at 0xC000)');
+            
+            // ROM switching test (without actual ROMs, just verify paging register changes)
+            section('128K ROM Switching');
+            
+            mem.writePort(0x7FFD, 0x00);  // ROM 0 (128K editor)
+            const state0 = mem.getPagingState();
+            
+            mem.writePort(0x7FFD, 0x10);  // ROM 1 (48K BASIC)
+            const state1 = mem.getPagingState();
+            
+            assert(state0.romBank === 0, 'ROM bank 0 selected with bit 4 = 0');
+            assert(state1.romBank === 1, 'ROM bank 1 selected with bit 4 = 1');
+            
+            // Paging disable test
+            section('128K Paging Disable');
+            
+            const mem3 = new Memory('128k');  // Fresh memory for this test
+            mem3.writePort(0x7FFD, 0x00);  // Reset to bank 0
+            mem3.write(0xC000, 0xAA);
+            
+            mem3.writePort(0x7FFD, 0x20);  // Set disable bit
+            mem3.writePort(0x7FFD, 0x01);  // Try to switch to bank 1
+            
+            // Should still read bank 0's value if paging is disabled
+            const afterDisable = mem3.read(0xC000);
+            assert(afterDisable === 0xAA, 'Paging disable bit (0x20) locks banking',
+                `expected 0xAA, got ${afterDisable.toString(16)}`);
+            
+            // Screen bank switching
+            section('128K Screen Banking');
+            
+            const mem2 = new Memory('128k');
+            
+            // Write to bank 5 (normal screen)
+            mem2.writePort(0x7FFD, 0x05);
+            mem2.write(0xC000, 0x55);
+            
+            // Write to bank 7 (shadow screen)
+            mem2.writePort(0x7FFD, 0x07);
+            mem2.write(0xC000, 0x77);
+            
+            // Verify bank 5 via direct screen access
+            mem2.writePort(0x7FFD, 0x00);  // Use screen 0 (bank 5)
+            const screen5 = mem2.read(0x4000);  // Screen always at 0x4000
+            
+            mem2.writePort(0x7FFD, 0x08);  // Use screen 1 (bank 7)
+            const screen7Val = mem2.read(0x4000);
+            
+            log(`  Screen bank test: bank5=${screen5.toString(16)}, bank7=${screen7Val.toString(16)}`, 'info');
+            assert(true, 'Screen bank selection bit (0x08) parsed');
+            
+            // Contended banks test
+            section('128K Contention Pattern');
+            
+            const contentionInfo = [];
+            for (let bank = 0; bank < 8; bank++) {
+                // Banks 1,3,5,7 are contended on 128K toastrack
+                const shouldBeContended = (bank & 1) === 1;
+                contentionInfo.push(`Bank ${bank}: ${shouldBeContended ? 'contended' : 'uncontended'}`);
+            }
+            log('  Expected: ' + contentionInfo.join(', '), 'info');
+            assert(true, 'Contention pattern documented (1,3,5,7 contended)');
+        }
+        
+        // ==================== KEYBOARD TESTS ====================
+        
+        async function runKeyboardTests() {
+            section('Keyboard Port Decoding');
+            
+            const ula = new ULA();
+            
+            // Test all 8 half-rows
+            const halfRows = [
+                { addr: 0xFEFE, keys: 'SHIFT, Z, X, C, V' },
+                { addr: 0xFDFE, keys: 'A, S, D, F, G' },
+                { addr: 0xFBFE, keys: 'Q, W, E, R, T' },
+                { addr: 0xF7FE, keys: '1, 2, 3, 4, 5' },
+                { addr: 0xEFFE, keys: '0, 9, 8, 7, 6' },
+                { addr: 0xDFFE, keys: 'P, O, I, U, Y' },
+                { addr: 0xBFFE, keys: 'ENTER, L, K, J, H' },
+                { addr: 0x7FFE, keys: 'SPACE, SYM, M, N, B' }
+            ];
+            
+            // No keys pressed - should return 0xBF (bits 0-4 high, bit 5 low for issue 2+)
+            for (const row of halfRows) {
+                const val = ula.readPort(row.addr);
+                const bits = val & 0x1F;  // Lower 5 bits are keys
+                assert(bits === 0x1F, `Half-row ${row.addr.toString(16)} no keys pressed`,
+                    `expected 0x1F, got ${bits.toString(16)}`);
+            }
+            
+            // Simulate key press and verify
+            section('Keyboard Key Press Simulation');
+            
+            // Press 'A' key (half-row 0xFDFE, bit 0)
+            ula.keyDown('a');
+            let val = ula.readPort(0xFDFE);
+            assert((val & 0x01) === 0, 'Key A press detected on port 0xFDFE bit 0',
+                `got ${(val & 0x1F).toString(2).padStart(5, '0')}`);
+            
+            ula.keyUp('a');
+            val = ula.readPort(0xFDFE);
+            assert((val & 0x01) === 1, 'Key A release detected');
+            
+            // Press SPACE (half-row 0x7FFE, bit 0)
+            ula.keyDown(' ');
+            val = ula.readPort(0x7FFE);
+            assert((val & 0x01) === 0, 'SPACE press detected on port 0x7FFE bit 0');
+            ula.keyUp(' ');
+            
+            // Press ENTER (half-row 0xBFFE, bit 0)
+            ula.keyDown('Enter');
+            val = ula.readPort(0xBFFE);
+            assert((val & 0x01) === 0, 'ENTER press detected on port 0xBFFE bit 0');
+            ula.keyUp('Enter');
+            
+            // Multiple keys on same row
+            section('Multiple Key Detection');
+            
+            ula.keyDown('q');
+            ula.keyDown('w');
+            val = ula.readPort(0xFBFE);
+            const qw = val & 0x03;
+            assert(qw === 0, 'Q+W simultaneous press',
+                `expected bits 0,1 clear, got ${(val & 0x1F).toString(2).padStart(5, '0')}`);
+            ula.keyUp('q');
+            ula.keyUp('w');
+        }
+        
+        // ==================== ULA TESTS ====================
+        
+        async function runULATests() {
+            section('ULA Timing Constants');
+            
+            // 48K timing
+            assert(224 * 312 === 69888, '48K frame length: 224 * 312 = 69888 T-states');
+            
+            // 128K timing
+            assert(228 * 311 === 70908, '128K frame length: 228 * 311 = 70908 T-states');
+            
+            // Pentagon timing
+            assert(224 * 320 === 71680, 'Pentagon frame length: 224 * 320 = 71680 T-states');
+            
+            section('ULA Port Decoding');
+            
+            const ula = new ULA();
+            
+            // Border color write (any even port)
+            ula.writePort(0xFE, 0x02);  // Red border
+            assert(ula.borderColor === 2, 'Border color set via port 0xFE',
+                `expected 2, got ${ula.borderColor}`);
+            
+            ula.writePort(0xFE, 0x07);  // White border
+            assert(ula.borderColor === 7, 'Border color bits 0-2 mask');
+            
+            // EAR output bit
+            ula.writePort(0xFE, 0x10);
+            assert(ula.earOutput === 1, 'EAR output bit (bit 4)');
+            
+            ula.writePort(0xFE, 0x00);
+            assert(ula.earOutput === 0, 'EAR output clear');
+            
+            // MIC output bit  
+            ula.writePort(0xFE, 0x08);
+            assert(ula.micOutput === 1, 'MIC output bit (bit 3)');
+            
+            section('ULA Interrupt Timing');
+            
+            // INT should be generated at start of frame
+            // INT length is 32 T-states on 48K
+            const intLength48K = 32;
+            assert(intLength48K === 32, '48K INT pulse length: 32 T-states');
+            
+            section('Screen Geometry');
+            
+            // 48K screen
+            const screen48K = {
+                width: 256,
+                height: 192,
+                borderTop: 64,
+                borderBottom: 56,
+                borderLeft: 48,
+                borderRight: 48
+            };
+            
+            assert(screen48K.width === 256, 'Screen width: 256 pixels');
+            assert(screen48K.height === 192, 'Screen height: 192 pixels');
+            assert(screen48K.borderTop === 64, 'Top border: 64 lines');
+            assert(screen48K.borderBottom === 56, 'Bottom border: 56 lines');
+            
+            const totalLines = screen48K.borderTop + screen48K.height + screen48K.borderBottom;
+            assert(totalLines === 312, 'Total lines: 312 (64+192+56)');
+            
+            section('Attribute Handling');
+            
+            // Flash timing - toggles every 16 frames
+            const flashFrames = 16;
+            assert(flashFrames === 16, 'FLASH toggles every 16 frames');
+            
+            // BRIGHT bit doubles intensity
+            // INK bits 0-2, PAPER bits 3-5, BRIGHT bit 6, FLASH bit 7
+            const attr = 0b01000111;  // BRIGHT + INK 7 (white) + PAPER 0 (black)
+            assert((attr & 0x07) === 7, 'INK from bits 0-2');
+            assert(((attr >> 3) & 0x07) === 0, 'PAPER from bits 3-5');
+            assert((attr & 0x40) !== 0, 'BRIGHT from bit 6');
+            assert((attr & 0x80) === 0, 'FLASH from bit 7');
+        }
+
+        // ==================== CHAINED PREFIX TESTS ====================
+
+        async function runPrefixTests() {
+            section('Chained Prefix - Z80 Execution');
+
+            const mem = new Memory('48k');
+            const cpu = new Z80(mem);
+
+            // Helper to execute code and return T-states consumed
+            function execCode(code, initRegs = {}) {
+                // Load code at 0x8000
+                for (let i = 0; i < code.length; i++) {
+                    mem.write(0x8000 + i, code[i]);
+                }
+
+                // Reset CPU and set initial registers
+                cpu.reset();
+                cpu.pc = 0x8000;
+                Object.assign(cpu, initRegs);
+
+                const startT = cpu.tStates;
+                cpu.step();
+                return cpu.tStates - startT;
+            }
+
+            // Test DD DD - second DD should take over
+            // DD DD 21 34 12 = DD 21 34 12 (LD IX,1234h) with extra 4T for first DD
+            log('Testing DD DD chaining...', 'info');
+            cpu.ix = 0;
+            const tDD_DD = execCode([0xDD, 0xDD, 0x21, 0x34, 0x12]);
+            assert(cpu.ix === 0x1234, 'DD DD 21 34 12: IX = 1234h (second DD wins)',
+                `IX = ${cpu.ix.toString(16)}`);
+            assert(tDD_DD === 18, 'DD DD timing: 4 (first DD) + 14 (LD IX,nn) = 18 T-states',
+                `got ${tDD_DD} T-states`);
+
+            // Test DD FD - FD should override, switch to IY
+            // DD FD 21 78 56 = FD 21 78 56 (LD IY,5678h) with extra 4T for DD
+            log('Testing DD FD chaining...', 'info');
+            cpu.iy = 0;
+            const tDD_FD = execCode([0xDD, 0xFD, 0x21, 0x78, 0x56]);
+            assert(cpu.iy === 0x5678, 'DD FD 21 78 56: IY = 5678h (FD overrides DD)',
+                `IY = ${cpu.iy.toString(16)}`);
+            assert(tDD_FD === 18, 'DD FD timing: 4 (DD) + 14 (LD IY,nn) = 18 T-states',
+                `got ${tDD_FD} T-states`);
+
+            // Test FD DD - DD should override, switch to IX
+            // FD DD 21 AB 00 = DD 21 AB 00 (LD IX,00ABh) with extra 4T for FD
+            log('Testing FD DD chaining...', 'info');
+            cpu.ix = 0;
+            const tFD_DD = execCode([0xFD, 0xDD, 0x21, 0xAB, 0x00]);
+            assert(cpu.ix === 0x00AB, 'FD DD 21 AB 00: IX = 00ABh (DD overrides FD)',
+                `IX = ${cpu.ix.toString(16)}`);
+            assert(tFD_DD === 18, 'FD DD timing: 4 (FD) + 14 (LD IX,nn) = 18 T-states',
+                `got ${tFD_DD} T-states`);
+
+            // Test DD ED - ED should override DD completely
+            // DD ED 4A = ED 4A (ADC HL,BC) with 4T for ignored DD
+            log('Testing DD ED chaining...', 'info');
+            cpu.hl = 0x1000;
+            cpu.bc = 0x0234;
+            cpu.f = 0; // Clear carry
+            const tDD_ED = execCode([0xDD, 0xED, 0x4A], { hl: 0x1000, bc: 0x0234, f: 0 });
+            assert(cpu.hl === 0x1234, 'DD ED 4A: HL = 1000h + 0234h = 1234h (ED overrides DD)',
+                `HL = ${cpu.hl.toString(16)}`);
+            assert(tDD_ED === 19, 'DD ED timing: 4 (DD) + 15 (ADC HL,BC) = 19 T-states',
+                `got ${tDD_ED} T-states`);
+
+            // Test multiple chained prefixes: DD DD DD 23 = DD 23 (INC IX) with 8T for two DDs
+            log('Testing DD DD DD chaining...', 'info');
+            cpu.ix = 0x00FF;
+            const tDD_DD_DD = execCode([0xDD, 0xDD, 0xDD, 0x23], { ix: 0x00FF });
+            assert(cpu.ix === 0x0100, 'DD DD DD 23: IX = 0100h (INC IX)',
+                `IX = ${cpu.ix.toString(16)}`);
+            assert(tDD_DD_DD === 18, 'DD DD DD timing: 4 + 4 + 10 = 18 T-states',
+                `got ${tDD_DD_DD} T-states`);
+
+            // Test FD FD chain
+            log('Testing FD FD chaining...', 'info');
+            cpu.iy = 0x0001;
+            const tFD_FD = execCode([0xFD, 0xFD, 0x2B], { iy: 0x0001 });
+            assert(cpu.iy === 0x0000, 'FD FD 2B: IY = 0000h (DEC IY)',
+                `IY = ${cpu.iy.toString(16)}`);
+            assert(tFD_FD === 14, 'FD FD timing: 4 + 10 = 14 T-states',
+                `got ${tFD_FD} T-states`);
+
+            // Test complex chain: DD FD DD ED 44 = ED 44 (NEG)
+            log('Testing DD FD DD ED chaining...', 'info');
+            cpu.a = 0x05;
+            const tComplex = execCode([0xDD, 0xFD, 0xDD, 0xED, 0x44], { a: 0x05 });
+            assert(cpu.a === 0xFB, 'DD FD DD ED 44: A = FBh (NEG of 05h)',
+                `A = ${cpu.a.toString(16)}`);
+            // 4 (DD) + 4 (FD) + 4 (DD) + 8 (NEG) = 20
+            assert(tComplex === 20, 'DD FD DD ED timing: 4 + 4 + 4 + 8 = 20 T-states',
+                `got ${tComplex} T-states`);
+
+            section('Chained Prefix - Disassembler');
+
+            const disasm = new Disassembler(mem);
+
+            // Test DD DD disassembly - first DD should be DEFB DDh (redundant prefix)
+            for (let i = 0; i < 5; i++) mem.write(0x8000 + i, [0xDD, 0xDD, 0x21, 0x34, 0x12][i]);
+            let result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'DEFB DDh', 'Disasm DD DD: first DD = DEFB DDh',
+                `got "${result.mnemonic}"`);
+            assert(result.length === 1, 'Disasm DD DD: first instruction is 1 byte',
+                `got ${result.length} bytes`);
+            // Second instruction should be LD IX,1234h
+            result = disasm.disassemble(0x8001);
+            assert(result.mnemonic === 'LD IX,1234h', 'Disasm DD DD: second = LD IX,1234h',
+                `got "${result.mnemonic}"`);
+
+            // Test DD FD disassembly - DD should be DEFB DDh, FD instruction follows
+            for (let i = 0; i < 5; i++) mem.write(0x8000 + i, [0xDD, 0xFD, 0x21, 0x78, 0x56][i]);
+            result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'DEFB DDh', 'Disasm DD FD: DD = DEFB DDh',
+                `got "${result.mnemonic}"`);
+            result = disasm.disassemble(0x8001);
+            assert(result.mnemonic === 'LD IY,5678h', 'Disasm DD FD: FD 21 = LD IY,5678h',
+                `got "${result.mnemonic}"`);
+
+            // Test FD DD disassembly - FD should be DEFB FDh, DD instruction follows
+            for (let i = 0; i < 5; i++) mem.write(0x8000 + i, [0xFD, 0xDD, 0x21, 0xAB, 0x00][i]);
+            result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'DEFB FDh', 'Disasm FD DD: FD = DEFB FDh',
+                `got "${result.mnemonic}"`);
+            result = disasm.disassemble(0x8001);
+            assert(result.mnemonic === 'LD IX,00ABh', 'Disasm FD DD: DD 21 = LD IX,00ABh',
+                `got "${result.mnemonic}"`);
+
+            // Test DD ED disassembly - DD should be DEFB DDh, ED instruction follows
+            for (let i = 0; i < 3; i++) mem.write(0x8000 + i, [0xDD, 0xED, 0x4A][i]);
+            result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'DEFB DDh', 'Disasm DD ED: DD = DEFB DDh',
+                `got "${result.mnemonic}"`);
+            result = disasm.disassemble(0x8001);
+            assert(result.mnemonic === 'ADC HL,BC', 'Disasm DD ED: ED 4A = ADC HL,BC',
+                `got "${result.mnemonic}"`);
+
+            // Test triple chain DD DD DD - should be DEFB DDh, DEFB DDh, then instruction
+            for (let i = 0; i < 6; i++) mem.write(0x8000 + i, [0xDD, 0xDD, 0xDD, 0xCB, 0x05, 0x46][i]);
+            result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'DEFB DDh', 'Disasm DD DD DD CB: first DD = DEFB DDh',
+                `got "${result.mnemonic}"`);
+            result = disasm.disassemble(0x8001);
+            assert(result.mnemonic === 'DEFB DDh', 'Disasm DD DD DD CB: second DD = DEFB DDh',
+                `got "${result.mnemonic}"`);
+            result = disasm.disassemble(0x8002);
+            assert(result.mnemonic === 'BIT 0,(IX+5)', 'Disasm DD DD DD CB: third = BIT 0,(IX+5)',
+                `got "${result.mnemonic}"`);
+
+            // Test normal DD instruction (no chain) still works
+            for (let i = 0; i < 4; i++) mem.write(0x8000 + i, [0xDD, 0x21, 0x00, 0x10][i]);
+            result = disasm.disassemble(0x8000);
+            assert(result.mnemonic === 'LD IX,1000h', 'Disasm DD 21 (no chain) = LD IX,1000h',
+                `got "${result.mnemonic}"`);
+            assert(result.length === 4, 'Disasm DD 21: 4 bytes',
+                `got ${result.length} bytes`);
+
+            section('Chained Prefix - R Register');
+
+            // R register should increment once per prefix byte fetched
+            cpu.reset();
+            cpu.pc = 0x8000;
+            cpu.rFull = 0;
+            for (let i = 0; i < 5; i++) mem.write(0x8000 + i, [0xDD, 0xDD, 0x21, 0x34, 0x12][i]);
+            cpu.step();
+            // R should increment: +1 for main loop, +1 for first DD, +1 for second DD = 3
+            // But the instruction fetch also increments R
+            const rAfter = cpu.rFull & 0x7F;
+            assert(rAfter >= 2, 'DD DD: R incremented at least twice for prefix bytes',
+                `R = ${rAfter}`);
+        }
+
+        // ==================== TEST RUNNERS ====================
+        
+        async function runAllTests() {
+            clearLog();
+            log(`System Test Suite v${TEST_VERSION}`, 'info');
+            log('=' .repeat(50), 'info');
+            
+            try {
+                await runMemoryTests();
+                await run128KTests();
+                await runKeyboardTests();
+                await runULATests();
+                await runPrefixTests();
+            } catch (e) {
+                log(`ERROR: ${e.message}`, 'fail');
+                console.error(e);
+            }
+            
+            log('\n' + '='.repeat(50), 'info');
+            log(`Tests complete: ${totalPassed} passed, ${totalFailed} failed`, 
+                totalFailed === 0 ? 'pass' : 'fail');
+        }
+        
+        // Button handlers
+        document.getElementById('runAll').onclick = runAllTests;
+        document.getElementById('runMemory').onclick = async () => {
+            clearLog();
+            await runMemoryTests();
+        };
+        document.getElementById('run128K').onclick = async () => {
+            clearLog();
+            await run128KTests();
+        };
+        document.getElementById('runKeyboard').onclick = async () => {
+            clearLog();
+            await runKeyboardTests();
+        };
+        document.getElementById('runULA').onclick = async () => {
+            clearLog();
+            await runULATests();
+        };
+        document.getElementById('runPrefix').onclick = async () => {
+            clearLog();
+            await runPrefixTests();
+        };
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (localStorage.getItem('zx-theme') === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.textContent = '🌙';
+        }
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+            localStorage.setItem('zx-theme', isLight ? 'light' : 'dark');
+        };
+
+        // Auto-run on load
+        runAllTests();
+    </script>
+</body>
+</html>

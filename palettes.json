@@ -1,0 +1,204 @@
+{
+  "palettes": [
+    {
+      "id": "alone",
+      "name": "Alone",
+      "colors": [
+        "#000000", "#0000A0", "#A00000", "#A000A0",
+        "#00A000", "#00A0A0", "#A0A000", "#A0A0A0",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "art-schafft",
+      "name": "Art by Schafft",
+      "colors": [
+        "#000000", "#1C0077", "#A2232A", "#8417A8",
+        "#7B8707", "#2D91C3", "#DAA73E", "#BABABA",
+        "#000000", "#2100A5", "#E02C35", "#B71BE8",
+        "#A7BA08", "#42C2FF", "#FFD66D", "#FCFCFC"
+      ]
+    },
+    {
+      "id": "atm-turbo",
+      "name": "ATM-Turbo",
+      "colors": [
+        "#000000", "#0000AA", "#AA0000", "#AA00AA",
+        "#00AA00", "#00AAAA", "#AAAA00", "#AAAAAA",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "default",
+      "name": "Default",
+      "colors": [
+        "#000000", "#0000D7", "#D70000", "#D700D7",
+        "#00D700", "#00D7D7", "#D7D700", "#D7D7D7",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "emuzwin",
+      "name": "EmuzWin",
+      "colors": [
+        "#000000", "#0000C4", "#C40000", "#C400C4",
+        "#00B900", "#00C4C4", "#C4C400", "#C4C4C4",
+        "#000000", "#0000ED", "#ED0000", "#ED00ED",
+        "#00D900", "#00DFDB", "#EDEB00", "#EDEBEB"
+      ]
+    },
+    {
+      "id": "escale",
+      "name": "Escale (Grayscale)",
+      "colors": [
+        "#3E414C", "#4E515F", "#5E6273", "#6E7386",
+        "#7E839A", "#8E94AD", "#9EA4C1", "#AEB5D4",
+        "#3E414C", "#525564", "#666A7C", "#7A7F94",
+        "#8E93AD", "#A2A8C5", "#B5BCDD", "#C9D1F5"
+      ]
+    },
+    {
+      "id": "grey",
+      "name": "Grey",
+      "colors": [
+        "#000000", "#1B1B1B", "#373636", "#525252",
+        "#6E6D6D", "#898989", "#A5A4A4", "#C0C0C0",
+        "#000000", "#242424", "#494949", "#6D6D6D",
+        "#929292", "#B6B6B6", "#DBDBDB", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "colors": [
+        "#000000", "#0000BC", "#BC0000", "#BC00BC",
+        "#00BC00", "#00BCBC", "#BCBC00", "#BCBCBC",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "mars",
+      "name": "Mars",
+      "colors": [
+        "#000000", "#000090", "#BF3000", "#BF3090",
+        "#009030", "#0090C0", "#BFC030", "#BFC0C0",
+        "#000000", "#0000BF", "#FE3F00", "#FE3FBF",
+        "#00BF3F", "#00BFFF", "#FEFF3F", "#FEFFFF"
+      ]
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean",
+      "colors": [
+        "#20201F", "#38389F", "#88201F", "#A0389F",
+        "#20881F", "#38A09F", "#88881F", "#A0A09F",
+        "#20201F", "#4444DF", "#BC201F", "#E044DF",
+        "#20BC1F", "#44E0DF", "#BCBC1F", "#E0E0DF"
+      ]
+    },
+    {
+      "id": "orthodox",
+      "name": "Orthodox",
+      "colors": [
+        "#000000", "#0000CD", "#A70000", "#A700CD",
+        "#00B700", "#00B7CD", "#A7B700", "#A7B7CD",
+        "#000000", "#0000FF", "#D00000", "#D000FF",
+        "#00E400", "#00E4FF", "#D0E400", "#D0E4FF"
+      ]
+    },
+    {
+      "id": "pulsar",
+      "name": "Pulsar",
+      "colors": [
+        "#000000", "#0000CD", "#CD0000", "#CD00CD",
+        "#00CD00", "#00CDCD", "#CDCD00", "#CDCDCD",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "spectaculator",
+      "name": "Spectaculator",
+      "colors": [
+        "#000000", "#0000CE", "#CE0000", "#CE00CE",
+        "#00CB00", "#00CBCE", "#CECB00", "#CECBCE",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FB00", "#00FBFF", "#FFFB00", "#FFFBFF"
+      ]
+    },
+    {
+      "id": "spectaculator-bw",
+      "name": "Spectaculator b/w",
+      "colors": [
+        "#101010", "#292C29", "#4A4D4A", "#6B6D6B",
+        "#7B7D7B", "#9C9E9C", "#BDBEBD", "#DEDFDE",
+        "#101010", "#313031", "#5A5D5A", "#7B7D7B",
+        "#9C9E9C", "#BDBEBD", "#E7E3E7", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "specemu",
+      "name": "SpecEmu",
+      "colors": [
+        "#000000", "#0000B2", "#B20000", "#B200B2",
+        "#00B200", "#00B2B2", "#B2B200", "#B2B2B2",
+        "#050505", "#0505E6", "#E60505", "#E605E6",
+        "#05E605", "#05E6E6", "#E6E605", "#E6E6E6"
+      ]
+    },
+    {
+      "id": "specemu-green",
+      "name": "SpecEmu (green)",
+      "colors": [
+        "#000000", "#001400", "#002900", "#003D00",
+        "#005200", "#006600", "#007A00", "#008F00",
+        "#000000", "#001C00", "#003800", "#005400",
+        "#007000", "#008C00", "#00A800", "#00C400"
+      ]
+    },
+    {
+      "id": "specemu-grey",
+      "name": "SpecEmu (grey)",
+      "colors": [
+        "#000000", "#141414", "#292929", "#3D3D3D",
+        "#525252", "#666666", "#7A7A7A", "#8F8F8F",
+        "#000000", "#1C1C1C", "#383838", "#545454",
+        "#707070", "#8C8C8C", "#A8A8A8", "#C4C4C4"
+      ]
+    },
+    {
+      "id": "wiki-1",
+      "name": "Wikipedia #1",
+      "colors": [
+        "#000000", "#0100CE", "#CF0100", "#CF01CE",
+        "#00CF15", "#01CFCF", "#CFCF15", "#CFCFCF",
+        "#000000", "#0200FD", "#FF0201", "#FF02FD",
+        "#00FF1C", "#02FFFF", "#FFFF1D", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "wiki-2",
+      "name": "Wikipedia #2",
+      "colors": [
+        "#000000", "#001DC8", "#D8240F", "#D530C9",
+        "#00C721", "#00C9CB", "#CECA27", "#CBCBCB",
+        "#000000", "#0027FB", "#FF3016", "#FF3FFC",
+        "#00F92C", "#00FCFE", "#FFFD33", "#FFFFFF"
+      ]
+    },
+    {
+      "id": "zx-next-hdmi",
+      "name": "ZX Spectrum Next HDMI",
+      "colors": [
+        "#000000", "#0000B0", "#B00000", "#B000B0",
+        "#00B000", "#00B0B0", "#B0B000", "#B0B0B0",
+        "#000000", "#0000FF", "#FF0000", "#FF00FF",
+        "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+      ]
+    }
+  ]
+}

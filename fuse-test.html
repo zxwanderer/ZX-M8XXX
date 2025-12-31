@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FUSE Z80 Test Runner v0.4.32</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #252540;
+            --bg-tertiary: #000;
+            --text-primary: #eee;
+            --text-secondary: #888;
+            --cyan: #0ff;
+            --green: #0f0;
+            --red: #f00;
+            --button-bg: #0a84ff;
+            --button-hover: #0070e0;
+        }
+        body.light-theme {
+            --bg-primary: #e8e8f0;
+            --bg-secondary: #d0d0e0;
+            --bg-tertiary: #f5f5fa;
+            --text-primary: #222;
+            --text-secondary: #666;
+            --cyan: #0088aa;
+            --green: #008800;
+            --red: #cc0000;
+        }
+        body { font-family: monospace; background: var(--bg-primary); color: var(--text-primary); padding: 20px; }
+        .pass { color: var(--green); }
+        .fail { color: var(--red); }
+        .info { color: var(--cyan); }
+        #output { white-space: pre; height: 400px; overflow: auto; background: var(--bg-tertiary); padding: 10px; }
+        button { margin: 5px; padding: 10px 20px; background: var(--button-bg); color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: var(--button-hover); }
+        #summary { font-size: 1.2em; margin: 10px 0; }
+        .version { color: var(--text-secondary); }
+        .test-resources { background: var(--bg-secondary); padding: 10px 15px; border-radius: 5px; margin: 15px 0; }
+        .test-resources h3 { margin: 0 0 10px 0; color: var(--cyan); }
+        .test-resources p { margin: 5px 0; }
+        .test-resources a { color: var(--cyan); }
+        .theme-btn { float: right; background: var(--bg-secondary); border: none; font-size: 16px; padding: 5px 10px; cursor: pointer; border-radius: 3px; margin: 0; color: inherit; }
+        .theme-btn:hover { background: var(--button-bg); }
+    </style>
+</head>
+<body>
+    <h1>FUSE Z80 Test Runner <span class="version">v0.4.32</span></h1>
+    <div class="test-resources">
+        <h3>Additional Test Resources</h3>
+        <p><strong>CPU:</strong> <a href="https://github.com/raxoft/z80test" target="_blank">Raxoft Z80 Test Suite</a> - Exhaustive flag testing (TAP files)</p>
+        <p><strong>System:</strong> <a href="https://github.com/brendanalford/zx-diagnostics" target="_blank">ZX-Diagnostics</a> - RAM, ROM, keyboard, interrupts (TAP/ROM)</p>
+        <p><strong>ULA/Timing:</strong> <a href="http://blog.retroleum.co.uk/electronics-articles/a-diagnostic-rom-image-for-the-zx-spectrum/" target="_blank">Retroleum DiagROM</a> - ULA, floating bus, contention</p>
+        <p><strong>Contention:</strong> <a href="http://www.zxdesign.info/memContention.shtml" target="_blank">ZX Design Info</a> - Memory contention documentation</p>
+        <p><strong>Comprehensive:</strong> <a href="https://github.com/redcode/ZXSpectrum/wiki/Tests" target="_blank">ZXSpectrum Tests Wiki</a> - Complete test ROM/snapshot collection</p>
+        <p><a href="system-test.html">System Tests</a> |
+        <a href="index.html">Main Emulator</a></p>
+    </div>
+    <div id="summary"></div>
+    <button onclick="runTests()">Run All Tests</button>
+    <button onclick="runTests(100)">Run First 100</button>
+    <button onclick="clearOutput()">Clear</button>
+    <button id="themeToggle" class="theme-btn" title="Toggle light/dark theme">☀️</button>
+    <div id="output"></div>
+
+    <script src="memory.js"></script>
+    <script src="z80.js"></script>
+    <script>
+        const TEST_VERSION = '0.4.32';
+        
+        // Simple test memory - allows writes anywhere
+        class TestMemory {
+            constructor() {
+                this.ram = new Uint8Array(0x10000);
+            }
+            read(addr) {
+                return this.ram[addr & 0xffff];
+            }
+            write(addr, val) {
+                this.ram[addr & 0xffff] = val & 0xff;
+            }
+            reset() {
+                this.ram.fill(0);
+            }
+        }
+        
+        let testsIn = null;
+        let testsExpected = null;
+        
+        // Load test files
+        async function loadTests() {
+            const [inResp, expResp] = await Promise.all([
+                fetch('tests.in'),
+                fetch('tests.expected')
+            ]);
+            testsIn = await inResp.text();
+            testsExpected = await expResp.text();
+            log('Loaded test files', 'info');
+        }
+        
+        function log(msg, cls = '') {
+            const out = document.getElementById('output');
+            const span = document.createElement('span');
+            span.className = cls;
+            span.textContent = msg + '\n';
+            out.appendChild(span);
+            out.scrollTop = out.scrollHeight;
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+        }
+        
+        function parseTests(text) {
+            const lines = text.split('\n');
+            const tests = [];
+            let i = 0;
+            
+            while (i < lines.length) {
+                // Skip blank lines
+                while (i < lines.length && lines[i].trim() === '') i++;
+                if (i >= lines.length) break;
+                
+                const test = { name: lines[i++].trim(), memory: [] };
+                if (!test.name) continue;
+                
+                // Parse registers: AF BC DE HL AF' BC' DE' HL' IX IY SP PC MEMPTR
+                const regs = lines[i++].trim().split(/\s+/);
+                test.af = parseInt(regs[0], 16);
+                test.bc = parseInt(regs[1], 16);
+                test.de = parseInt(regs[2], 16);
+                test.hl = parseInt(regs[3], 16);
+                test.af_ = parseInt(regs[4], 16);
+                test.bc_ = parseInt(regs[5], 16);
+                test.de_ = parseInt(regs[6], 16);
+                test.hl_ = parseInt(regs[7], 16);
+                test.ix = parseInt(regs[8], 16);
+                test.iy = parseInt(regs[9], 16);
+                test.sp = parseInt(regs[10], 16);
+                test.pc = parseInt(regs[11], 16);
+                test.memptr = parseInt(regs[12], 16);
+                
+                // Parse I R IFF1 IFF2 IM halted tstates
+                const state = lines[i++].trim().split(/\s+/);
+                test.i = parseInt(state[0], 16);
+                test.r = parseInt(state[1], 16);
+                test.iff1 = parseInt(state[2]);
+                test.iff2 = parseInt(state[3]);
+                test.im = parseInt(state[4]);
+                test.halted = parseInt(state[5]);
+                test.tstates = parseInt(state[6]);
+                
+                // Parse memory setup
+                while (i < lines.length && lines[i].trim() !== '-1') {
+                    const memLine = lines[i++].trim();
+                    if (!memLine) continue;
+                    const parts = memLine.split(/\s+/);
+                    const addr = parseInt(parts[0], 16);
+                    for (let j = 1; j < parts.length && parts[j] !== '-1'; j++) {
+                        test.memory.push({ addr: addr + j - 1, val: parseInt(parts[j], 16) });
+                    }
+                }
+                i++; // Skip -1
+                
+                tests.push(test);
+            }
+            return tests;
+        }
+        
+        function parseExpected(text) {
+            const lines = text.split('\n');
+            const results = {};
+            let i = 0;
+            
+            while (i < lines.length) {
+                // Skip blank lines
+                while (i < lines.length && lines[i].trim() === '') i++;
+                if (i >= lines.length) break;
+                
+                const name = lines[i++].trim();
+                if (!name) continue;
+                
+                const result = { name, events: [], memory: [] };
+                
+                // Skip events (MR, MW, etc.)
+                while (i < lines.length && /^\s*\d+\s+(MR|MW|MC|PR|PW|PC)\s/.test(lines[i])) {
+                    i++;
+                }
+                
+                // Parse registers
+                const regs = lines[i++].trim().split(/\s+/);
+                result.af = parseInt(regs[0], 16);
+                result.bc = parseInt(regs[1], 16);
+                result.de = parseInt(regs[2], 16);
+                result.hl = parseInt(regs[3], 16);
+                result.af_ = parseInt(regs[4], 16);
+                result.bc_ = parseInt(regs[5], 16);
+                result.de_ = parseInt(regs[6], 16);
+                result.hl_ = parseInt(regs[7], 16);
+                result.ix = parseInt(regs[8], 16);
+                result.iy = parseInt(regs[9], 16);
+                result.sp = parseInt(regs[10], 16);
+                result.pc = parseInt(regs[11], 16);
+                result.memptr = parseInt(regs[12], 16);
+                
+                // Parse state
+                const state = lines[i++].trim().split(/\s+/);
+                result.i = parseInt(state[0], 16);
+                result.r = parseInt(state[1], 16);
+                result.iff1 = parseInt(state[2]);
+                result.iff2 = parseInt(state[3]);
+                result.im = parseInt(state[4]);
+                result.halted = parseInt(state[5]);
+                result.tstates = parseInt(state[6]);
+                
+                // Parse memory changes
+                while (i < lines.length && lines[i].trim() !== '' && !lines[i].match(/^[a-z0-9_]+$/i)) {
+                    const memLine = lines[i++].trim();
+                    if (!memLine || memLine === '-1') continue;
+                    const parts = memLine.split(/\s+/);
+                    const addr = parseInt(parts[0], 16);
+                    for (let j = 1; j < parts.length && parts[j] !== '-1'; j++) {
+                        result.memory.push({ addr: addr + j - 1, val: parseInt(parts[j], 16) });
+                    }
+                }
+                
+                results[name] = result;
+            }
+            return results;
+        }
+        
+        function runSingleTest(test, expected) {
+            const memory = new TestMemory();
+            const cpu = new Z80(memory);
+            
+            // Port handlers - return high byte of port address (floating bus behavior)
+            cpu.portRead = (port) => (port >> 8) & 0xff;
+            cpu.portWrite = (port, val) => {};
+            
+            // Set up initial state
+            cpu.af = test.af;
+            cpu.bc = test.bc;
+            cpu.de = test.de;
+            cpu.hl = test.hl;
+            cpu.a_ = (test.af_ >> 8) & 0xff;
+            cpu.f_ = test.af_ & 0xff;
+            cpu.b_ = (test.bc_ >> 8) & 0xff;
+            cpu.c_ = test.bc_ & 0xff;
+            cpu.d_ = (test.de_ >> 8) & 0xff;
+            cpu.e_ = test.de_ & 0xff;
+            cpu.h_ = (test.hl_ >> 8) & 0xff;
+            cpu.l_ = test.hl_ & 0xff;
+            cpu.ix = test.ix;
+            cpu.iy = test.iy;
+            cpu.sp = test.sp;
+            cpu.pc = test.pc;
+            cpu.memptr = test.memptr;
+            cpu.i = test.i;
+            cpu.r = test.r;
+            cpu.r7 = test.r & 0x80;
+            cpu.iff1 = !!test.iff1;
+            cpu.iff2 = !!test.iff2;
+            cpu.im = test.im;
+            cpu.halted = !!test.halted;
+            cpu.tStates = 0;
+            
+            // Set up memory
+            for (const m of test.memory) {
+                memory.write(m.addr, m.val);
+            }
+            
+            // Run until we've executed enough T-states
+            while (cpu.tStates < test.tstates) {
+                cpu.execute();
+            }
+            
+            // Compare results
+            const errors = [];
+            
+            // Mask for flags comparison (ignore undocumented bits 3 and 5 for some tests)
+            const flagMask = 0xff; // Compare all flags
+            
+            if ((cpu.af & 0xff00) !== (expected.af & 0xff00)) 
+                errors.push(`A: ${(cpu.a).toString(16)} != ${(expected.af >> 8).toString(16)}`);
+            if ((cpu.f & flagMask) !== (expected.af & flagMask))
+                errors.push(`F: ${(cpu.f).toString(16)} != ${(expected.af & 0xff).toString(16)}`);
+            if (cpu.bc !== expected.bc) errors.push(`BC: ${cpu.bc.toString(16)} != ${expected.bc.toString(16)}`);
+            if (cpu.de !== expected.de) errors.push(`DE: ${cpu.de.toString(16)} != ${expected.de.toString(16)}`);
+            if (cpu.hl !== expected.hl) errors.push(`HL: ${cpu.hl.toString(16)} != ${expected.hl.toString(16)}`);
+            if (cpu.ix !== expected.ix) errors.push(`IX: ${cpu.ix.toString(16)} != ${expected.ix.toString(16)}`);
+            if (cpu.iy !== expected.iy) errors.push(`IY: ${cpu.iy.toString(16)} != ${expected.iy.toString(16)}`);
+            if (cpu.sp !== expected.sp) errors.push(`SP: ${cpu.sp.toString(16)} != ${expected.sp.toString(16)}`);
+            if (cpu.pc !== expected.pc) errors.push(`PC: ${cpu.pc.toString(16)} != ${expected.pc.toString(16)}`);
+            if (cpu.i !== expected.i) errors.push(`I: ${cpu.i.toString(16)} != ${expected.i.toString(16)}`);
+            
+            // R register comparison (only lower 7 bits matter for most purposes)
+            const rActual = (cpu.r7 & 0x80) | (cpu.r & 0x7f);
+            if ((rActual & 0x7f) !== (expected.r & 0x7f)) 
+                errors.push(`R: ${rActual.toString(16)} != ${expected.r.toString(16)}`);
+            
+            if (cpu.iff1 !== !!expected.iff1) errors.push(`IFF1: ${cpu.iff1} != ${!!expected.iff1}`);
+            if (cpu.iff2 !== !!expected.iff2) errors.push(`IFF2: ${cpu.iff2} != ${!!expected.iff2}`);
+            if (cpu.im !== expected.im) errors.push(`IM: ${cpu.im} != ${expected.im}`);
+            if (cpu.halted !== !!expected.halted) errors.push(`HALT: ${cpu.halted} != ${!!expected.halted}`);
+            
+            // Check memory changes
+            for (const m of expected.memory) {
+                const actual = memory.read(m.addr);
+                if (actual !== m.val) {
+                    errors.push(`MEM[${m.addr.toString(16)}]: ${actual.toString(16)} != ${m.val.toString(16)}`);
+                }
+            }
+            
+            // T-states comparison (allow some slack)
+            if (cpu.tStates !== expected.tstates) {
+                errors.push(`T: ${cpu.tStates} != ${expected.tstates}`);
+            }
+            
+            return errors;
+        }
+        
+        async function runTests(limit = Infinity) {
+            if (!testsIn) await loadTests();
+            
+            clearOutput();
+            log(`FUSE Z80 Test Runner v${TEST_VERSION}`, 'info');
+            log('Parsing tests...', 'info');
+            
+            const tests = parseTests(testsIn);
+            const expected = parseExpected(testsExpected);
+            
+            log(`Found ${tests.length} tests`, 'info');
+            
+            let passed = 0, failed = 0;
+            const failures = [];
+            
+            const testCount = Math.min(tests.length, limit);
+            
+            for (let i = 0; i < testCount; i++) {
+                const test = tests[i];
+                const exp = expected[test.name];
+                
+                if (!exp) {
+                    log(`${test.name}: No expected result found`, 'fail');
+                    failed++;
+                    continue;
+                }
+                
+                try {
+                    const errors = runSingleTest(test, exp);
+                    if (errors.length === 0) {
+                        passed++;
+                    } else {
+                        failed++;
+                        failures.push({ name: test.name, errors });
+                        if (failures.length <= 50) {
+                            log(`${test.name}: FAIL - ${errors.join(', ')}`, 'fail');
+                        }
+                    }
+                } catch (e) {
+                    failed++;
+                    failures.push({ name: test.name, errors: [e.message] });
+                    if (failures.length <= 50) {
+                        log(`${test.name}: ERROR - ${e.message}`, 'fail');
+                    }
+                }
+                
+                // Update progress
+                if ((i + 1) % 100 === 0) {
+                    document.getElementById('summary').innerHTML = 
+                        `v${TEST_VERSION} | Progress: ${i + 1}/${testCount} | <span class="pass">Pass: ${passed}</span> | <span class="fail">Fail: ${failed}</span>`;
+                    await new Promise(r => setTimeout(r, 0)); // Allow UI update
+                }
+            }
+            
+            log('', '');
+            log(`========================================`, 'info');
+            log(`FUSE Z80 Test Runner v${TEST_VERSION}`, 'info');
+            log(`RESULTS: ${passed} passed, ${failed} failed out of ${testCount}`, passed === testCount ? 'pass' : 'fail');
+            log(`Pass rate: ${(100 * passed / testCount).toFixed(1)}%`, 'info');
+            
+            document.getElementById('summary').innerHTML = 
+                `v${TEST_VERSION} | <span class="pass">Pass: ${passed}</span> | <span class="fail">Fail: ${failed}</span> | Total: ${testCount} | Rate: ${(100 * passed / testCount).toFixed(1)}%`;
+            
+            if (failures.length > 50) {
+                log(`(Showing first 50 failures of ${failures.length} total)`, 'info');
+            }
+        }
+        
+        // Auto-load tests on page load
+        loadTests();
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (localStorage.getItem('zx-theme') === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.textContent = '🌙';
+        }
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            themeToggle.textContent = isLight ? '🌙' : '☀️';
+            localStorage.setItem('zx-theme', isLight ? 'light' : 'dark');
+        };
+    </script>
+</body>
+</html>

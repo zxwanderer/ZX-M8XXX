@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ULA 128K Test Trace</title>
+    <style>
+        body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 20px; margin: 0; }
+        h1 { color: #0ff; margin: 0 0 10px 0; }
+        .container { display: flex; gap: 20px; }
+        .left-panel { flex: 0 0 400px; }
+        .right-panel { flex: 1; }
+        .controls { margin: 10px 0; }
+        button { padding: 8px 16px; margin: 3px; background: #0a84ff; color: white; border: none; cursor: pointer; font-size: 12px; }
+        button:hover { background: #0070e0; }
+        button:disabled { background: #555; }
+        input { width: 60px; background: #252540; color: #fff; border: 1px solid #444; padding: 5px; }
+        label { margin-right: 15px; }
+        #output { background: #0a0a15; padding: 10px; height: 500px; overflow: auto; white-space: pre; font-size: 11px; border: 1px solid #444; }
+        canvas { border: 1px solid #444; image-rendering: pixelated; background: #000; }
+        .param-row { margin: 5px 0; }
+        .highlight { color: #ff0; }
+        .error { color: #f44; }
+        .info { color: #0ff; }
+        .success { color: #0f0; }
+        .section { color: #0f0; font-weight: bold; }
+        .dim { color: #666; }
+        #status { padding: 10px; background: #252540; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>ULA 128K Test Trace - Step by Step Analysis</h1>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="param-row">
+                <label>TOP_LEFT_PIXEL: <input type="number" id="topLeftPixel" value="14362"></label>
+                <label>Border offset: <input type="number" id="borderOffset" value="4"></label>
+            </div>
+            <div class="param-row">
+                <label>Start line: <input type="number" id="startLine" value="0"></label>
+                <label>Num lines: <input type="number" id="numLines" value="20"></label>
+            </div>
+            <div class="controls">
+                <button onclick="runTrace()">Run Full Trace</button>
+                <button onclick="stepLine()">Step 1 Line</button>
+                <button onclick="compareModels()">Compare Models</button>
+                <button onclick="findCorrectOffset()">Find Correct Offset</button>
+            </div>
+            <div id="status">Ready</div>
+            <canvas id="screen" width="352" height="311"></canvas>
+            <div style="margin-top: 5px; font-size: 10px;">
+                Yellow line = first screen line (visY=63) | Green line = screen end (visY=255)
+            </div>
+        </div>
+        <div class="right-panel">
+            <div id="output"></div>
+        </div>
+    </div>
+
+<script>
+const TSTATES_PER_LINE = 228;
+const LINES_PER_FRAME = 311;
+const TSTATES_PER_FRAME = 70908;
+const BORDER_TOP = 63; // Full border mode
+const LEFT_BORDER_TSTATES = 24;
+const TOTAL_WIDTH = 352;
+
+const COLORS = ['#000', '#00D', '#D00', '#D0D', '#0D0', '#0DD', '#DD0', '#DDD'];
+const RGB = [[0,0,0], [0,0,215], [215,0,0], [215,0,215], [0,215,0], [0,215,215], [215,215,0], [215,215,215]];
+
+let canvas = document.getElementById('screen');
+let ctx = canvas.getContext('2d');
+let output = document.getElementById('output');
+let status = document.getElementById('status');
+
+// ULA test register values after setup
+const REG = { A: 1, B: 2, C: 0xFE, D: 3, E: 4, H: 5, L: 6 };
+
+// Parse disassembly to extract line patterns
+// Each "----" separator marks a new line block
+// Format: array of {type: 'OUT'|'NOP', reg: 'A'|'B'|...|'0', tstates: 12|4}
+const LINE_PATTERNS = [
+    // Line 0: 19 pure OUTs (0x9C66-0x9C8A)
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'0'},{r:'D'},{r:'0'},{r:'E'},{r:'0'},{r:'H'},{r:'0'},{r:'0'},{r:'L'},{r:'0'},{r:'0'},{r:'0'},{r:'0'},{r:'0'}],
+    // Line 1: Same pattern (0x9C8C-0x9CB0)
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'0'},{r:'D'},{r:'0'},{r:'E'},{r:'0'},{r:'H'},{r:'0'},{r:'0'},{r:'L'},{r:'0'},{r:'0'},{r:'0'},{r:'0'},{r:'0'}],
+    // Line 2: Mix with NOPs (0x9CB2-0x9CD8) - 228 T total
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{t:'NOP'},{r:'D'},{r:'D'},{t:'NOP'},{r:'E'},{r:'0'},{r:'H'},{t:'NOP'},{t:'NOP'},{r:'0'},{t:'NOP'},{t:'NOP'},{r:'L'},{r:'0'},{r:'0'},{r:'0'},{r:'0'},{r:'0'}],
+    // Line 3: Similar (0x9CDA-0x9D01)
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{t:'NOP'},{r:'D'},{r:'D'},{t:'NOP'},{r:'E'},{r:'0'},{r:'H'},{t:'NOP'},{t:'NOP'},{r:'0'},{t:'NOP'},{r:'L'},{t:'NOP'},{t:'NOP'},{r:'0'},{t:'NOP'},{t:'NOP'},{r:'0'},{r:'0'},{r:'0'}],
+    // Line 4-7: Various patterns...
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'D'},{r:'D'},{r:'D'},{r:'E'},{r:'H'},{r:'H'},{t:'NOP'},{t:'NOP'},{r:'0'},{r:'L'},{t:'NOP'},{t:'NOP'},{r:'0'},{t:'NOP'},{t:'NOP'},{r:'0'},{r:'0'},{r:'0'}],
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'D'},{r:'D'},{r:'D'},{r:'E'},{r:'H'},{r:'H'},{t:'NOP'},{t:'NOP'},{r:'0'},{r:'L'},{t:'NOP'},{t:'NOP'},{r:'0'},{t:'NOP'},{t:'NOP'},{r:'0'},{r:'0'},{r:'0'}],
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'D'},{r:'D'},{r:'D'},{r:'E'},{r:'H'},{r:'H'},{r:'H'},{r:'L'},{r:'L'},{r:'L'},{r:'0'},{r:'0'},{r:'0'},{r:'0'}],
+    [{r:'A'},{r:'0'},{r:'A'},{r:'B'},{r:'0'},{r:'D'},{r:'D'},{r:'D'},{r:'E'},{r:'H'},{r:'H'},{r:'H'},{r:'L'},{r:'L'},{r:'L'},{r:'0'},{r:'0'},{r:'0'},{r:'0'}],
+];
+
+function log(msg, cls = '') {
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = msg + '\n';
+    output.appendChild(span);
+    output.scrollTop = output.scrollHeight;
+}
+
+function clearOutput() {
+    output.innerHTML = '';
+}
+
+function setStatus(msg) {
+    status.textContent = msg;
+}
+
+function getRegValue(r) {
+    if (r === '0') return 0;
+    return REG[r] || 0;
+}
+
+// Calculate delay from HALT to first OUT
+function calcDelayToFirstOut() {
+    // From disasm:
+    // After HALT: LD BC,$0138 (10T)
+    // Delay loop: 312 iterations × 28T = 8736T
+    // After loop: 6×NOP(24) + DEC DE(6) + LD A(7) + LD BC(10) + LD DE(10) + LD HL(10) = 67T
+    // Total: 10 + 8736 + 67 = 8813T
+    return 10 + (0x138 * 28) + 67;
+}
+
+// Calculate line timing
+function calcLineTimesBase(topLeftPixel) {
+    const firstPaperLineBorderStart = topLeftPixel - LEFT_BORDER_TSTATES;
+    return firstPaperLineBorderStart - (BORDER_TOP * TSTATES_PER_LINE);
+}
+
+function calcLineStartTstate(visY, topLeftPixel) {
+    return calcLineTimesBase(topLeftPixel) + (visY * TSTATES_PER_LINE);
+}
+
+// Map T-state to screen position
+function tstateToVisY(tstate, topLeftPixel) {
+    const base = calcLineTimesBase(topLeftPixel);
+    const relT = tstate - base;
+    return Math.floor(relT / TSTATES_PER_LINE);
+}
+
+function tstateToPixelX(tstate, lineStartT) {
+    return Math.floor((tstate - lineStartT) * 2);
+}
+
+// Execute one line of the test pattern
+function executeLine(lineNum, startT, borderOffset, pattern) {
+    const changes = [];
+    let t = startT;
+    let prevColor = -1;
+
+    for (const instr of pattern) {
+        if (instr.t === 'NOP') {
+            t += 4;
+        } else {
+            // OUT instruction
+            const color = getRegValue(instr.r);
+            const changeT = t + borderOffset;
+            if (color !== prevColor) {
+                changes.push({ t: changeT, color, outStartT: t });
+                prevColor = color;
+            }
+            t += 12;
+        }
+    }
+
+    return { changes, endT: t, tstates: t - startT };
+}
+
+// Render one line with border changes
+function renderLine(visY, lineStartT, changes, startColor) {
+    let currentColor = startColor;
+    let changeIdx = 0;
+
+    for (let x = 0; x < TOTAL_WIDTH; x++) {
+        const pixelT = lineStartT + (x / 2);
+
+        while (changeIdx < changes.length && changes[changeIdx].t <= pixelT) {
+            currentColor = changes[changeIdx].color;
+            changeIdx++;
+        }
+
+        const rgb = RGB[currentColor];
+        ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+        ctx.fillRect(x, visY, 1, 1);
+    }
+}
+
+function runTrace() {
+    clearOutput();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const topLeftPixel = parseInt(document.getElementById('topLeftPixel').value);
+    const borderOffset = parseInt(document.getElementById('borderOffset').value);
+    const startLine = parseInt(document.getElementById('startLine').value);
+    const numLines = parseInt(document.getElementById('numLines').value);
+
+    log('=== ULA 128K Test Trace ===', 'section');
+    log(`TOP_LEFT_PIXEL_TSTATE = ${topLeftPixel}`, 'info');
+    log(`Border change offset = +${borderOffset}`, 'info');
+    log(`LINE_TIMES_BASE = ${calcLineTimesBase(topLeftPixel)}`, 'info');
+    log('');
+
+    // Calculate when first OUT starts
+    const delayT = calcDelayToFirstOut();
+    log(`Delay from HALT to first OUT: ${delayT} T-states`, 'info');
+
+    // The test draws lines starting from some position
+    // First OUT should be on the first screen line
+    let currentT = delayT;
+
+    log('');
+    log('Line-by-line trace:', 'section');
+    log('─'.repeat(100));
+
+    for (let i = startLine; i < startLine + numLines && i < LINE_PATTERNS.length; i++) {
+        const pattern = LINE_PATTERNS[i % LINE_PATTERNS.length];
+        const result = executeLine(i, currentT, borderOffset, pattern);
+
+        // Find which visual line this maps to
+        const firstChangeT = result.changes.length > 0 ? result.changes[0].t : currentT;
+        const visY = tstateToVisY(firstChangeT, topLeftPixel);
+        const lineStartT = calcLineStartTstate(visY, topLeftPixel);
+        const lineEndT = lineStartT + (TOTAL_WIDTH / 2);
+
+        const expectedVisY = BORDER_TOP + i; // Expected: first test line should be visY=63
+
+        log(`Test line ${i}:`, 'highlight');
+        log(`  OUT block: T=[${currentT}, ${result.endT}] (${result.tstates} T-states)`);
+        log(`  First change at T=${firstChangeT} → maps to visY=${visY}`);
+        log(`  Expected visY=${expectedVisY} ${visY === expectedVisY ? '✓' : '✗ MISMATCH!'}`);
+        log(`  Line ${visY} range: [${lineStartT}, ${lineEndT}]`);
+
+        if (visY !== expectedVisY) {
+            log(`  ERROR: Off by ${visY - expectedVisY} lines!`, 'error');
+        }
+
+        // Show first few changes
+        const showChanges = result.changes.slice(0, 5);
+        for (const ch of showChanges) {
+            const x = tstateToPixelX(ch.t, lineStartT);
+            log(`    T=${ch.t}: color=${ch.color} → x=${x}`, 'dim');
+        }
+        if (result.changes.length > 5) {
+            log(`    ... and ${result.changes.length - 5} more changes`, 'dim');
+        }
+
+        // Render the line
+        if (visY >= 0 && visY < canvas.height) {
+            const lineChanges = result.changes.filter(c => c.t > lineStartT && c.t <= lineEndT);
+            let startColor = 0;
+            for (const ch of result.changes) {
+                if (ch.t <= lineStartT) startColor = ch.color;
+            }
+            renderLine(visY, lineStartT, lineChanges, startColor);
+        }
+
+        currentT = result.endT;
+        log('');
+    }
+
+    // Draw reference lines
+    ctx.strokeStyle = '#ff0';
+    ctx.beginPath();
+    ctx.moveTo(0, BORDER_TOP);
+    ctx.lineTo(TOTAL_WIDTH, BORDER_TOP);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#0f0';
+    ctx.beginPath();
+    ctx.moveTo(0, BORDER_TOP + 192);
+    ctx.lineTo(TOTAL_WIDTH, BORDER_TOP + 192);
+    ctx.stroke();
+
+    setStatus('Trace complete');
+}
+
+function compareModels() {
+    clearOutput();
+    log('=== Timing Model Comparison ===', 'section');
+    log('');
+
+    const models = [
+        { name: 'Fuse/libspectrum', topLeft: 14362 },
+        { name: 'Swan', topLeft: 14361 },
+        { name: 'worldofspectrum', topLeft: 14365 },
+        { name: 'ZXMAK2', topLeft: 14428 },
+    ];
+
+    const delayT = calcDelayToFirstOut();
+    const firstOutT = delayT; // After HALT at T=0
+
+    log(`First OUT instruction starts at T=${firstOutT}`, 'info');
+    log(`With +4 offset, first border change at T=${firstOutT + 4}`, 'info');
+    log('');
+
+    for (const model of models) {
+        const visY = tstateToVisY(firstOutT + 4, model.topLeft);
+        const expectedVisY = BORDER_TOP; // First test line should be on first screen line
+
+        log(`${model.name} (TOP_LEFT=${model.topLeft}):`, 'highlight');
+        log(`  LINE_TIMES_BASE = ${calcLineTimesBase(model.topLeft)}`);
+        log(`  First OUT maps to visY = ${visY}`);
+        log(`  Expected visY = ${expectedVisY}`);
+        log(`  Difference: ${visY - expectedVisY} lines ${visY === expectedVisY ? '✓' : '✗'}`, visY === expectedVisY ? 'success' : 'error');
+
+        // What TOP_LEFT_PIXEL would make this work?
+        // We want: tstateToVisY(firstOutT + 4, X) = BORDER_TOP
+        // visY = (t - base) / 228
+        // BORDER_TOP = (firstOutT + 4 - (X - 24 - BORDER_TOP*228)) / 228
+        // BORDER_TOP * 228 = firstOutT + 4 - X + 24 + BORDER_TOP*228
+        // 0 = firstOutT + 4 - X + 24
+        // X = firstOutT + 4 + 24 = firstOutT + 28
+
+        log('');
+    }
+
+    // Calculate ideal TOP_LEFT_PIXEL
+    const idealTopLeft = firstOutT + 4 + LEFT_BORDER_TSTATES;
+    log('Calculated ideal TOP_LEFT_PIXEL:', 'section');
+    log(`  For first OUT at T=${firstOutT} to map to visY=${BORDER_TOP}:`);
+    log(`  TOP_LEFT_PIXEL should be: ${idealTopLeft}`, 'highlight');
+}
+
+function findCorrectOffset() {
+    clearOutput();
+    log('=== Finding Correct TOP_LEFT_PIXEL ===', 'section');
+    log('');
+
+    const delayT = calcDelayToFirstOut();
+    const borderOffset = parseInt(document.getElementById('borderOffset').value);
+
+    log(`Delay to first OUT: ${delayT} T-states`, 'info');
+    log(`Border change offset: +${borderOffset}`, 'info');
+    log('');
+
+    // The first border change should appear at the start of visY=63 (first screen line)
+    // First change T-state: delayT + borderOffset
+    const firstChangeT = delayT + borderOffset;
+
+    // For this to be at the START of visY=63:
+    // lineStartTstate(63) = firstChangeT
+    // LINE_TIMES_BASE + 63*228 = firstChangeT
+    // LINE_TIMES_BASE = firstChangeT - 63*228
+
+    const requiredBase = firstChangeT - (BORDER_TOP * TSTATES_PER_LINE);
+    log(`Required LINE_TIMES_BASE for first change at line start: ${requiredBase}`);
+
+    // LINE_TIMES_BASE = TOP_LEFT_PIXEL - 24 - 63*228
+    // TOP_LEFT_PIXEL = LINE_TIMES_BASE + 24 + 63*228
+    const requiredTopLeft = requiredBase + LEFT_BORDER_TSTATES + (BORDER_TOP * TSTATES_PER_LINE);
+    log(`Required TOP_LEFT_PIXEL: ${requiredTopLeft}`, 'highlight');
+
+    // But the first change should appear at the LEFT EDGE of the border (x=0), not at x=0
+    // Actually, we want the first change to appear at some specific X position on line 63
+    // Let's see where it should appear based on the test pattern
+
+    log('');
+    log('Alternatively, if first change should be at left border start:', 'info');
+    // First change at T = lineStartTstate(63)
+    // delayT + borderOffset = LINE_TIMES_BASE + 63*228
+    // Same as above
+
+    log('');
+    log('Test with different offsets:', 'section');
+
+    for (let offset = 0; offset <= 12; offset++) {
+        const changeT = delayT + offset;
+        const base = changeT - (BORDER_TOP * TSTATES_PER_LINE);
+        const topLeft = base + LEFT_BORDER_TSTATES + (BORDER_TOP * TSTATES_PER_LINE);
+        log(`  Offset +${offset}: TOP_LEFT_PIXEL = ${topLeft}`);
+    }
+}
+
+function stepLine() {
+    // Similar to runTrace but just one line
+    runTrace();
+}
+
+// Initial comparison
+compareModels();
+</script>
+</body>
+</html>
