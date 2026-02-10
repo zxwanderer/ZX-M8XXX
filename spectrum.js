@@ -1,13 +1,13 @@
 /**
  * ZX-M8XXX - Spectrum Machine Integration
- * @version 0.9.13
+ * @version 0.9.14
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.13';
+    const VERSION = '0.9.14';
 
     class Spectrum {
         static get VERSION() { return VERSION; }
@@ -948,6 +948,9 @@
                         // FFDF: Y position (0-255)
                         result = this.kempstonMouseY & 0xff;
                     }
+                } else if (this.ula.ulaplus.enabled && port === 0xff3b) {
+                    // ULAplus data port read
+                    result = this.ula.ulaplusReadData();
                 } else if ((port & 0xC002) === 0xC000) {
                     // Port 0xFFFD: AY register read (128K/Pentagon, or 48K with AY enabled)
                     if (this.ayEnabled || (this.machineType === '48k' && this.ay48kEnabled)) {
@@ -1146,6 +1149,17 @@
                 } else if ((port & 0xC002) === 0x8000) {
                     // Port 0xBFFD: AY register write
                     this.ay.writeRegister(val);
+                }
+            }
+
+            // ULAplus ports (when enabled)
+            if (this.ula.ulaplus.enabled) {
+                if (port === 0xbf3b) {
+                    // ULAplus register select
+                    this.ula.ulaplusWriteRegister(val);
+                } else if (port === 0xff3b) {
+                    // ULAplus data write
+                    this.ula.ulaplusWriteData(val);
                 }
             }
         }

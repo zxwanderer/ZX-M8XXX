@@ -1,6 +1,6 @@
 # Z80 and ZX Spectrum Emulation Technical Guide
 
-**Version 1.1** | For emulator developers
+**Version 1.2** | For emulator developers
 
 This document describes the technical requirements for cycle-accurate emulation of the Z80 CPU and ZX Spectrum family (48K, 128K, Pentagon 128, and extended clones). It covers timing, contention, sound, undocumented behavior, and edge cases that must be implemented for perfect emulation.
 
@@ -1206,6 +1206,154 @@ class MachineConfig {
 5. ROM configuration
 6. Special features (turbo, FDC, etc.)
 
+### 13.10 ULAplus (Extended Palette)
+
+ULAplus is a palette extension that provides 64 simultaneous colors from a 256-color palette. It is supported by many modern emulators, FPGA implementations (ZX-Uno, ZX Spectrum Next), and some hardware add-ons.
+
+**I/O Ports:**
+
+| Port | Function | Access |
+|------|----------|--------|
+| 0xBF3B | Register select | Write only |
+| 0xFF3B | Data port | Read/Write |
+
+**Register Port (0xBF3B) Format:**
+
+| Bits | Function |
+|------|----------|
+| 7-6 | Group select: 00=Palette, 01=Mode |
+| 5-0 | Palette entry (0-63) when group=00 |
+
+**Palette Data Format (GRB, written to 0xFF3B):**
+
+| Bits | Color | Range |
+|------|-------|-------|
+| 7-5 | Green | 0-7 |
+| 4-2 | Red | 0-7 |
+| 1-0 | Blue | 0-3 (expanded) |
+
+**Blue Expansion:**
+The 2-bit blue value is expanded to 3 bits: `00→000`, `01→011`, `10→101`, `11→111`
+
+This gives access to 256 colors from a theoretical 512-color (9-bit GRB) palette.
+
+**Palette Organization:**
+
+The 64-entry palette is organized as 4 CLUTs (Color Lookup Tables) of 16 colors each:
+
+| Entry | CLUT | Type | Selection |
+|-------|------|------|-----------|
+| 0-7 | 0 | INK | BRIGHT=0, FLASH=0 |
+| 8-15 | 0 | PAPER | BRIGHT=0, FLASH=0 |
+| 16-23 | 1 | INK | BRIGHT=1, FLASH=0 |
+| 24-31 | 1 | PAPER | BRIGHT=1, FLASH=0 |
+| 32-39 | 2 | INK | BRIGHT=0, FLASH=1 |
+| 40-47 | 2 | PAPER | BRIGHT=0, FLASH=1 |
+| 48-55 | 3 | INK | BRIGHT=1, FLASH=1 |
+| 56-63 | 3 | PAPER | BRIGHT=1, FLASH=1 |
+
+**CLUT Selection Formula:**
+```
+clut = (FLASH × 2) + BRIGHT
+ink_entry = clut × 16 + INK
+paper_entry = clut × 16 + 8 + PAPER
+```
+
+**Mode Register (group=01, written to 0xFF3B):**
+
+| Bit | Function |
+|-----|----------|
+| 0 | ULAplus enable (1=on, 0=off) |
+| 1 | Grayscale mode (1=on, 0=off) |
+
+**Border Behavior:**
+When ULAplus is enabled, the border color uses PAPER 0 from CLUT 0 (palette entry 8).
+
+**Implementation:**
+
+```javascript
+class ULAplus {
+    constructor() {
+        this.palette = new Uint8Array(64);  // GRB values
+        this.paletteRGB = new Uint32Array(64);  // Expanded 32-bit RGBA
+        this.enabled = false;
+        this.grayscale = false;
+        this.selectedRegister = 0;
+        this.registerGroup = 0;
+    }
+
+    writeRegisterPort(value) {
+        // Port 0xBF3B
+        this.registerGroup = (value >> 6) & 0x03;
+        this.selectedRegister = value & 0x3F;
+    }
+
+    writeDataPort(value) {
+        // Port 0xFF3B
+        if (this.registerGroup === 0) {
+            // Palette group
+            this.palette[this.selectedRegister] = value;
+            this.updatePaletteEntry(this.selectedRegister);
+        } else if (this.registerGroup === 1) {
+            // Mode group
+            this.enabled = (value & 0x01) !== 0;
+            this.grayscale = (value & 0x02) !== 0;
+        }
+    }
+
+    readDataPort() {
+        // Port 0xFF3B
+        if (this.registerGroup === 0) {
+            return this.palette[this.selectedRegister];
+        } else if (this.registerGroup === 1) {
+            return (this.enabled ? 1 : 0) | (this.grayscale ? 2 : 0);
+        }
+        return 0xFF;
+    }
+
+    updatePaletteEntry(index) {
+        const grb = this.palette[index];
+        const g3 = (grb >> 5) & 0x07;
+        const r3 = (grb >> 2) & 0x07;
+        const b2 = grb & 0x03;
+
+        // Expand to 8-bit per channel
+        const r = (r3 << 5) | (r3 << 2) | (r3 >> 1);
+        const g = (g3 << 5) | (g3 << 2) | (g3 >> 1);
+        // Blue expansion: 00→000, 01→011, 10→101, 11→111
+        const b3 = b2 === 0 ? 0 : (b2 << 1) | 1;
+        const b = (b3 << 5) | (b3 << 2) | (b3 >> 1);
+
+        // Store as 32-bit RGBA (little-endian: ABGR)
+        this.paletteRGB[index] = 0xFF000000 | (b << 16) | (g << 8) | r;
+    }
+
+    getColor(attr, isInk) {
+        if (!this.enabled) {
+            return null;  // Use standard ULA colors
+        }
+
+        const flash = (attr >> 7) & 1;
+        const bright = (attr >> 6) & 1;
+        const clut = flash * 2 + bright;
+        const colorIndex = isInk ? (attr & 0x07) : ((attr >> 3) & 0x07);
+
+        const paletteIndex = clut * 16 + (isInk ? colorIndex : 8 + colorIndex);
+        return this.paletteRGB[paletteIndex];
+    }
+}
+```
+
+**Detection:**
+Software can detect ULAplus by writing a value to palette entry 0, reading it back, and checking if it matches. Standard ULA returns floating bus on port 0xFF3B.
+
+**File Format Support:**
+Extended SCR files can include palette data:
+- 6912 bytes: Standard screen (no palette)
+- 6976 bytes: Screen + 64-byte palette
+- 12288 bytes: Hi-res screen
+- 12352 bytes: Hi-res + palette
+
 ---
 
 ## 14. Emulator Architecture
@@ -1963,6 +2111,12 @@ Total banks: 32 (512KB) or 64 (1024KB)
 0x1F-0xFF: Beta Disk (WD1793)
 ```
 
+**ULAplus (extension for any machine):**
+```
+0xBF3B:  Register select (write)
+0xFF3B:  Data port (read/write)
+```
+
 ---
 
 ## Appendix B: Envelope Shape Reference
@@ -2033,5 +2187,5 @@ Frequency = CPU_Clock / (2 × (13×B - 5))
 
 ---
 
-*Document created for ZX-M8XXX emulator project. Version 1.1 - January 2026.*
+*Document created for ZX-M8XXX emulator project. Version 1.2 - February 2026.*
 *Contributions and corrections welcome.*

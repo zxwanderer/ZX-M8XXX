@@ -2,6 +2,40 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.14
+- **Info Tab Reorganization**: Restructured Info tab with sub-tabs for better organization
+  - I/O sub-tab: Keyboard layout, ports (keyboard, Kempston, ULAplus, AY-3-8910), colors
+  - Timings sub-tab: Frame timing, border sizes, memory map, RAM banks, contention patterns, Pentagon differences
+  - Opcodes sub-tab: Z80 instruction set reference (moved from main tabs)
+- **Tools Tab**: New consolidated Tools tab with sub-tabs
+  - Explorer sub-tab: File structure viewer (TAP, TZX, SNA, Z80, etc.)
+  - Compare sub-tab: Snapshot and binary comparison tool
+  - Tests sub-tab: Emulator regression tests (moved from main tabs)
+  - Export sub-tab: Screenshot, frame export, PSG capture, RZX recording, ASM export options
+- **Settings Tab Reorganization**: Split Settings tab into sub-tabs
+  - Display sub-tab: Border size, palette, zoom, overlay, fullscreen mode, late timings, ULA+
+  - Input sub-tab: Kempston joystick/mouse, gamepad, Beta Disk
+  - Media sub-tab: Flash load, tape controls, blank disk, boot file
+  - Audio sub-tab: Sound, AY in 48K, volume, stereo mode
+- **ULAplus Support**: Extended palette mode for 64 colors
+  - Ports $BF3B (register select) and $FF3B (data)
+  - 64-color palette using GRB 332 format (4 CLUTs × 16 colors)
+  - Real-time palette preview in Settings → Display
+  - Enable/disable via checkbox, persisted to localStorage
+- **SCR Export with ULAplus**: Export screen with extended palette
+  - Standard SCR: 6912 bytes (bitmap + attributes)
+  - ULAplus SCR: 6976 bytes (+ 64-byte palette appended)
+  - Auto-detects if game has modified ULAplus palette
+  - Compatible with ZX-Paintbrush and other editors
+- **Export Improvements**:
+  - Added PNG format to export format selector
+  - Export button uses selected format (PNG, SCR, BSC, etc.)
+  - SCR export reads raw screen memory for accurate ULAplus data
+- **Game Browser Improvements**:
+  - Fixed pagination (client-side, fetches up to 100 results)
+  - Added placeholder with diagonal lines for games without screenshots
+  - Scroll to top when changing pages
+
 ## v0.9.13
 - **Game Browser**: Added online game search powered by Spectrum Computing (ZXDB)
   - Access via Load → Web in toolbar

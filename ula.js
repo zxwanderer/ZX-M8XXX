@@ -197,6 +197,20 @@
             // Pre-compute 32-bit packed RGBA values for faster rendering
             this.updatePalette32();
 
+            // ULAplus extended palette support
+            // Port $BF3B: register select, Port $FF3B: data
+            // Register 0-63: palette entries (4 CLUTs × 16 colors)
+            // Register 64: mode register (bit 0 = palette enabled)
+            this.ulaplus = {
+                enabled: false,           // ULAplus hardware present
+                paletteEnabled: false,    // Palette mode active (register 64, bit 0)
+                paletteModified: false,   // True if any palette entry was written
+                register: 0,              // Currently selected register (0-64)
+                palette: new Uint8Array(64),  // 64 palette entries (GRB 332 format)
+                palette32: new Uint32Array(64) // Pre-computed 32-bit RGBA
+            };
+            this.initULAplusPalette();
+
             this.frameBuffer = new Uint8ClampedArray(this.TOTAL_WIDTH * this.TOTAL_HEIGHT * 4);
             // Create Uint32Array view for faster pixel writes (4 bytes at once)
             this.frameBuffer32 = new Uint32Array(this.frameBuffer.buffer);
@@ -323,6 +337,107 @@
                     this.palette32[i] = (c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3];
                 }
             }
+        }
+
+        // Initialize ULAplus palette to match standard Spectrum colors
+        // ULAplus uses GRB 332 format: G2G1G0 R2R1R0 B1B0
+        initULAplusPalette() {
+            // Convert standard 16-color palette to ULAplus format for 4 CLUTs
+            // CLUT 0-3 each have 16 entries, but we initialize all 64 to defaults
+            const stdColors = [
+                // Normal colors (CLUT entries for non-bright)
+                0x00, 0x02, 0x18, 0x1a, 0xc0, 0xc2, 0xd8, 0xda,
+                // Bright colors
+                0x00, 0x03, 0x1c, 0x1f, 0xe0, 0xe3, 0xfc, 0xff
+            ];
+            // Fill all 4 CLUTs with the same standard colors initially
+            for (let clut = 0; clut < 4; clut++) {
+                for (let i = 0; i < 16; i++) {
+                    this.ulaplus.palette[clut * 16 + i] = stdColors[i];
+                }
+            }
+            this.updateULAplusPalette32();
+        }
+
+        // Convert GRB 332 to RGBA and update 32-bit palette
+        updateULAplusPalette32() {
+            // Detect system endianness
+            const testBuffer = new ArrayBuffer(4);
+            const testView8 = new Uint8Array(testBuffer);
+            const testView32 = new Uint32Array(testBuffer);
+            testView32[0] = 0x01020304;
+            const isLittleEndian = (testView8[0] === 0x04);
+
+            for (let i = 0; i < 64; i++) {
+                const grb = this.ulaplus.palette[i];
+                // GRB 332: G2G1G0 R2R1R0 B1B0
+                const g3 = (grb >> 5) & 0x07;  // 3 bits green
+                const r3 = (grb >> 2) & 0x07;  // 3 bits red
+                const b2 = grb & 0x03;         // 2 bits blue
+                // Expand to 8 bits: 3-bit colors use top 3 bits + replicate
+                // 2-bit blue uses top 2 bits + replicate
+                const r = (r3 << 5) | (r3 << 2) | (r3 >> 1);
+                const g = (g3 << 5) | (g3 << 2) | (g3 >> 1);
+                const b = (b2 << 6) | (b2 << 4) | (b2 << 2) | b2;
+
+                if (isLittleEndian) {
+                    this.ulaplus.palette32[i] = (0xff << 24) | (b << 16) | (g << 8) | r;
+                } else {
+                    this.ulaplus.palette32[i] = (r << 24) | (g << 16) | (b << 8) | 0xff;
+                }
+            }
+        }
+
+        // ULAplus register write (port $BF3B)
+        ulaplusWriteRegister(val) {
+            this.ulaplus.register = val & 0x7f;  // 7-bit register number
+        }
+
+        // ULAplus data write (port $FF3B)
+        ulaplusWriteData(val) {
+            const reg = this.ulaplus.register;
+            if (reg < 64) {
+                // Palette entry (0-63)
+                this.ulaplus.palette[reg] = val;
+                this.ulaplus.paletteModified = true;
+                this.updateULAplusPalette32();
+            } else if (reg === 64) {
+                // Mode register: bit 0 = palette enabled
+                this.ulaplus.paletteEnabled = (val & 0x01) !== 0;
+            }
+        }
+
+        // ULAplus data read (port $FF3B)
+        ulaplusReadData() {
+            const reg = this.ulaplus.register;
+            if (reg < 64) {
+                return this.ulaplus.palette[reg];
+            } else if (reg === 64) {
+                return this.ulaplus.paletteEnabled ? 0x01 : 0x00;
+            }
+            return 0xff;
+        }
+
+        // Get ULAplus color for attribute byte
+        // attr format: F B B B P P P I (Flash, Background 3-bit, Paper/Ink CLUT, Ink)
+        // In ULAplus mode, attribute selects from 4 CLUTs:
+        // CLUT = (attr >> 6) & 3 for bright/flash bits reinterpreted
+        // Ink = CLUT * 16 + (attr & 7)
+        // Paper = CLUT * 16 + 8 + ((attr >> 3) & 7)
+        getULAplusColors(attr) {
+            // CLUT selection from bits 7,6 (flash, bright)
+            const clut = ((attr >> 6) & 0x03) * 16;
+            const ink = clut + (attr & 0x07);
+            const paper = clut + 8 + ((attr >> 3) & 0x07);
+            return { ink: this.ulaplus.palette32[ink], paper: this.ulaplus.palette32[paper] };
+        }
+
+        // Reset ULAplus state
+        resetULAplus() {
+            this.ulaplus.paletteEnabled = false;
+            this.ulaplus.paletteModified = false;
+            this.ulaplus.register = 0;
+            this.initULAplusPalette();
         }
 
         // Calculate T-state when each visible line's left border starts
@@ -980,6 +1095,9 @@
                         // Use palette32 for consistency with other rendering paths
                         const fb32 = this.frameBuffer32;
                         const pal32 = this.palette32;
+                        const ulaplus = this.ulaplus;
+                        const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
+                        const ulaPal32 = ulaplus.palette32;
                         const rowOffset = visY * this.TOTAL_WIDTH + this.BORDER_LEFT;
                         const flashActive = this.flashState;
                         const attrChanges = this.attrChanges;
@@ -1013,15 +1131,22 @@
                                 attr = attrInitial ? attrInitial[attrOffset] : currentAttr;
                             }
 
-                            let ink = attr & 0x07;
-                            let paper = (attr >> 3) & 0x07;
-                            const bright = (attr & 0x40) ? 8 : 0;
-
-                            if ((attr & 0x80) && flashActive) {
-                                const tmp = ink; ink = paper; paper = tmp;
+                            let inkColor, paperColor;
+                            if (ulaPlusActive) {
+                                // ULAplus: CLUT from bits 7,6; ink from bits 2-0; paper from bits 5-3
+                                const clut = ((attr >> 6) & 0x03) << 4;
+                                inkColor = ulaPal32[clut + (attr & 0x07)];
+                                paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                            } else {
+                                let ink = attr & 0x07;
+                                let paper = (attr >> 3) & 0x07;
+                                const bright = (attr & 0x40) ? 8 : 0;
+                                if ((attr & 0x80) && flashActive) {
+                                    const tmp = ink; ink = paper; paper = tmp;
+                                }
+                                inkColor = pal32[ink + bright];
+                                paperColor = pal32[paper + bright];
                             }
-                            const inkColor = pal32[ink + bright];
-                            const paperColor = pal32[paper + bright];
 
                             const baseOffset = rowOffset + (col << 3);
                             fb32[baseOffset]     = (pixelByte & 0x80) ? inkColor : paperColor;
@@ -1038,21 +1163,31 @@
                         const rowOffset = visY * this.TOTAL_WIDTH + this.BORDER_LEFT;
                         const fb32 = this.frameBuffer32;
                         const pal32 = this.palette32;
+                        const ulaplus = this.ulaplus;
+                        const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
+                        const ulaPal32 = ulaplus.palette32;
                         const flashActive = this.flashState;
 
                         for (let col = 0; col < 32; col++) {
                             const pixelByte = screenRam[pixelAddr + col];
                             const attr = screenRam[attrAddr + col];
 
-                            let ink = attr & 0x07;
-                            let paper = (attr >> 3) & 0x07;
-                            const bright = (attr & 0x40) ? 8 : 0;
-
-                            if ((attr & 0x80) && flashActive) {
-                                const tmp = ink; ink = paper; paper = tmp;
+                            let inkColor, paperColor;
+                            if (ulaPlusActive) {
+                                // ULAplus: CLUT from bits 7,6; ink from bits 2-0; paper from bits 5-3
+                                const clut = ((attr >> 6) & 0x03) << 4;
+                                inkColor = ulaPal32[clut + (attr & 0x07)];
+                                paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                            } else {
+                                let ink = attr & 0x07;
+                                let paper = (attr >> 3) & 0x07;
+                                const bright = (attr & 0x40) ? 8 : 0;
+                                if ((attr & 0x80) && flashActive) {
+                                    const tmp = ink; ink = paper; paper = tmp;
+                                }
+                                inkColor = pal32[ink + bright];
+                                paperColor = pal32[paper + bright];
                             }
-                            const inkColor = pal32[ink + bright];
-                            const paperColor = pal32[paper + bright];
 
                             // Write 8 pixels using 32-bit array
                             const baseOffset = rowOffset + (col << 3);
@@ -1125,6 +1260,9 @@
             // Use palette32 for consistency with other rendering paths
             const fb32 = this.frameBuffer32;
             const pal32 = this.palette32;
+            const ulaplus = this.ulaplus;
+            const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
+            const ulaPal32 = ulaplus.palette32;
             const rowOffset = visY * this.TOTAL_WIDTH + this.BORDER_LEFT;
             const flashActive = this.flashState;
 
@@ -1163,15 +1301,21 @@
                             attr = attrInitial ? attrInitial[attrOffset] : currentAttr;
                         }
 
-                        let ink = attr & 0x07;
-                        let paper = (attr >> 3) & 0x07;
-                        const bright = (attr & 0x40) ? 8 : 0;
-
-                        if ((attr & 0x80) && flashActive) {
-                            const tmp = ink; ink = paper; paper = tmp;
+                        let inkColor, paperColor;
+                        if (ulaPlusActive) {
+                            const clut = ((attr >> 6) & 0x03) << 4;
+                            inkColor = ulaPal32[clut + (attr & 0x07)];
+                            paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                        } else {
+                            let ink = attr & 0x07;
+                            let paper = (attr >> 3) & 0x07;
+                            const bright = (attr & 0x40) ? 8 : 0;
+                            if ((attr & 0x80) && flashActive) {
+                                const tmp = ink; ink = paper; paper = tmp;
+                            }
+                            inkColor = pal32[ink + bright];
+                            paperColor = pal32[paper + bright];
                         }
-                        const inkColor = pal32[ink + bright];
-                        const paperColor = pal32[paper + bright];
 
                         const baseOffset = rowOffset + (col << 3);
                         fb32[baseOffset]     = (pixelByte & 0x80) ? inkColor : paperColor;
@@ -1189,15 +1333,21 @@
                         const pixelByte = screenRam[pixelAddr + col];
                         const attr = screenRam[attrAddr + col];
 
-                        let ink = attr & 0x07;
-                        let paper = (attr >> 3) & 0x07;
-                        const bright = (attr & 0x40) ? 8 : 0;
-
-                        if ((attr & 0x80) && flashActive) {
-                            const tmp = ink; ink = paper; paper = tmp;
+                        let inkColor, paperColor;
+                        if (ulaPlusActive) {
+                            const clut = ((attr >> 6) & 0x03) << 4;
+                            inkColor = ulaPal32[clut + (attr & 0x07)];
+                            paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                        } else {
+                            let ink = attr & 0x07;
+                            let paper = (attr >> 3) & 0x07;
+                            const bright = (attr & 0x40) ? 8 : 0;
+                            if ((attr & 0x80) && flashActive) {
+                                const tmp = ink; ink = paper; paper = tmp;
+                            }
+                            inkColor = pal32[ink + bright];
+                            paperColor = pal32[paper + bright];
                         }
-                        const inkColor = pal32[ink + bright];
-                        const paperColor = pal32[paper + bright];
 
                         const baseOffset = rowOffset + (col << 3);
                         fb32[baseOffset]     = (pixelByte & 0x80) ? inkColor : paperColor;
@@ -1383,6 +1533,9 @@
         renderDeferredPaper() {
             const fb32 = this.frameBuffer32;
             const pal32 = this.palette32;
+            const ulaplus = this.ulaplus;
+            const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
+            const ulaPal32 = ulaplus.palette32;
             const totalWidth = this.TOTAL_WIDTH;
             const flashActive = this.flashState;
             const changes = this.screenBankChanges;
@@ -1427,15 +1580,21 @@
                     const pixelByte = screenRam[pixelAddr + col];
                     const attr = screenRam[attrAddr + col];
 
-                    let ink = attr & 0x07;
-                    let paper = (attr >> 3) & 0x07;
-                    const bright = (attr & 0x40) ? 8 : 0;
-
-                    if ((attr & 0x80) && flashActive) {
-                        const tmp = ink; ink = paper; paper = tmp;
+                    let inkColor, paperColor;
+                    if (ulaPlusActive) {
+                        const clut = ((attr >> 6) & 0x03) << 4;
+                        inkColor = ulaPal32[clut + (attr & 0x07)];
+                        paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                    } else {
+                        let ink = attr & 0x07;
+                        let paper = (attr >> 3) & 0x07;
+                        const bright = (attr & 0x40) ? 8 : 0;
+                        if ((attr & 0x80) && flashActive) {
+                            const tmp = ink; ink = paper; paper = tmp;
+                        }
+                        inkColor = pal32[ink + bright];
+                        paperColor = pal32[paper + bright];
                     }
-                    const inkColor = pal32[ink + bright];
-                    const paperColor = pal32[paper + bright];
 
                     const baseOffset = rowOffset + (col << 3);
                     fb32[baseOffset]     = (pixelByte & 0x80) ? inkColor : paperColor;
@@ -1668,6 +1827,9 @@
             // Skip paper rendering if borderOnly mode
             const fb32 = this.frameBuffer32;
             const pal32 = this.palette32;
+            const ulaplus = this.ulaplus;
+            const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
+            const ulaPal32 = ulaplus.palette32;
             const totalWidth = this.TOTAL_WIDTH;
 
             if (!this.borderOnly) {
@@ -1686,15 +1848,21 @@
                         const pixelByte = screenRam[pixelAddr + col];
                         const attr = screenRam[attrAddr + col];
 
-                        let ink = attr & 0x07;
-                        let paper = (attr >> 3) & 0x07;
-                        const bright = (attr & 0x40) ? 8 : 0;
-
-                        if ((attr & 0x80) && flashActive) {
-                            const tmp = ink; ink = paper; paper = tmp;
+                        let inkColor, paperColor;
+                        if (ulaPlusActive) {
+                            const clut = ((attr >> 6) & 0x03) << 4;
+                            inkColor = ulaPal32[clut + (attr & 0x07)];
+                            paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
+                        } else {
+                            let ink = attr & 0x07;
+                            let paper = (attr >> 3) & 0x07;
+                            const bright = (attr & 0x40) ? 8 : 0;
+                            if ((attr & 0x80) && flashActive) {
+                                const tmp = ink; ink = paper; paper = tmp;
+                            }
+                            inkColor = pal32[ink + bright];
+                            paperColor = pal32[paper + bright];
                         }
-                        const inkColor = pal32[ink + bright];
-                        const paperColor = pal32[paper + bright];
 
                         const baseOffset = rowOffset + (col << 3);
                         fb32[baseOffset]     = (pixelByte & 0x80) ? inkColor : paperColor;
