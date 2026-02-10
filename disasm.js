@@ -1,13 +1,13 @@
 /**
  * ZX-M8XXX - Z80 Disassembler
- * @version 0.9.12
+ * @version 0.9.13
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.12';
+    const VERSION = '0.9.13';
 
     const r = ['B', 'C', 'D', 'E', 'H', 'L', '(HL)', 'A'];
     const rp = ['BC', 'DE', 'HL', 'SP'];

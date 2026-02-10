@@ -1,13 +1,13 @@
 /**
  * ZX-M8XXX - Spectrum Machine Integration
- * @version 0.9.12
+ * @version 0.9.13
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.12';
+    const VERSION = '0.9.13';
 
     class Spectrum {
         static get VERSION() { return VERSION; }
@@ -2948,6 +2948,9 @@
             // Set borderOnly BEFORE rendering so renderFrame uses correct mode
             const borderOnly = this.overlayMode === 'screen' || this.overlayMode === 'reveal' || this.overlayMode === 'beamscreen';
             this.ula.borderOnly = borderOnly;
+
+            // Initialize border changes with current border color (for static rendering)
+            this.ula.borderChanges = [{tState: 0, color: this.ula.borderColor}];
 
             const frameBuffer = this.ula.renderFrame();
 

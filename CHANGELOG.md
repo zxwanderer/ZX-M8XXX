@@ -2,6 +2,45 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.13
+- **Game Browser**: Added online game search powered by Spectrum Computing (ZXDB)
+  - Access via Load → Web in toolbar
+  - Search games by title with screenshots and details
+  - Uses ZXInfo API (api.zxinfo.dk) - the largest ZX Spectrum database
+  - Direct download links for TAP, TZX, Z80, SNA files
+  - Results sorted alphabetically by title
+  - Zero dependencies - works directly from browser
+- **Quicksave/Quickload**: Save and restore game state instantly
+  - F2 = Quicksave (saves to browser localStorage)
+  - F5 = Quickload (restores saved state)
+  - Also accessible via Save/Load dropdowns
+  - Uses SZX format for full state preservation
+- **UI Improvements**: Consolidated toolbar for cleaner interface
+  - Load dropdown: File, Web, Project, Quick (F5)
+  - Save dropdown: SNA, Z80, SZX, Project, Quick (F2)
+  - Help and theme buttons moved next to Save dropdown
+  - App name/version moved to Help button tooltip
+  - Reduced toolbar width, no more overlapping with tabs
+- **Info Tab**: Added input port reference
+  - Keyboard port (#FE) with all half-row addresses and key bits
+  - Kempston joystick port (#1F) with direction/fire bits
+  - Kempston mouse ports (#FBDF, #FFDF, #FADF)
+  - Input state summary: keyboard active-low (0=pressed), joystick active-high (1=pressed)
+- **RZX Recording**: Fixed RZX export to work with other emulators (Spectaculator, EmuZWin)
+  - Recording now starts after interrupt fires, not at frame boundary
+  - Uses SZX snapshot format (preserves CPU halted state)
+  - Keyboard scan inputs now correctly captured in frame 0
+  - Most recordings work; some games with unusual timing (e.g., Batty) may still fail
+- **RZX Loading Fix**: Show snapshot screen when RZX is loaded in paused state
+  - Canvas was cleared by updateCanvasSize() after snapshot rendering
+  - Border color from snapshot now correctly displayed
+- **RZX Explorer Fix**: Fixed Z80 screen preview showing random blocks
+  - Z80 format always stores screen in page 8 (both 48K and 128K)
+  - Was incorrectly looking for page 5 in 128K mode
+- **UI Fix**: Can now start new RZX recording after exporting
+  - Recording button was disabled after export due to stale playback state
+- **Code Cleanup**: Removed excessive RZX debug logging
+
 ## v0.9.12
 - **RZX Playback Improvements**: Improved RZX replay compatibility
   - Fixed Z80 loader not recognizing +3, +2, +2A machine types (hwMode 7, 12, 13)
