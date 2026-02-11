@@ -1354,6 +1354,31 @@ Extended SCR files can include palette data:
 - 12288 bytes: Hi-res screen
 - 12352 bytes: Hi-res + palette
 
+**HAM256 Raster Effects:**
+
+HAM256 (Hold And Modify 256) is a technique that updates the ULAplus palette mid-frame to display more than 64 colors simultaneously. The demo writes all 64 palette entries 12 times per frame, once for each 16-line group of the display.
+
+To support HAM256 and similar raster effects:
+
+1. **Track palette writes with T-states**: Record each palette write with its T-state timing:
+   ```javascript
+   paletteChanges.push({tState: cpu.tStates, reg: register, value: value});
+   ```
+
+2. **Group-based palette lookup**: HAM256 writes entries 0-63 sequentially, 12 times per frame. For rendering line Y (0-191):
+   ```javascript
+   const group = Math.floor(Y / 16);  // 0-11
+   // Apply first (group+1)*64 palette changes
+   const maxChanges = (group + 1) * 64;
+   for (let i = 0; i < Math.min(maxChanges, changes.length); i++) {
+       palette[changes[i].reg] = expandGRB(changes[i].value);
+   }
+   ```
+
+3. **IM2 interrupt timing**: HAM256 uses IM2 with I=$3B, vector at $3BFF. The interrupt fires, then code delays until near the paper area before writing palette entries synchronized with the raster beam.
+
+This approach works reliably on all machine types (48K, 128K, Pentagon) without requiring T-state timing calibration.
+
 ---
 
 ## 14. Emulator Architecture

@@ -3,6 +3,7 @@
         {
             "id": "ula48",
             "name": "ULA 48K Timing (early)",
+            "category": "video",
             "file": "tests/ula.zip",
             "zipEntry": "ula48.tap",
             "machine": "48k",
@@ -18,6 +19,7 @@
         {
             "id": "ula128",
             "name": "ULA 128K Timing (early)",
+            "category": "video",
             "file": "tests/ula.zip",
             "zipEntry": "ula128.tap",
             "machine": "128k",
@@ -33,6 +35,7 @@
         {
             "id": "p128",
             "name": "Pentagon 128 Timing",
+            "category": "video",
             "file": "tests/ula.zip",
             "zipEntry": "pent128.tap",
             "machine": "pentagon",
@@ -46,27 +49,94 @@
         },
 
         {
+            "id": "ula+256",
+            "name": "ULA+ HAM256",
+            "category": "ulaplus",
+            "file": "tests/HAM256ViewerV0.3.tap.zip",
+            "zipEntry": "HAM256.tap",
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 45, "screen": "tests/ula+256_45.png" }
+            ]
+        },
+
+        {
+            "id": "ula+rainbow",
+            "name": "ULA+ rainbow",
+            "category": "ulaplus",
+            "file": "tests/ULAplusDemo.tap.zip",
+            "zipEntry": "Multicolour.tap",
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 164, "screen": "tests/ula+rainbow_164.png" }
+            ]
+        },
+
+        {
+            "id": "Nirvana_48",
+            "name": "Nirvana 48",
+            "category": "multicolor",
+            "file": "tests/desant.zip",
+            "zipEntry": "desant.tap",
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 57, "screen": "tests/Nirvana_48_57.png" }
+            ]
+        },
+        {
+            "id": "Nirvana_128",
+            "name": "Nirvana 128",
+            "category": "multicolor",
+            "file": "tests/desant.zip",
+            "zipEntry": "desant.tap",
+            "machine": "128k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 109, "screen": "tests/Nirvana_128_109.png" }
+            ]
+        },
+
+        {
             "id": "aquaplane",
             "name": "Aquaplane 48K",
+            "category": "video",
             "file": "tests/Aquaplane.zip",
             "zipEntry": "Aquaplane.sna",
-            "machine": "48k",
             "earlyTimings": true,
             "palette": "default",
             "enabled": true,
             "author": "",
             "source": "",
             "steps": [
-                { "frames": 202, "screen": "tests/aquaplane_202.png" }
+                { "frames": 86, "screen": "tests/aquaplane_87.png" }
             ]
         },
 
         {
             "id": "comet",
             "name": "Comet game 48K",
+            "category": "video",
             "file": "tests/CometGameThe.zip",
             "zipEntry": "CometGameThe.sna",
-            "machine": "48k",
             "earlyTimings": true,
             "palette": "default",
             "enabled": true,
@@ -80,9 +150,9 @@
         {
             "id": "academy",
             "name": "Academy 48K",
+            "category": "video",
             "file": "tests/Academy.zip",
             "zipEntry": "Academy.sna",
-            "machine": "48k",
             "earlyTimings": true,
             "palette": "default",
             "enabled": true,
@@ -96,9 +166,9 @@
         {
             "id": "venom",
             "name": "Venom 48K",
+            "category": "video",
             "file": "tests/Venom.zip",
             "zipEntry": "Venom.sna",
-            "machine": "48k",
             "earlyTimings": true,
             "palette": "default",
             "enabled": true,
@@ -110,8 +180,55 @@
         },
 
         {
+            "id": "shock128",
+            "name": "Shock 128K",
+            "category": "multicolor",
+            "file": "tests/snapshot_128k_shock.szx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 80, "screen": "tests/shock128_81.png" }
+            ]
+        },
+
+        {
+            "id": "echology",
+            "name": "Echology",
+            "category": "multicolor",
+            "file": "tests/snapshot_128k_echo.szx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 210, "screen": "tests/echology_211.png" }
+            ]
+        },
+
+        {
+            "id": "eric",
+            "name": "Eric RZX",
+            "category": "rzx",
+            "file": "tests/ericfloaters.rzx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 2486, "screen": "tests/eric_2486.png" }
+            ]
+        },
+
+
+        {
             "id": "cpd-48k",
             "name": "CPD-test 48k",
+            "category": "cpu",
             "file": "tests/cpd-test08b.tap.zip",
             "zipEntry": "cpd-test.tap",
             "machine": "48k",
@@ -126,6 +243,7 @@
         {
             "id": "cpd-128k",
             "name": "CPD-test 128k",
+            "category": "cpu",
             "file": "tests/cpd-test08b.tap.zip",
             "zipEntry": "cpd-test.tap",
             "machine": "128k",
@@ -141,6 +259,7 @@
         {
             "id": "halt2int early",
             "name": "HALT2INT early",
+            "category": "cpu",
             "file": "tests/halt2int.tap",
             "machine": "48k",
             "earlyTimings": true,
@@ -155,6 +274,7 @@
         {
             "id": "halt2int late",
             "name": "HALT2INT late",
+            "category": "cpu",
             "file": "tests/halt2int.tap",
             "machine": "48k",
             "earlyTimings": false,
@@ -170,6 +290,7 @@
         {
             "id": "z80full",
             "name": "Raxoft z80full",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80full.tap",
             "machine": "48k",
@@ -192,6 +313,7 @@
         {
             "id": "z80ccf",
             "name": "Raxoft z80ccf",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80ccf.tap",
             "machine": "48k",
@@ -214,6 +336,7 @@
         {
             "id": "z80doc",
             "name": "Raxoft z80doc",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80doc.tap",
             "machine": "48k",
@@ -236,6 +359,7 @@
         {
             "id": "z80docflags",
             "name": "Raxoft z80docflags",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80docflags.tap",
             "machine": "48k",
@@ -258,6 +382,7 @@
         {
             "id": "z80flags",
             "name": "Raxoft z80flags",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80flags.tap",
             "machine": "48k",
@@ -280,6 +405,7 @@
         {
             "id": "z80memptr",
             "name": "Raxoft z80memptr",
+            "category": "cpu",
             "file": "tests/raxoft.zip",
 			"zipEntry": "z80memptr.tap",
             "machine": "48k",
@@ -302,6 +428,7 @@
         {
             "id": "zexall",
             "name": "zexall",
+            "category": "cpu",
             "file": "tests/zexall.tap",
             "machine": "48k",
             "earlyTimings": true,
@@ -324,6 +451,7 @@
         {
             "id": "zexdoc",
             "name": "zexdoc",
+            "category": "cpu",
             "file": "tests/zexdoc.tap",
             "machine": "48k",
             "earlyTimings": true,

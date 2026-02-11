@@ -1,6 +1,9 @@
 # TODO
 
-## Pending Tasks
+## Pending
 
-- [ ] Fix EX (SP),HL internal cycles if needed
-- [ ] Investigate Aquaplane-specific 8px early issue (ULA128 border test shows 8px early)
+- [ ] **halt2int test**: Investigate and fix timing/interrupt issue to pass HALT2INT test
+  - Test file: `tests/halt2int.tap`
+  - Author: Mark Woodmass
+  - Reference: https://github.com/redcode/Z80/wiki/HALT2INT
+  - Currently fails - need to analyze expected vs actual behavior

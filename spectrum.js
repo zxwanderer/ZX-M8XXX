@@ -1,13 +1,13 @@
 /**
  * ZX-M8XXX - Spectrum Machine Integration
- * @version 0.9.14
+ * @version 0.9.15
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.14';
+    const VERSION = '0.9.15';
 
     class Spectrum {
         static get VERSION() { return VERSION; }
@@ -24,7 +24,8 @@
             this.memory = new Memory(this.machineType);
             this.cpu = new Z80(this.memory);
             this.ula = new ULA(this.memory, this.machineType);
-            
+            this.ula.cpu = this.cpu;  // For debug access to CPU state
+
             // Setup contention
             this.setupContention();
             
@@ -168,6 +169,8 @@
             this.rzxRecentInputs = [];  // Recent RZX inputs for debug display
             this.rzxLastPort = 0;       // Last port read for RZX
             this.rzxDebugAddr = 0;      // Address to log during RZX (0=disabled, e.g. 0x8F8C for RNG)
+            this.rzxDebugFrames = 0;    // Log detailed info for first N frames (0=disabled)
+            this.rzxDebugLog = [];      // Collected debug info for export
             this.portLog = [];          // Port I/O log for debugging
             this.portLogEnabled = false; // Whether to log port I/O
 
@@ -275,6 +278,23 @@
             this.memory.loadRom(data, bank);
             this.romLoaded = true;
             if (this.onRomLoaded) this.onRomLoaded();
+        }
+
+        // Get ROM checksum for verification (call from console: spectrum.getRomChecksum())
+        getRomChecksum() {
+            let sum = 0;
+            const romSize = this.machineType === '48k' ? 0x4000 : 0x8000;
+            for (let i = 0; i < romSize; i++) {
+                sum = (sum + this.memory.read(i)) & 0xFFFFFFFF;
+            }
+            // Also compute first 256 bytes separately (useful for quick check)
+            let first256 = 0;
+            for (let i = 0; i < 256; i++) {
+                first256 = (first256 + this.memory.read(i)) & 0xFFFF;
+            }
+            console.log(`ROM checksum: full=${sum.toString(16)} first256=${first256.toString(16)} size=${romSize}`);
+            console.log(`ROM[0x38]=${this.memory.read(0x38).toString(16)} (should be F5 for 48K)`);
+            return { full: sum, first256, size: romSize };
         }
 
         // ========== Debug Properties ==========
@@ -1158,8 +1178,8 @@
                     // ULAplus register select
                     this.ula.ulaplusWriteRegister(val);
                 } else if (port === 0xff3b) {
-                    // ULAplus data write
-                    this.ula.ulaplusWriteData(val);
+                    // ULAplus data write - pass T-states for raster effect tracking
+                    this.ula.ulaplusWriteData(val, this.cpu.tStates);
                 }
             }
         }
@@ -1627,14 +1647,38 @@
                 // Check input consumption before advancing (mismatch indicates desync)
                 const frameInfo = this.rzxPlayer.getFrameInfo(this.rzxFrame);
                 if (frameInfo) {
+                    const m1Diff = rzxM1BeforeInt - frameInfo.fetchCount;
+                    const inputsConsumed = frameInfo.inputIndex;
+                    const inputsTotal = frameInfo.inputCount;
+
+                    // Detailed debug logging for first N frames
+                    if (this.rzxDebugFrames > 0 && this.rzxFrame < this.rzxDebugFrames) {
+                        const debugEntry = {
+                            frame: this.rzxFrame,
+                            m1Actual: rzxM1BeforeInt,
+                            m1Expected: frameInfo.fetchCount,
+                            m1Diff: m1Diff,
+                            inputsConsumed: inputsConsumed,
+                            inputsTotal: inputsTotal,
+                            inputs: frameInfo.inputs.slice(0, 20), // First 20 inputs
+                            pc: this.cpu.pc,
+                            sp: this.cpu.sp,
+                            tStates: this.cpu.tStates
+                        };
+                        this.rzxDebugLog.push(debugEntry);
+                        console.log(`RZX F${this.rzxFrame}: M1=${rzxM1BeforeInt}/${frameInfo.fetchCount} (${m1Diff >= 0 ? '+' : ''}${m1Diff}) IN=${inputsConsumed}/${inputsTotal} PC=${this.cpu.pc.toString(16)} T=${this.cpu.tStates}`);
+                        if (inputsTotal > 0 && inputsTotal <= 10) {
+                            console.log(`  inputs: [${frameInfo.inputs.map(v => v.toString(16).padStart(2,'0')).join(', ')}]`);
+                        }
+                    }
+
                     // Log M1 count mismatches (indicates instruction counting bug)
-                    const diff = rzxM1BeforeInt - frameInfo.fetchCount;
-                    if (diff !== 0) {
-                        console.warn(`RZX F${this.rzxFrame}: M1 mismatch! actual=${rzxM1BeforeInt} expected=${frameInfo.fetchCount} diff=${diff}`);
+                    if (m1Diff !== 0) {
+                        console.warn(`RZX F${this.rzxFrame}: M1 mismatch! actual=${rzxM1BeforeInt} expected=${frameInfo.fetchCount} diff=${m1Diff}`);
                     }
                     // Log input consumption mismatches (indicates code path divergence)
-                    if (frameInfo.inputIndex !== frameInfo.inputCount) {
-                        console.warn(`RZX F${this.rzxFrame}: input mismatch! consumed=${frameInfo.inputIndex}/${frameInfo.inputCount}`);
+                    if (inputsConsumed !== inputsTotal) {
+                        console.warn(`RZX F${this.rzxFrame}: input mismatch! consumed=${inputsConsumed}/${inputsTotal}`);
                     }
                 }
 
@@ -1914,6 +1958,20 @@
             // Advance AY logging frame counter
             if (this.ay) {
                 this.ay.advanceLogFrame();
+            }
+
+            // RZX: advance to next frame (same as runFrame)
+            if (this.rzxPlaying && this.rzxPlayer) {
+                this.rzxFrameStartInstr = this.cpu.instructionCount;
+
+                if (this.rzxFrame < this.rzxPlayer.getFrameCount() - 1) {
+                    this.rzxFrame++;
+                }
+
+                if (this.rzxFrame >= this.rzxPlayer.getFrameCount()) {
+                    this.rzxStop();
+                    if (this.onRZXEnd) this.onRZXEnd();
+                }
             }
 
             return tstatesPerFrame;
@@ -5056,6 +5114,7 @@
                 }
 
                 const result = this.snapshotLoader.loadZ80(data, this.cpu, this.memory);
+                result.machineType = targetType;  // Add machine type to result for ROM reload
 
                 // Reset frame timing state to avoid stale state from previous program
                 this.frameStartOffset = 0;
@@ -5106,11 +5165,12 @@
 
                 // Load SZX
                 const result = SZXLoader.load(data, this.cpu, this.memory, this.ula);
+                result.machineType = targetType;  // Add machine type to result for ROM reload
 
                 // Debug: verify ROM is correct (first byte at 0x38 should be F5 for 48K)
                 const romCheck = this.memory.read(0x38);
                 if (romCheck !== 0xF5) {
-                    console.warn(`RZX: ROM may be wrong at 0x38: got ${romCheck.toString(16)}, expected f5`);
+                    console.warn(`SZX: ROM may be wrong at 0x38: got ${romCheck.toString(16)}, expected f5`);
                 }
 
                 // Reset frame timing state to avoid stale state from previous program
@@ -5425,6 +5485,9 @@
             const wasRunning = this.running;
             if (wasRunning) this.stop();
 
+            // Track old machine type for ROM compatibility check
+            this._lastMachineType = this.machineType;
+
             // Save ROM data if preserving
             const oldRom = preserveRom && this.romLoaded ? this.memory.rom : null;
 
@@ -5432,6 +5495,7 @@
             const oldFullBorderMode = this.ula ? this.ula.fullBorderMode : false;
             const oldPalette = this.ula ? this.ula.palette : null;
             const oldPaletteId = this.ula ? this.ula.paletteId : null;
+            const oldUlaplusEnabled = this.ula ? this.ula.ulaplus.enabled : false;
 
             this.machineType = type;
             this.ayEnabled = type !== '48k';  // Update AY enabled state for new machine type
@@ -5439,6 +5503,7 @@
             this.memory = new Memory(type);
             this.ula = new ULA(this.memory, type);
             this.cpu = new Z80(this.memory);
+            this.ula.cpu = this.cpu;  // For debug access to CPU state
             this.cpu.portRead = this.portRead.bind(this);
             this.cpu.portWrite = this.portWrite.bind(this);
             this.setupContention();  // Setup contention for new machine type
@@ -5455,6 +5520,9 @@
                 this.ula.palette = oldPalette;
                 this.ula.paletteId = oldPaletteId;
             }
+            // Restore ULAplus enabled state (checkbox) but reset palette to defaults
+            this.ula.ulaplus.enabled = oldUlaplusEnabled;
+            this.ula.resetULAplus();  // Reset palette, paletteEnabled, register to defaults
             this.updateDisplayDimensions();  // Recreate imageData for new ULA dimensions
             this.tapeTrap = new TapeTrapHandler(this.cpu, this.memory, this.tapeLoader);
             this.tapeTrap.setEnabled(this.tapeTrapsEnabled && this.tapeFlashLoad);
@@ -5477,35 +5545,25 @@
 
             // Restore ROM data
             if (oldRom) {
-                // When switching from 128K to 48K, use ROM bank 1 (the 48K-compatible ROM)
-                // 128K ROM bank 0 is the 128K-specific BASIC, bank 1 is the 48K ROM
-                const oldMachineWas128k = oldRom[1] !== undefined;
-                const newMachineIs48k = type === '48k';
+                const machineTypeChanged = this._lastMachineType !== type;
 
-                if (oldMachineWas128k && newMachineIs48k && oldRom[1]) {
-                    // Use ROM bank 1 from 128K (the 48K-compatible ROM) for 48K machine
-                    this.memory.rom[0].set(oldRom[1]);
-                } else if (!oldMachineWas128k && !newMachineIs48k && oldRom[0]) {
-                    // 48K to 128K/Pentagon: copy 48K ROM to BOTH banks
-                    // ROM bank 0 = 128K BASIC, ROM bank 1 = 48K BASIC
-                    // Since we only have the 48K ROM, use it for both (bank 1 is the important one)
-                    this.memory.rom[0].set(oldRom[0]);
-                    if (this.memory.rom[1]) {
-                        this.memory.rom[1].set(oldRom[0]);
-                    }
+                // When machine type changes, don't try to reuse ROMs - require proper reload
+                // Different machine ROMs are not interchangeable (even 128K bank 1 vs 48K ROM can differ)
+                if (machineTypeChanged) {
+                    this.romLoaded = false;
+                    // Don't auto-start without ROM
                 } else {
-                    // Copy ROM bank 0 (same machine type)
+                    // Same machine type - copy ROM banks
                     if (oldRom[0]) {
                         this.memory.rom[0].set(oldRom[0]);
                     }
+                    // Copy ROM bank 1 if both old and new have it (128K to 128K, Pentagon to Pentagon)
+                    if (oldRom[1] && this.memory.rom[1]) {
+                        this.memory.rom[1].set(oldRom[1]);
+                    }
+                    this.romLoaded = true;
+                    if (wasRunning) this.start();
                 }
-                // Copy ROM bank 1 if both old and new have it (128K to 128K/Pentagon)
-                if (oldRom[1] && this.memory.rom[1]) {
-                    this.memory.rom[1].set(oldRom[1]);
-                }
-                this.romLoaded = true;
-                // Only restart if ROM was preserved
-                if (wasRunning) this.start();
             } else {
                 this.romLoaded = false;
                 // Don't auto-start without ROM - caller must load ROM and start manually
@@ -5543,13 +5601,6 @@
                     throw new Error('Unsupported snapshot type in RZX: ' + snapType);
                 }
 
-                // Debug: check CPU state, video RAM, and BASIC system variables after snapshot load
-                let nonZeroPixels = 0;
-                for (let i = 0x4000; i < 0x5800; i++) {
-                    if (this.memory.read(i) !== 0) nonZeroPixels++;
-                }
-                // Check BASIC system variables related to keyboard
-                const LAST_K = this.memory.read(0x5C08);  // Last key pressed
             }
 
             // Store original data for project save
@@ -5563,6 +5614,7 @@
             this.rzxFrameStartInstr = this.cpu.instructionCount;
             this.rzxFirstInterrupt = true;  // Don't advance on first interrupt
             this.rzxPlaying = true;
+            this.rzxDebugLog = [];  // Reset debug log for new playback
 
             // Reset input state to prevent stale inputs affecting playback
             this.kempstonState = 0;
@@ -5591,6 +5643,33 @@
             this.rzxFirstInterrupt = true;
             this.rzxData = null;
             this.rzxRecentInputs = [];
+        }
+
+        // Enable detailed RZX debug logging for first N frames
+        // Usage from console: spectrum.rzxEnableDebug(100)
+        rzxEnableDebug(frames = 100) {
+            this.rzxDebugFrames = frames;
+            this.rzxDebugLog = [];
+            console.log(`RZX debug enabled for first ${frames} frames. Reload RZX to start logging.`);
+        }
+
+        // Get collected debug log as JSON string (for comparison with other emulators)
+        // Usage from console: spectrum.rzxGetDebugLog()
+        rzxGetDebugLog() {
+            return JSON.stringify(this.rzxDebugLog, null, 2);
+        }
+
+        // Export debug log to file
+        rzxExportDebugLog() {
+            const json = this.rzxGetDebugLog();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rzx_debug_log.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log(`Exported ${this.rzxDebugLog.length} frames to rzx_debug_log.json`);
         }
 
         isRZXPlaying() {

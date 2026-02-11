@@ -223,6 +223,20 @@
             this.attrChangeCount = new Uint8Array(768);
             this.attrInitial = new Uint8Array(768);
 
+            // ULAplus palette change tracking for raster effects (HAM256, etc.)
+            // Track palette writes with T-states to apply per-scanline
+            this.PALETTE_MAX_CHANGES = 1024;  // Max palette writes per frame (HAM256 does 768)
+            this.paletteChanges = [];        // Array of {tState, reg, value}
+            this.paletteInitial = new Uint8Array(64);  // Palette state at frame start
+            this.paletteInitial32 = new Uint32Array(64);  // Palette32 state at frame start
+            this.paletteTempLine = new Uint32Array(64);  // Temp palette for per-scanline rendering
+            this.hadPaletteChanges = false;
+            this.paletteUniqueCount = 0;  // Count of unique entries changed this frame
+            this._paletteEntrySeen = new Uint8Array(64);  // Track which entries changed
+            this._debugPaletteCount = 0;
+            this.debugPalette = false;  // Set to true to enable palette debug logging
+            this.cpu = null;  // CPU reference for debug (set by spectrum.js)
+
             // Keyboard mapping: e.code → [row, bit]
             // Uses physical key positions - works with any keyboard layout
             // Ctrl = Caps Shift, Alt = Symbol Shift
@@ -394,10 +408,29 @@
         }
 
         // ULAplus data write (port $FF3B)
-        ulaplusWriteData(val) {
+        // tStates parameter for tracking raster palette changes
+        ulaplusWriteData(val, tStates) {
             const reg = this.ulaplus.register;
             if (reg < 64) {
                 // Palette entry (0-63)
+                // Track change for raster effects if T-states provided
+                if (tStates !== undefined && this.paletteChanges && this.paletteChanges.length < this.PALETTE_MAX_CHANGES) {
+                    this.paletteChanges.push({tState: tStates, reg: reg, value: val});
+                    this.hadPaletteChanges = true;
+                    // Track unique entries for pattern detection
+                    if (!this._paletteEntrySeen[reg]) {
+                        this._paletteEntrySeen[reg] = 1;
+                        this.paletteUniqueCount++;
+                    }
+                }
+
+                // If writing to entry 8 (border color in ULAplus mode), trigger border rendering
+                // This ensures border stripes work for demos like ULAplusDemo
+                if (reg === 8 && this.ulaplus.paletteEnabled && this.beamRendering && tStates !== undefined) {
+                    // Render border up to this point with OLD color, then update palette
+                    this.renderBorderUpToT(tStates);
+                }
+
                 this.ulaplus.palette[reg] = val;
                 this.ulaplus.paletteModified = true;
                 this.updateULAplusPalette32();
@@ -438,6 +471,78 @@
             this.ulaplus.paletteModified = false;
             this.ulaplus.register = 0;
             this.initULAplusPalette();
+            // Reset debug counter for new file loads
+            this._paletteDebugFrames = 0;
+        }
+
+        // Build palette32 for a specific T-state by applying all changes up to that point
+        // Used for raster effects like HAM256 that change palette mid-frame
+        getPalette32AtTState(tState, outPalette32) {
+            // Start from initial palette captured at frame start
+            outPalette32.set(this.paletteInitial32);
+
+            // Apply all changes that happened before or at the given T-state
+            const changes = this.paletteChanges;
+            let appliedCount = 0;
+            for (let i = 0; i < changes.length; i++) {
+                const change = changes[i];
+                if (change.tState <= tState) {
+                    // Convert single GRB332 value to RGBA and update
+                    const grb = change.value;
+                    const g3 = (grb >> 5) & 0x07;
+                    const r3 = (grb >> 2) & 0x07;
+                    const b2 = grb & 0x03;
+                    const r = (r3 << 5) | (r3 << 2) | (r3 >> 1);
+                    const g = (g3 << 5) | (g3 << 2) | (g3 >> 1);
+                    const b = (b2 << 6) | (b2 << 4) | (b2 << 2) | b2;
+                    // Assume little-endian (most common)
+                    outPalette32[change.reg] = (0xff << 24) | (b << 16) | (g << 8) | r;
+                    appliedCount++;
+                }
+            }
+
+            // Debug logging (enable via spectrum.ula.debugPalette = true)
+            if (this.debugPalette && this._debugPaletteCount < 10) {
+                console.log(`[Palette] tState=${tState}, total=${changes.length}, applied=${appliedCount}`);
+                if (changes.length > 0) {
+                    console.log(`  First change: tState=${changes[0].tState}, Last change: tState=${changes[changes.length-1].tState}`);
+                }
+                this._debugPaletteCount++;
+            }
+        }
+
+        // Reset debug counter at frame start
+        _resetPaletteDebug() {
+            this._debugPaletteCount = 0;
+        }
+
+        // Build palette32 for a specific 16-line group by applying changes by index
+        // HAM256 writes entries 0-63 twelve times (once per group), so for group G
+        // we apply the first (G+1)*64 changes to get the correct palette state.
+        // This is more accurate than T-state based lookup for raster effects.
+        getPalette32ForGroup(group, outPalette32) {
+            // Start from initial palette
+            outPalette32.set(this.paletteInitial32);
+
+            const changes = this.paletteChanges;
+            if (changes.length === 0) return;
+
+            // For group G, we need the state after (G+1)*64 writes
+            // e.g., group 0 = first 64 writes, group 1 = first 128 writes, etc.
+            const maxIndex = Math.min((group + 1) * 64, changes.length);
+
+            for (let i = 0; i < maxIndex; i++) {
+                const change = changes[i];
+                // Convert single GRB332 value to RGBA and update
+                const grb = change.value;
+                const g3 = (grb >> 5) & 0x07;
+                const r3 = (grb >> 2) & 0x07;
+                const b2 = grb & 0x03;
+                const r = (r3 << 5) | (r3 << 2) | (r3 >> 1);
+                const g = (g3 << 5) | (g3 << 2) | (g3 >> 1);
+                const b = (b2 << 6) | (b2 << 4) | (b2 << 2) | b2;
+                outPalette32[change.reg] = (0xff << 24) | (b << 16) | (g << 8) | r;
+            }
         }
 
         // Calculate T-state when each visible line's left border starts
@@ -631,6 +736,27 @@
             return { visY, x, visible, lineT };
         }
 
+        // Get border color as 32-bit RGBA value
+        // When ULAplus paletteEnabled=true, uses palette entry 8 (PAPER 0 from CLUT 0)
+        // Otherwise uses standard palette with borderColor index
+        getBorderColor32() {
+            if (this.ulaplus.enabled && this.ulaplus.paletteEnabled) {
+                return this.ulaplus.palette32[8];  // PAPER 0 from CLUT 0
+            }
+            return this.palette32[this.borderColor];
+        }
+
+        // Get border color at specific T-state (for raster effects)
+        // Looks up palette entry 8 at the given T-state if ULAplus is active
+        getBorderColor32AtTState(tState) {
+            if (this.ulaplus.enabled && this.ulaplus.paletteEnabled && this.hadPaletteChanges) {
+                // Build palette at this T-state and return entry 8
+                this.getPalette32AtTState(tState, this.paletteTempLine);
+                return this.paletteTempLine[8];
+            }
+            return this.getBorderColor32();
+        }
+
         // Render border pixels from lastRenderedBeamT to toT
         // This is called when border color changes to fill in pixels with the current color
         // Optimized: render line by line for efficiency, using 32-bit writes for consistency
@@ -640,8 +766,8 @@
             const fromT = this.lastRenderedBeamT;
             if (toT <= fromT) return;  // Nothing to render
 
-            // Use palette32 for consistency with paper fast path
-            const color32 = this.palette32[this.borderColor];
+            // Use ULAplus palette entry 8 when active, otherwise standard palette
+            const color32 = this.getBorderColor32();
             const fb32 = this.frameBuffer32;
             const totalWidth = this.TOTAL_WIDTH;
             const tstatesPerLine = this.TSTATES_PER_LINE;
@@ -767,6 +893,58 @@
                 this.attrInitial = new Uint8Array(768);
             }
             this.attrInitial.set(screen.ram.subarray(0x1800, 0x1B00));
+
+            // ULAplus palette tracking: capture initial palette and clear changes
+            // This enables raster effects like HAM256 that change palette mid-frame
+            this.paletteChanges = [];
+            this.hadPaletteChanges = false;
+            this.paletteUniqueCount = 0;
+            this._paletteEntrySeen.fill(0);
+            this._resetPaletteDebug();
+            // Capture initial palette state
+            if (!this.paletteInitial) {
+                this.paletteInitial = new Uint8Array(64);
+            }
+            this.paletteInitial.set(this.ulaplus.palette);
+            // Also capture initial 32-bit palette for fast rendering
+            if (!this.paletteInitial32) {
+                this.paletteInitial32 = new Uint32Array(64);
+            }
+            this.paletteInitial32.set(this.ulaplus.palette32);
+
+            // Debug: log palette changes info once per session
+            if (this._paletteDebugFrames === undefined) {
+                this._paletteDebugFrames = 0;
+            }
+        }
+
+        // Called at end of frame to log palette debug info
+        endFramePaletteDebug() {
+            // Only start counting frames once paletteEnabled is true (demo has activated ULAplus)
+            if (!this.ulaplus.enabled || !this.ulaplus.paletteEnabled) {
+                return;
+            }
+
+            if (this._paletteDebugFrames < 10) {
+                this._paletteDebugFrames++;
+                const changes = this.paletteChanges;
+                console.log(`[ULAplus Raster] Frame ${this._paletteDebugFrames}: ${changes.length} palette changes`);
+                if (this.cpu) {
+                    console.log(`  CPU: IM=${this.cpu.im}, I=$${this.cpu.i.toString(16).toUpperCase()}, IFF1=${this.cpu.iff1}, PC=$${this.cpu.pc.toString(16).toUpperCase()}`);
+                    if (this.cpu.im === 2) {
+                        const vectorAddr = (this.cpu.i << 8) | 0xff;
+                        const vectorLo = this.memory.read(vectorAddr);
+                        const vectorHi = this.memory.read((vectorAddr + 1) & 0xffff);
+                        const handlerAddr = vectorLo | (vectorHi << 8);
+                        console.log(`  IM2 vector: $${vectorAddr.toString(16).toUpperCase()} -> handler at $${handlerAddr.toString(16).toUpperCase()}`);
+                    }
+                }
+                if (changes.length > 0) {
+                    console.log(`  T-state range: ${changes[0].tState} to ${changes[changes.length-1].tState}`);
+                } else {
+                    console.log(`  No palette changes this frame (expected ~768 for HAM256)`);
+                }
+            }
         }
 
         // Called when attribute memory is written (for multicolor tracking)
@@ -1024,13 +1202,16 @@
             // Apply -2 T-state offset only for scroll17-style effects (when screen bank switching is active)
             const borderLineOffset = this.hadScreenBankChanges ? 2 : 0;
 
+            // ULAplus: border uses palette entry 8 when enabled
+            const ulaPlusBorder = this.ulaplus.enabled && this.ulaplus.paletteEnabled;
+
             if (screenLine < 0 || screenLine >= 192) {
                 // Pure border line (top/bottom border)
                 // Skip if beam rendering is handling border
                 if (!skipBorderRendering) {
                     if (lineChanges.length === 0) {
                         // Optimized: fill entire line using 32-bit writes
-                        const borderColor32 = this.palette32[startColor];
+                        const borderColor32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
                         const rowOffset = visY * this.TOTAL_WIDTH;
                         const fb32 = this.frameBuffer32;
                         for (let x = 0; x < this.TOTAL_WIDTH; x++) {
@@ -1048,7 +1229,7 @@
                 if (!skipBorderRendering) {
                     if (lineChanges.length === 0) {
                         // Optimized: fill left border using 32-bit writes
-                        const borderColor32 = this.palette32[startColor];
+                        const borderColor32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
                         const rowOffset = visY * this.TOTAL_WIDTH;
                         const fb32 = this.frameBuffer32;
                         for (let x = 0; x < this.BORDER_LEFT; x++) {
@@ -1065,7 +1246,7 @@
                     if (!skipBorderRendering) {
                         if (lineChanges.length === 0) {
                             // Optimized: fill paper area using 32-bit writes
-                            const borderColor32 = this.palette32[startColor];
+                            const borderColor32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
                             const rowOffset = visY * this.TOTAL_WIDTH;
                             const fb32 = this.frameBuffer32;
                             for (let x = this.BORDER_LEFT; x < this.BORDER_LEFT + this.SCREEN_WIDTH; x++) {
@@ -1097,7 +1278,6 @@
                         const pal32 = this.palette32;
                         const ulaplus = this.ulaplus;
                         const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
-                        const ulaPal32 = ulaplus.palette32;
                         const rowOffset = visY * this.TOTAL_WIDTH + this.BORDER_LEFT;
                         const flashActive = this.flashState;
                         const attrChanges = this.attrChanges;
@@ -1105,6 +1285,25 @@
 
                         // Accurate multicolor: use per-write tracking with T-state timing
                         const paperStartTstate = lineStartTstate + (this.BORDER_LEFT / 2);
+
+                        // Use per-scanline palette if palette changes detected (ULAplus raster effects)
+                        // Few unique entries (<=8): T-state based (per-scanline effects like ULAplusDemo)
+                        // Many unique entries (>8): group-based (HAM256 writes 64 entries per group)
+                        const paperLine = visY - this.BORDER_TOP;
+                        const group = Math.floor(paperLine / 16);
+                        let ulaPal32;
+                        if (ulaPlusActive && this.hadPaletteChanges) {
+                            if (this.paletteUniqueCount <= 8) {
+                                // Few entries changed - use T-state based (matches border timing)
+                                this.getPalette32AtTState(lineStartTstate, this.paletteTempLine);
+                            } else {
+                                // Many entries changed - use group-based (HAM256 pattern)
+                                this.getPalette32ForGroup(group, this.paletteTempLine);
+                            }
+                            ulaPal32 = this.paletteTempLine;
+                        } else {
+                            ulaPal32 = ulaplus.palette32;
+                        }
                         const machineOffset = (this.machineType === '128k') ? (this.mc128kOffset || 0) : 0;
 
                         for (let col = 0; col < 32; col++) {
@@ -1165,8 +1364,22 @@
                         const pal32 = this.palette32;
                         const ulaplus = this.ulaplus;
                         const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
-                        const ulaPal32 = ulaplus.palette32;
                         const flashActive = this.flashState;
+                        // For raster effects: detect pattern by unique entries count
+                        // Few unique entries (<=8): T-state based (per-scanline effects)
+                        // Many unique entries (>8): group-based (HAM256 pattern)
+                        let ulaPal32ForLine;
+                        if (ulaPlusActive && this.hadPaletteChanges) {
+                            const lineStartTstate = this.calculateLineStartTstate(visY);
+                            if (this.paletteUniqueCount <= 8) {
+                                this.getPalette32AtTState(lineStartTstate, this.paletteTempLine);
+                            } else {
+                                const paperLine = visY - this.BORDER_TOP;
+                                const group = Math.floor(paperLine / 16);
+                                this.getPalette32ForGroup(group, this.paletteTempLine);
+                            }
+                            ulaPal32ForLine = this.paletteTempLine;
+                        }
 
                         for (let col = 0; col < 32; col++) {
                             const pixelByte = screenRam[pixelAddr + col];
@@ -1176,6 +1389,7 @@
                             if (ulaPlusActive) {
                                 // ULAplus: CLUT from bits 7,6; ink from bits 2-0; paper from bits 5-3
                                 const clut = ((attr >> 6) & 0x03) << 4;
+                                const ulaPal32 = this.hadPaletteChanges ? ulaPal32ForLine : ulaplus.palette32;
                                 inkColor = ulaPal32[clut + (attr & 0x07)];
                                 paperColor = ulaPal32[clut + 8 + ((attr >> 3) & 0x07)];
                             } else {
@@ -1207,7 +1421,7 @@
                 if (!skipBorderRendering) {
                     if (lineChanges.length === 0) {
                         // Optimized: fill right border using 32-bit writes
-                        const borderColor32 = this.palette32[startColor];
+                        const borderColor32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
                         const rowOffset = visY * this.TOTAL_WIDTH;
                         const fb32 = this.frameBuffer32;
                         for (let x = this.BORDER_LEFT + this.SCREEN_WIDTH; x < this.TOTAL_WIDTH; x++) {
@@ -1262,7 +1476,23 @@
             const pal32 = this.palette32;
             const ulaplus = this.ulaplus;
             const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
-            const ulaPal32 = ulaplus.palette32;
+            // Use per-scanline palette if palette changes detected (raster effects)
+            // Few unique entries (<=8): T-state based (per-scanline effects)
+            // Many unique entries (>8): group-based (HAM256 pattern)
+            const paperLine = visY - this.BORDER_TOP;
+            const group = Math.floor(paperLine / 16);
+            const lineStartTstate = this.calculateLineStartTstate(visY);
+            let ulaPal32;
+            if (ulaPlusActive && this.hadPaletteChanges) {
+                if (this.paletteUniqueCount <= 8) {
+                    this.getPalette32AtTState(lineStartTstate, this.paletteTempLine);
+                } else {
+                    this.getPalette32ForGroup(group, this.paletteTempLine);
+                }
+                ulaPal32 = this.paletteTempLine;
+            } else {
+                ulaPal32 = ulaplus.palette32;
+            }
             const rowOffset = visY * this.TOTAL_WIDTH + this.BORDER_LEFT;
             const flashActive = this.flashState;
 
@@ -1270,8 +1500,6 @@
                 // Check if multicolor tracking detected any attribute changes this frame
                 if (this.hadAttrChanges) {
                     // Multicolor path: read attributes at ULA scan time
-                    const lineStartTstate = this.calculateLineStartTstate(visY);
-                    const paperStartTstate = lineStartTstate + (this.BORDER_LEFT / 2);
                     // 128K-specific offset tuning (adjustable via console: spectrum.ula.mc128kOffset)
                     const machineOffset = (this.machineType === '128k') ? (this.mc128kOffset || 0) : 0;
                     const attrChanges = this.attrChanges;
@@ -1427,7 +1655,9 @@
             const borderLineOffset = this.hadScreenBankChanges ? 2 : 0;
 
             const fb32 = this.frameBuffer32;
-            const borderColor32 = this.palette32[startColor];
+            // ULAplus: border uses palette entry 8 when enabled
+            const ulaPlusBorder = this.ulaplus.enabled && this.ulaplus.paletteEnabled;
+            const borderColor32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
             const rowOffset = visY * this.TOTAL_WIDTH;
 
             if (screenLine < 0 || screenLine >= 192) {
@@ -1480,6 +1710,9 @@
             const isPentagon = this.machineType === 'pentagon';
             const timingMask = isPentagon ? ~0 : ~3;  // ~0 = no mask, ~3 = clear lower 2 bits
 
+            // ULAplus: border uses palette entry 8 when enabled
+            const ulaPlusBorder = this.ulaplus.enabled && this.ulaplus.paletteEnabled;
+
             // Use palette32 for consistency with paper fast path
             const fb32 = this.frameBuffer32;
             const pal32 = this.palette32;
@@ -1498,7 +1731,8 @@
                     changeIdx++;
                 }
 
-                fb32[rowOffset + x] = pal32[currentColor];
+                // ULAplus: use palette entry 8 at current T-state, otherwise standard palette
+                fb32[rowOffset + x] = ulaPlusBorder ? this.getBorderColor32AtTState(pixelTstate) : pal32[currentColor];
             }
         }
         
@@ -1516,6 +1750,9 @@
                 this.renderDeferredPaper();
             }
             // Normal paper rendering is handled by renderScanline during frame execution
+
+            // Debug: log ULAplus palette raster info
+            this.endFramePaletteDebug();
 
             // Update flash state
             this.flashCounter++;
@@ -1535,7 +1772,7 @@
             const pal32 = this.palette32;
             const ulaplus = this.ulaplus;
             const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
-            const ulaPal32 = ulaplus.palette32;
+            const hasPaletteChanges = this.hadPaletteChanges;
             const totalWidth = this.TOTAL_WIDTH;
             const flashActive = this.flashState;
             const changes = this.screenBankChanges;
@@ -1555,6 +1792,22 @@
                 const lineStartTstate = this.calculateLineStartTstate(visY);
                 const paperStartTstate = lineStartTstate + (this.BORDER_LEFT / 2);
                 const rowOffset = visY * totalWidth + this.BORDER_LEFT;
+
+                // Use per-scanline palette if palette changes detected (raster effects)
+                // Few unique entries (<=8): T-state based (per-scanline effects)
+                // Many unique entries (>8): group-based (HAM256 pattern)
+                const group = Math.floor(y / 16);
+                let ulaPal32;
+                if (ulaPlusActive && hasPaletteChanges) {
+                    if (this.paletteUniqueCount <= 8) {
+                        this.getPalette32AtTState(lineStartTstate, this.paletteTempLine);
+                    } else {
+                        this.getPalette32ForGroup(group, this.paletteTempLine);
+                    }
+                    ulaPal32 = this.paletteTempLine;
+                } else {
+                    ulaPal32 = ulaplus.palette32;
+                }
 
                 const third = Math.floor(y / 64);
                 const lineInThird = y & 0x07;
@@ -1829,7 +2082,7 @@
             const pal32 = this.palette32;
             const ulaplus = this.ulaplus;
             const ulaPlusActive = ulaplus.enabled && ulaplus.paletteEnabled;
-            const ulaPal32 = ulaplus.palette32;
+            const hasPaletteChanges = this.hadPaletteChanges;
             const totalWidth = this.TOTAL_WIDTH;
 
             if (!this.borderOnly) {
@@ -1843,6 +2096,23 @@
                     const pixelAddr = (third << 11) | (lineInThird << 8) | (charRow << 5);
                     const attrAddr = 0x1800 + Math.floor(y / 8) * 32;
                     const rowOffset = screenY * totalWidth + this.BORDER_LEFT;
+
+                    // Use per-scanline palette if palette changes detected (raster effects)
+                    // Few unique entries (<=8): T-state based (per-scanline effects)
+                    // Many unique entries (>8): group-based (HAM256 pattern)
+                    const group = Math.floor(y / 16);
+                    let ulaPal32;
+                    if (ulaPlusActive && hasPaletteChanges) {
+                        const lineStartTstate = this.calculateLineStartTstate(screenY);
+                        if (this.paletteUniqueCount <= 8) {
+                            this.getPalette32AtTState(lineStartTstate, this.paletteTempLine);
+                        } else {
+                            this.getPalette32ForGroup(group, this.paletteTempLine);
+                        }
+                        ulaPal32 = this.paletteTempLine;
+                    } else {
+                        ulaPal32 = ulaplus.palette32;
+                    }
 
                     for (let col = 0; col < 32; col++) {
                         const pixelByte = screenRam[pixelAddr + col];
@@ -1918,9 +2188,12 @@
 
                 const isScreenLine = visY >= this.BORDER_TOP && visY < this.BORDER_TOP + this.SCREEN_HEIGHT;
 
+                // ULAplus: border uses palette entry 8 when enabled
+                const ulaPlusBorder = this.ulaplus.enabled && this.ulaplus.paletteEnabled;
+
                 if (lineChanges.length === 0) {
                     // No changes during this line - solid color using 32-bit writes
-                    const color32 = this.palette32[startColor];
+                    const color32 = ulaPlusBorder ? this.getBorderColor32AtTState(lineStartTstate) : this.palette32[startColor];
                     const fb32 = this.frameBuffer32;
                     const rowOffset = visY * this.TOTAL_WIDTH;
 
@@ -1949,6 +2222,9 @@
             let currentColor = startColor;
             let changeIdx = 0;
 
+            // ULAplus: border uses palette entry 8 when enabled
+            const ulaPlusBorder = this.ulaplus.enabled && this.ulaplus.paletteEnabled;
+
             // Use palette32 for consistency
             const fb32 = this.frameBuffer32;
             const pal32 = this.palette32;
@@ -1969,12 +2245,14 @@
                     changeIdx++;
                 }
 
-                fb32[rowOffset + x] = pal32[currentColor];
+                // ULAplus: use palette entry 8 at current T-state, otherwise standard palette
+                fb32[rowOffset + x] = ulaPlusBorder ? this.getBorderColor32AtTState(pixelTstate) : pal32[currentColor];
             }
         }
         
         renderBorder() {
-            const color32 = this.palette32[this.borderColor];
+            // ULAplus: border uses palette entry 8 when enabled
+            const color32 = this.getBorderColor32();
             const fb32 = this.frameBuffer32;
             const totalWidth = this.TOTAL_WIDTH;
 

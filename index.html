@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZX-M8XXX v0.9.14</title>
+    <title>ZX-M8XXX v0.9.15</title>
     <style>
         * { box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -2314,6 +2314,35 @@
             border-radius: 4px;
             min-height: 120px;
             max-height: 550px;
+        }
+        .tests-category-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .tests-category-tab {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-button);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .tests-category-tab:hover {
+            background: var(--bg-button);
+            color: var(--text-primary);
+        }
+        .tests-category-tab.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+        .tests-category-tab .count {
+            opacity: 0.7;
+            font-size: 10px;
+            margin-left: 4px;
         }
         .tests-table {
             width: 100%;
@@ -5380,7 +5409,7 @@
                 <option value="project">Project</option>
                 <option value="quick">Quick (F2)</option>
             </select>
-            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.14 — Help">Help</button>
+            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.15 — Help">Help</button>
             <button id="themeToggle" class="theme-btn" title="Toggle light/dark theme">☀️</button>
             <input type="file" id="projectFileInput" class="file-input" accept=".zxproj,.json">
         </div>
@@ -6244,6 +6273,7 @@ start:
                         </table>
                         <p>CLUT selection: <code>(FLASH × 2 + BRIGHT)</code>. Border uses PAPER color from CLUT 0.</p>
                         <p><strong>Mode register (group=01):</strong> Bit 0 = ULAplus on/off, Bit 1 = Grayscale mode.</p>
+                        <p><strong>Raster effects:</strong> HAM256 and similar demos that update palette mid-frame are fully supported. The emulator tracks palette writes with T-state timing and applies them per 16-line group.</p>
                     </div>
 
                     <div class="info-section">
@@ -6547,6 +6577,7 @@ start:
                         <label class="checkbox-label" title="Enable ULAplus extended palette support (64 colors)">
                             <input type="checkbox" id="chkULAplus"> ULA+
                         </label>
+                        <button id="btnResetULAplus" style="margin-left: 10px; padding: 2px 8px; font-size: 11px;" title="Reset ULAplus palette to defaults">Reset</button>
                         <span id="ulaplusStatus" style="margin-left: 10px; color: var(--text-dim); font-size: 11px;"></span>
                     </div>
                     <div class="ulaplus-palette-preview hidden" id="ulaplusPalettePreview">
@@ -6696,6 +6727,14 @@ start:
 
                 <!-- Test List -->
                 <div class="tests-list-container">
+                    <div class="tests-category-tabs" id="testsCategoryTabs">
+                        <button class="tests-category-tab active" data-category="all">All</button>
+                        <button class="tests-category-tab" data-category="cpu">CPU</button>
+                        <button class="tests-category-tab" data-category="video">Video</button>
+                        <button class="tests-category-tab" data-category="ulaplus">ULA+</button>
+                        <button class="tests-category-tab" data-category="multicolor">Multicolor</button>
+                        <button class="tests-category-tab" data-category="rzx">RZX</button>
+                    </div>
                     <table class="tests-table" id="testsTable">
                         <thead>
                             <tr>
@@ -7390,7 +7429,7 @@ start:
     <div class="fullhelp-dialog hidden" id="fullHelpDialog">
         <div class="fullhelp-content">
             <div class="fullhelp-header">
-                <h3>ZX-M8XXX <span class="help-version">v0.9.14</span> Help</h3>
+                <h3>ZX-M8XXX <span class="help-version">v0.9.15</span> Help</h3>
                 <button class="fullhelp-close" id="btnFullHelpClose">&times;</button>
             </div>
             <div class="fullhelp-body">
@@ -7421,6 +7460,7 @@ start:
                         <li>48K, 128K, and Pentagon machine support</li>
                         <li>Memory banking (128K/Pentagon)</li>
                         <li>ULA video generation with border</li>
+                        <li>ULAplus extended palette (64 colors, HAM256 raster effects)</li>
                         <li>Memory contention emulation</li>
                         <li>AY-3-8910 sound chip (stereo modes)</li>
                         <li>PSG file export (record AY music)</li>
@@ -7986,6 +8026,7 @@ start:
             "file": "tests/program.tap",
             "machine": "48k",           // 48k, 128k, pentagon
             "earlyTimings": true,       // Use early ULA timings
+            "ulaplus": false,           // Enable ULAplus (default: false)
             "palette": "default",       // Color palette
             "enabled": true,            // false to skip
             "fullBorder": true,         // Include border in comparison
@@ -8279,7 +8320,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
     <script src="sjasmplus/assembler.js"></script>
     
     <script>
-        const APP_VERSION = '0.9.14';
+        const APP_VERSION = '0.9.15';
         console.log('ZX-M8XXX v' + APP_VERSION);
         
         // Help modal
@@ -12120,6 +12161,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 this.previewPaused = false;
                 this.previewFrameCount = 0;
 
+                // Category filtering
+                this.currentCategory = 'all';
+                this.categoryTabs = document.getElementById('testsCategoryTabs');
+
                 // Keyboard map for special keys
                 this.keyMap = {
                     'ENTER': 'Enter', 'SPACE': ' ', 'SHIFT': 'Shift', 'CTRL': 'Control',
@@ -12140,6 +12185,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 this.elements.btnCopyFrame?.addEventListener('click', () => this.copyFrameCount());
                 this.elements.btnScreenshot?.addEventListener('click', () => this.saveScreenshot());
                 this.elements.btnStopPreview?.addEventListener('click', () => this.stopPreview());
+
+                // Category tab clicks
+                this.categoryTabs?.addEventListener('click', (e) => {
+                    const tab = e.target.closest('.tests-category-tab');
+                    if (tab) {
+                        this.setCategory(tab.dataset.category);
+                    }
+                });
             }
 
             async loadTests(url = 'tests.json') {
@@ -12152,6 +12205,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     const data = await response.json();
                     this.tests = data.tests || [];
                     this.renderTestList();
+                    this.updateCategoryCounts();
                     this.updateStatus(`${this.tests.length} tests loaded`);
                     this.elements.btnRunSelected.disabled = false;
                     this.elements.btnPreview.disabled = false;
@@ -12168,9 +12222,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                 for (const test of this.tests) {
                     const isEnabled = test.enabled !== false; // Default to true
+                    const category = test.category || 'other';
+                    const isVisible = this.currentCategory === 'all' || category === this.currentCategory;
+
                     const tr = document.createElement('tr');
                     tr.dataset.testId = test.id;
+                    tr.dataset.category = category;
                     if (!isEnabled) tr.classList.add('tests-row-disabled');
+                    if (!isVisible) tr.style.display = 'none';
                     tr.innerHTML = `
                         <td class="tests-col-check"><input type="checkbox" class="test-checkbox" ${isEnabled ? 'checked' : 'disabled'}></td>
                         <td class="tests-col-name">${this.escapeHtml(test.name)}</td>
@@ -12182,6 +12241,59 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 }
             }
 
+            setCategory(category) {
+                this.currentCategory = category;
+
+                // Update tab styling
+                const tabs = this.categoryTabs?.querySelectorAll('.tests-category-tab');
+                tabs?.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.category === category);
+                });
+
+                // Filter visible rows
+                const rows = this.elements.tableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const rowCategory = row.dataset.category;
+                    const isVisible = category === 'all' || rowCategory === category;
+                    row.style.display = isVisible ? '' : 'none';
+                });
+
+                // Update select-all checkbox state
+                this.updateSelectAllState();
+            }
+
+            updateSelectAllState() {
+                const visibleCheckboxes = Array.from(this.elements.tableBody.querySelectorAll('tr'))
+                    .filter(row => row.style.display !== 'none')
+                    .map(row => row.querySelector('.test-checkbox:not(:disabled)'))
+                    .filter(Boolean);
+
+                const allChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+                if (this.elements.selectAll) {
+                    this.elements.selectAll.checked = allChecked;
+                }
+            }
+
+            updateCategoryCounts() {
+                const counts = { all: this.tests.length };
+                for (const test of this.tests) {
+                    const cat = test.category || 'other';
+                    counts[cat] = (counts[cat] || 0) + 1;
+                }
+
+                const tabs = this.categoryTabs?.querySelectorAll('.tests-category-tab');
+                tabs?.forEach(tab => {
+                    const cat = tab.dataset.category;
+                    const count = counts[cat] || 0;
+                    const countSpan = tab.querySelector('.count');
+                    if (countSpan) {
+                        countSpan.textContent = `(${count})`;
+                    } else if (count > 0 || cat === 'all') {
+                        tab.innerHTML = `${tab.textContent.split('(')[0].trim()} <span class="count">(${count})</span>`;
+                    }
+                });
+            }
+
             escapeHtml(str) {
                 const div = document.createElement('div');
                 div.textContent = str;
@@ -12189,14 +12301,22 @@ labelManager.importJSON(jsonStr, merge)</pre>
             }
 
             toggleSelectAll(checked) {
-                const checkboxes = this.elements.tableBody.querySelectorAll('.test-checkbox:not(:disabled)');
-                checkboxes.forEach(cb => cb.checked = checked);
+                // Only toggle visible (filtered) tests
+                const rows = this.elements.tableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        const cb = row.querySelector('.test-checkbox:not(:disabled)');
+                        if (cb) cb.checked = checked;
+                    }
+                });
             }
 
             getSelectedTests() {
                 const selected = [];
                 const rows = this.elements.tableBody.querySelectorAll('tr');
                 rows.forEach(row => {
+                    // Only include visible (filtered) rows
+                    if (row.style.display === 'none') return;
                     const checkbox = row.querySelector('.test-checkbox');
                     if (checkbox?.checked) {
                         const testId = row.dataset.testId;
@@ -12362,11 +12482,6 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         this.spectrum.setEarlyTimings?.(test.earlyTimings);
                     }
 
-                    // Apply palette if specified
-                    if (test.palette && typeof applyPalette === 'function') {
-                        applyPalette(test.palette);
-                    }
-
                     // Apply full border mode if specified (default to true for tests)
                     const useFullBorder = test.fullBorder !== undefined ? test.fullBorder : true;
                     if (this.spectrum.ula.setFullBorder(useFullBorder)) {
@@ -12375,6 +12490,22 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                     // Reset and load file
                     this.spectrum.reset();
+
+                    // Apply ULAplus AFTER reset (default: disabled)
+                    // Must be after reset to avoid being cleared
+                    // Always reset ULA+ first to clear palette from previous tests
+                    this.spectrum.ula.resetULAplus();
+                    const enableUlaplus = test.ulaplus === true;
+                    this.spectrum.ula.ulaplus.enabled = enableUlaplus;
+                    if (enableUlaplus) {
+                        this.spectrum.ula.ulaplus.paletteEnabled = true;  // Enable palette mode for tests
+                    }
+                    updateULAplusStatus?.();
+
+                    // Apply palette if specified
+                    if (test.palette && typeof applyPalette === 'function') {
+                        applyPalette(test.palette);
+                    }
                     this.spectrum.tapeLoader.rewind();
 
                     // Recreate tape trap to ensure clean state
@@ -12462,6 +12593,32 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                     // Reset disassembler to use fresh memory reference
                     if (typeof disasm !== 'undefined') disasm = null;
+
+                    // Update ULAplus status UI
+                    if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
+                }
+            }
+
+            // Reload ROM if snapshot loading changed machine type and invalidated ROM
+            reloadRomIfNeeded() {
+                if (this.spectrum.romLoaded) return;
+
+                const machineType = this.spectrum.machineType;
+                if (machineType === '48k' && rom48Data) {
+                    this.spectrum.memory.loadRom(rom48Data, 0);
+                    this.spectrum.romLoaded = true;
+                } else if (machineType === '128k' && rom128Data) {
+                    this.spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
+                    this.spectrum.memory.loadRom(rom128Data.slice(16384, 32768), 1);
+                    this.spectrum.romLoaded = true;
+                } else if (machineType === 'pentagon' && romPentagonData) {
+                    this.spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
+                    this.spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                    if (romTrdosData) {
+                        this.spectrum.memory.loadTrdosRom(romTrdosData);
+                        this.spectrum.trdosTrap.updateTrdosRomFlag();
+                    }
+                    this.spectrum.romLoaded = true;
                 }
             }
 
@@ -12486,13 +12643,18 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                     // Simulate LOAD "" keypresses (trap is now ready)
                     await this.injectLoadCommand();
-                } else if (ext === 'sna' || ext === 'z80') {
-                    const loader = new SnapshotLoader();
-                    if (ext === 'sna') {
-                        loader.loadSNA(data, this.spectrum.cpu, this.spectrum.memory);
-                    } else {
-                        loader.loadZ80(data, this.spectrum.cpu, this.spectrum.memory);
-                    }
+                } else if (ext === 'sna') {
+                    this.spectrum.loadSnapshot(data);  // Auto-switches machine
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'z80') {
+                    this.spectrum.loadZ80Snapshot(data);  // Auto-switches machine
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'szx') {
+                    this.spectrum.loadSZXSnapshot(data);
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'rzx') {
+                    await this.spectrum.loadRZX(data);
+                    this.reloadRomIfNeeded();
                 } else if (ext === 'zip') {
                     // Handle ZIP files - extract specific entry or first compatible file
                     const spectrumFiles = await ZipLoader.findAllSpectrum(data.buffer);
@@ -12539,18 +12701,40 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     this.spectrum.tapeLoader.load(new Uint8Array(data));
                     this.spectrum.tapeTrap.setTape(this.spectrum.tapeLoader);
                     await this.injectLoadCommand();
-                } else if (ext === 'sna' || ext === 'z80') {
-                    const loader = new SnapshotLoader();
-                    if (ext === 'sna') {
-                        loader.loadSNA(data, this.spectrum.cpu, this.spectrum.memory);
-                    } else {
-                        loader.loadZ80(data, this.spectrum.cpu, this.spectrum.memory);
-                    }
+                } else if (ext === 'sna') {
+                    this.spectrum.loadSnapshot(new Uint8Array(data));  // Auto-switches machine
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'z80') {
+                    this.spectrum.loadZ80Snapshot(new Uint8Array(data));  // Auto-switches machine
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'szx') {
+                    this.spectrum.loadSZXSnapshot(new Uint8Array(data));
+                    this.reloadRomIfNeeded();
+                } else if (ext === 'rzx') {
+                    await this.spectrum.loadRZX(new Uint8Array(data));
+                    this.reloadRomIfNeeded();
                 } else if (ext === 'trd' || ext === 'scl') {
                     this.spectrum.loadDiskImage(data, ext, fileName);
                 } else {
                     throw new Error(`Unsupported extracted file format: ${ext}`);
                 }
+            }
+
+            // Helper to run frames with abort checking and UI yielding
+            async runFramesWithAbortCheck(count, callback = null) {
+                for (let i = 0; i < count; i++) {
+                    // Check if preview or test was stopped
+                    if (!this.previewing && !this.running) return false;
+
+                    if (callback) callback();
+                    this.spectrum.runFrame();
+
+                    // Yield every 10 frames to allow UI updates (Stop button)
+                    if (i % 10 === 9) {
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+                return true;
             }
 
             // Inject LOAD "" command into edit line and trigger execution
@@ -12566,10 +12750,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     ula.keyboardState.fill(0xFF);
 
                     // Run frames until menu is fully ready
-                    for (let i = 0; i < 200; i++) {
-                        ula.keyboardState.fill(0xFF);
-                        this.spectrum.runFrame();
-                    }
+                    if (!await this.runFramesWithAbortCheck(200, () => ula.keyboardState.fill(0xFF))) return;
 
                     // Press "1" to select 128 BASIC
                     ula.keyDown('1');
@@ -12580,10 +12761,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     ula.keyboardState.fill(0xFF);
 
                     // Wait for BASIC to initialize
-                    for (let i = 0; i < 100; i++) {
-                        ula.keyboardState.fill(0xFF);
-                        this.spectrum.runFrame();
-                    }
+                    if (!await this.runFramesWithAbortCheck(100, () => ula.keyboardState.fill(0xFF))) return;
 
                     // Now type LOAD "" just like 48K mode
                     // In 128K BASIC, J key also gives LOAD in K mode
@@ -12639,13 +12817,12 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     }
 
                     // Run frames for loading with keyboard clear
-                    for (let i = 0; i < 300; i++) {
+                    await this.runFramesWithAbortCheck(300, () => {
                         ula.keyboardState.fill(0xFF);
                         for (let j = 0x5C00; j <= 0x5C08; j++) {
                             mem.write(j, 0xFF);
                         }
-                        this.spectrum.runFrame();
-                    }
+                    });
                     return;
                 }
 
@@ -12654,8 +12831,16 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 let frameCount = 0;
 
                 for (let i = 0; i < 200; i++) {
+                    // Check if preview or test was stopped
+                    if (!this.previewing && !this.running) return;
+
                     this.spectrum.runFrame();
                     frameCount++;
+
+                    // Yield every 10 frames
+                    if (i % 10 === 9) {
+                        await new Promise(r => setTimeout(r, 0));
+                    }
 
                     const curDfSz = mem.read(0x5C6B);
                     const curEline = mem.read(0x5C59) | (mem.read(0x5C5A) << 8);
@@ -12684,9 +12869,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 }
 
                 // Run a few more frames to ensure ROM is fully in input loop
-                for (let i = 0; i < 50; i++) {
-                    this.spectrum.runFrame();
-                }
+                if (!await this.runFramesWithAbortCheck(50)) return;
 
                 // Ensure all keys are released before we start
                 this.spectrum.ula.keyboardState.fill(0xFF);
@@ -12699,8 +12882,12 @@ labelManager.importJSON(jsonStr, merge)</pre>
             async simulateLoadCommand() {
                 const ula = this.spectrum.ula;
 
-                // Helper to press a single key using ULA methods
+                // Helper to check if aborted
+                const isAborted = () => !this.previewing && !this.running;
+
+                // Helper to press a single key using ULA methods (with abort check)
                 const pressKey = async (key, holdFrames = 25, releaseFrames = 15) => {
+                    if (isAborted()) return false;
                     ula.keyDown(key);
                     for (let i = 0; i < holdFrames; i++) {
                         this.spectrum.runFrame();
@@ -12709,10 +12896,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     for (let i = 0; i < releaseFrames; i++) {
                         this.spectrum.runFrame();
                     }
+                    // Yield after each key press
+                    await new Promise(r => setTimeout(r, 0));
+                    return !isAborted();
                 };
 
                 // Helper to press key with Symbol Shift (Alt in browser terms)
                 const pressWithSymbol = async (key, holdFrames = 25, releaseFrames = 15) => {
+                    if (isAborted()) return false;
                     ula.keyDown('Alt'); // Symbol Shift
                     ula.keyDown(key);
                     for (let i = 0; i < holdFrames; i++) {
@@ -12723,16 +12914,22 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     for (let i = 0; i < releaseFrames; i++) {
                         this.spectrum.runFrame();
                     }
+                    // Yield after each key press
+                    await new Promise(r => setTimeout(r, 0));
+                    return !isAborted();
                 };
 
                 // J = LOAD in K mode
-                await pressKey('j');
+                if (!await pressKey('j')) return;
 
                 // Symbol Shift + P = " (quote)
-                await pressWithSymbol('p');
+                if (!await pressWithSymbol('p')) return;
 
                 // Symbol Shift + P again for closing "
-                await pressWithSymbol('p');
+                if (!await pressWithSymbol('p')) return;
+
+                // Check abort before ENTER
+                if (isAborted()) return;
 
                 // ENTER - press briefly then clear keyboard immediately
                 ula.keyDown('Enter');
@@ -12751,10 +12948,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                 // Run frames with keyboard continuously cleared
                 // The tape trap will load instantly, then BASIC autorun executes
-                for (let i = 0; i < 200; i++) {
-                    ula.keyboardState.fill(0xFF);
-                    this.spectrum.runFrame();
-                }
+                await this.runFramesWithAbortCheck(200, () => ula.keyboardState.fill(0xFF));
             }
 
             // Directly load tape contents into memory, bypassing ROM (kept for reference)
@@ -13167,7 +13361,6 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         this.spectrum.updateDisplayDimensions();
                     }
 
-                    // Reset and load file
                     // Setup preview canvas (after full border mode is set)
                     const dims = this.spectrum.getScreenDimensions();
                     const previewCanvas = this.elements.previewCanvas;
@@ -13178,6 +13371,17 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     // Full reset including tape state
                     this.spectrum.reset();
                     this.spectrum.tapeLoader.rewind();
+
+                    // Apply ULAplus AFTER reset (default: disabled)
+                    // Must be after reset to avoid being cleared
+                    // Always reset ULA+ first to clear palette from previous tests
+                    this.spectrum.ula.resetULAplus();
+                    const enableUlaplus = test.ulaplus === true;
+                    this.spectrum.ula.ulaplus.enabled = enableUlaplus;
+                    if (enableUlaplus) {
+                        this.spectrum.ula.ulaplus.paletteEnabled = true;  // Enable palette mode for tests
+                    }
+                    updateULAplusStatus?.();
 
                     // Recreate tape trap to ensure clean state
                     this.spectrum.tapeTrap = new TapeTrapHandler(
@@ -26897,8 +27101,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
             // Validate saved machine type has required ROM, fallback to 48k if not
             if (spectrum.machineType === '128k' && !rom128Data) {
                 spectrum.setMachineType('48k');
+                if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
             } else if (spectrum.machineType === 'pentagon' && !romPentagonData) {
                 spectrum.setMachineType('48k');
+                if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
             }
 
             applyRomsToEmulator();
@@ -28994,6 +29200,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     spectrum.setMachineType(project.machineType);
                     applyRomsToEmulator();
                     machineSelect.value = project.machineType;
+                    if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
                 }
 
                 // Restore snapshot
@@ -29509,6 +29716,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
             // Re-apply palette to new ULA
             if (typeof applyPalette === 'function') {
                 applyPalette(paletteSelect?.value || 'default');
+            }
+            // Update ULAplus status (palette was reset in setMachineType)
+            if (typeof updateULAplusStatus === 'function') {
+                updateULAplusStatus();
             }
             spectrum.reset();
             disasm = null; // Reset to use fresh memory reference
@@ -30951,6 +31162,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
             updateULAplusStatus();
             spectrum.redraw(); // Immediately apply palette change
             showMessage(chkULAplus.checked ? 'ULA+ enabled' : 'ULA+ disabled');
+        });
+
+        // Reset ULAplus palette to defaults
+        document.getElementById('btnResetULAplus').addEventListener('click', () => {
+            spectrum.ula.resetULAplus();
+            updateULAplusStatus();
+            spectrum.redraw();
+            showMessage('ULAplus palette reset');
         });
 
         // Update ULAplus status periodically when palette is active
@@ -32788,6 +33007,7 @@ PSG_DATA:
                 machineSelect.value = 'pentagon';
                 disasm = null; // Reset to use fresh memory reference
                 updateCanvasSize();
+                if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
             } else if (result.needsMachineSwitch) {
                 // Beta Disk not available - need to enable it or switch to Pentagon
                 if (!romTrdosData) {
@@ -32815,6 +33035,12 @@ PSG_DATA:
 
         // Handle loaded result (shared between file input and ZIP selection)
         function handleLoadResult(result, fileName) {
+            // Stop any running RZX playback when loading new file (unless this IS an RZX)
+            if (result.frames === undefined && spectrum.isRZXPlaying()) {
+                spectrum.rzxStop();
+                updateRZXStatus();
+            }
+
             // Update media indicators based on result type
             if (result.diskInserted || result.diskFile) {
                 updateMediaIndicator(fileName, 'disk');
@@ -32876,11 +33102,20 @@ PSG_DATA:
                 spectrum.stop();
                 disasm = null;
 
-                // Reload Pentagon ROM if machine type is Pentagon (ensures correct ROM after snapshot load)
-                if (result.machineType === 'pentagon' && romPentagonData) {
-                    console.log('[RZX Load] Reloading Pentagon ROM');
-                    spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
-                    spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                // Reload ROM if needed (machine type changed or ROM incompatible)
+                if (result.needsRomReload || !spectrum.romLoaded) {
+                    if (result.machineType === 'pentagon' && romPentagonData) {
+                        spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
+                        spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                        spectrum.romLoaded = true;
+                    } else if (result.machineType === '128k' && rom128Data) {
+                        spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
+                        spectrum.memory.loadRom(rom128Data.slice(16384, 32768), 1);
+                        spectrum.romLoaded = true;
+                    } else if (result.machineType === '48k' && rom48Data) {
+                        spectrum.memory.loadRom(rom48Data, 0);
+                        spectrum.romLoaded = true;
+                    }
                 }
 
                 const creatorInfo = result.creator ? ` (${result.creator.name})` : '';
@@ -32896,15 +33131,31 @@ PSG_DATA:
                 // Render the snapshot screen (updateCanvasSize() clears the canvas)
                 spectrum.renderToScreen();
             } else {
-                // SNA/Z80 snapshot - machine type may have changed
+                // SNA/Z80/SZX snapshot - machine type may have changed
                 showMessage(`Snapshot loaded (${result.machineType.toUpperCase()}): ${fileName}`);
 
-                // Re-apply appropriate ROM after machine switch
-                if (result.machineType !== '48k' && rom128Data) {
+                // Re-apply appropriate ROM after machine switch (and set romLoaded flag)
+                let romReloaded = false;
+                if (result.machineType === 'pentagon' && romPentagonData) {
+                    spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
+                    spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                    spectrum.romLoaded = true;
+                    romReloaded = true;
+                } else if (result.machineType === '128k' && rom128Data) {
                     spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
                     spectrum.memory.loadRom(rom128Data.slice(16384, 32768), 1);
+                    spectrum.romLoaded = true;
+                    romReloaded = true;
                 } else if (result.machineType === '48k' && rom48Data) {
                     spectrum.memory.loadRom(rom48Data, 0);
+                    spectrum.romLoaded = true;
+                    romReloaded = true;
+                }
+
+                // If ROM was reloaded after machine type change, start emulation
+                // (snapshot loaders try to start but fail if romLoaded was false)
+                if (romReloaded && !spectrum.running) {
+                    spectrum.start();
                 }
 
                 // Reset disassembler to use fresh memory reference
@@ -32946,6 +33197,7 @@ PSG_DATA:
 
                     machineSelect.value = 'pentagon';
                     disasm = null; // Reset to use fresh memory reference
+                    if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
                     showMessage('Switched to Pentagon mode for TR-DOS');
                 } else if (!romTrdosData) {
                     showMessage('TR-DOS ROM required. Load trdos.rom first, or enable Beta Disk in Settings.', 'error');
@@ -33019,12 +33271,20 @@ PSG_DATA:
                             // Handle RZX files specially (async loading)
                             const rzxData = result._zipFiles[index].data;
                             loadResult = await spectrum.loadRZX(rzxData);
-                            // Reload Pentagon ROM if machine type is Pentagon (ensures correct ROM after snapshot load)
-                            if (loadResult.machineType === 'pentagon' && romPentagonData) {
-                                console.log('[RZX Load] Reloading Pentagon ROM');
-                                // Pentagon ROM: first 16KB = 128K ROM (bank 0), second 16KB = 48K ROM (bank 1)
-                                spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
-                                spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                            // Reload ROM if needed (machine type changed or ROM incompatible)
+                            if (loadResult.needsRomReload || !spectrum.romLoaded) {
+                                if (loadResult.machineType === 'pentagon' && romPentagonData) {
+                                    spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
+                                    spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                                    spectrum.romLoaded = true;
+                                } else if (loadResult.machineType === '128k' && rom128Data) {
+                                    spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
+                                    spectrum.memory.loadRom(rom128Data.slice(16384, 32768), 1);
+                                    spectrum.romLoaded = true;
+                                } else if (loadResult.machineType === '48k' && rom48Data) {
+                                    spectrum.memory.loadRom(rom48Data, 0);
+                                    spectrum.romLoaded = true;
+                                }
                             }
                         } else if (file.type === 'trd' || file.type === 'scl') {
                             // Disk image inside ZIP - handle disk insertion

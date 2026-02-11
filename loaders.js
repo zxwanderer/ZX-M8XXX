@@ -1443,12 +1443,10 @@
                     machineType = '128k';
                 }
             }
-            console.log('[Z80 Loader] hwMode:', hwMode, 'extHeaderLen:', extHeaderLen, '=> machineType:', machineType);
 
             // Read 128K port 0x7FFD if applicable
             if ((machineType === '128k' || machineType === 'pentagon') && bytes.length > 35) {
                 const port7FFD = bytes[35];
-                console.log('[Z80 Loader] port7FFD:', port7FFD.toString(16), 'ROM bank:', (port7FFD & 0x10) ? 1 : 0, 'RAM bank:', port7FFD & 0x07);
                 // Reset paging lock before setting paging state from snapshot
                 memory.pagingDisabled = false;
                 memory.writePaging(port7FFD);
@@ -1510,7 +1508,6 @@
         }
         
         loadZ80Page(pageNum, data, memory, machineType) {
-            console.log('[Z80 Loader] Loading page', pageNum, 'size:', data.length, 'machine:', machineType);
             // Map page numbers to memory addresses/banks
             // Page numbers differ between 48K and 128K modes
             if (machineType === '48k') {
@@ -1539,18 +1536,14 @@
                 if (pageNum === 0) {
                     // 48K ROM modifications - load into ROM bank 1
                     const romBank = memory.rom[1];
-                    console.log('[Z80 Loader] Loading ROM page 0 (48K ROM) into bank 1, romBank exists:', !!romBank);
                     if (romBank) {
                         romBank.set(data.subarray(0, Math.min(data.length, 16384)));
-                        console.log('[Z80 Loader] ROM bank 1 loaded, first bytes:', Array.from(data.subarray(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
                     }
                 } else if (pageNum === 2) {
                     // 128K ROM modifications - load into ROM bank 0
                     const romBank = memory.rom[0];
-                    console.log('[Z80 Loader] Loading ROM page 2 (128K ROM) into bank 0, romBank exists:', !!romBank);
                     if (romBank) {
                         romBank.set(data.subarray(0, Math.min(data.length, 16384)));
-                        console.log('[Z80 Loader] ROM bank 0 loaded, first bytes:', Array.from(data.subarray(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
                     }
                 } else {
                     const bankNum = pageNum - 3;

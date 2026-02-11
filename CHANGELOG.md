@@ -2,6 +2,30 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.15
+- **Test Suite Enhancements**: Extended automated test capabilities
+  - Added RZX file support for input recording playback tests
+  - Added SZX snapshot format support
+  - New multicolor rendering tests (Shock megademo, Nirvana+ effects)
+  - New RZX playback tests to verify recording compatibility
+  - **Test categories**: Filter tests by type (All/CPU/Video/ULA+/Multicolor/RZX)
+  - Category tabs with test counts above test list
+  - Select-all checkbox now only affects visible (filtered) tests
+  - Fixed ROM corruption when tests load snapshots that change machine type
+  - Fixed RZX playback in test runner (frame counter wasn't advancing in headless mode)
+  - Fixed ULA+ palette bleeding between tests (now reset before each test)
+- **RZX Playback Fix**: Fixed RZX playback failing when loaded from different machine type
+  - Loading 48K RZX while in Pentagon or 128K mode now works correctly
+  - ROM is now properly reloaded when machine type changes during snapshot loading
+  - Previously, wrong ROM was used causing execution to diverge (e.g., RET returning to wrong address)
+- **RZX UI Fix**: RZX controls now properly clear when loading other files
+  - Stop button and progress indicator no longer remain visible after loading snapshot/tape
+- **Loading Fix**: Fixed black screen when loading snapshot while RZX is playing
+  - Emulation now properly restarts after ROM reload on machine type change
+- **Code Cleanup**: Removed excessive debug logging
+  - Removed Z80 Loader debug messages
+  - Removed RZX initial state dump
+
 ## v0.9.14
 - **Info Tab Reorganization**: Restructured Info tab with sub-tabs for better organization
   - I/O sub-tab: Keyboard layout, ports (keyboard, Kempston, ULAplus, AY-3-8910), colors
@@ -22,6 +46,11 @@ All notable changes to ZX-M8XXX are documented in this file.
   - 64-color palette using GRB 332 format (4 CLUTs × 16 colors)
   - Real-time palette preview in Settings → Display
   - Enable/disable via checkbox, persisted to localStorage
+  - **HAM256 raster effects**: Full support for mid-frame palette changes
+    - Tracks palette writes with T-state timing
+    - Group-based palette lookup (12 groups × 64 entries per frame)
+    - Works on 48K, 128K, and Pentagon machines
+  - ULAplus state properly managed on machine switch (checkbox preserved, palette reset)
 - **SCR Export with ULAplus**: Export screen with extended palette
   - Standard SCR: 6912 bytes (bitmap + attributes)
   - ULAplus SCR: 6976 bytes (+ 64-byte palette appended)

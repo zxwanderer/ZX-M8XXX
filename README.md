@@ -1,6 +1,6 @@
 # ZX-M8XXX
 
-**Version 0.9.14** | [Changelog](CHANGELOG.md)
+**Version 0.9.15** | [Changelog](CHANGELOG.md)
 
 ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integrated debugger designed for reverse engineering and development. No build tools, no dependencies - just open `index.html` in your browser.
 
@@ -11,6 +11,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - 48K, 128K, and Pentagon machine support
 - Memory banking and contention emulation
 - Pixel-perfect ULA video timing with border effects
+- ULAplus extended palette (64 colors, HAM256 raster effects)
 - AY-3-8910 sound chip emulation (stereo modes: Mono/ABC/ACB)
 - PSG file export (record AY music with player source)
 - SNA/Z80/SZX snapshot loading/saving
@@ -85,6 +86,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - **Real-time tape loading** (work in progress): Some copy protection schemes work, others don't yet. Standard loaders and many turbo loaders work; complex protection may fail. Flash load (instant) mode is more reliable.
 - **RZX playback**: Partial support - some recordings may desync due to timing differences
 - **Z80 save uncompressed**: Z80 snapshots are saved without RLE compression for maximum compatibility (~131KB for 128K, ~49KB for 48K)
+- **ULAplus raster effects**: HAM256 and similar multi-entry palette effects work correctly. Per-scanline effects (like ULAplusDemo border stripes) may show minor paper/border desync at edges.
 
 ## License
 
