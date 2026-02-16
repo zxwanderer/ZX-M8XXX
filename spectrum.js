@@ -1,13 +1,13 @@
 /**
  * ZX-M8XXX - Spectrum Machine Integration
- * @version 0.9.15
+ * @version 0.9.17
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.15';
+    const VERSION = '0.9.17';
 
     class Spectrum {
         static get VERSION() { return VERSION; }
@@ -2505,19 +2505,20 @@
                 const tempCtx = tempCanvas.getContext('2d');
                 const tempImageData = tempCtx.createImageData(dims.width, dims.height);
 
-                // Convert entire previous frame to grayscale
+                // Convert entire previous frame to darkened grayscale
                 // Both BeamScreen and Beam: grayscale everything (paper area has border colors in borderOnlyMode)
                 // The previousFrameBuffer already contains border colors extended into paper area
                 for (let i = 0; i < this.previousFrameBuffer.length; i += 4) {
+                    // Calculate grayscale and darken by 50% for better contrast with current frame
                     const gray = Math.round(
-                        this.previousFrameBuffer[i] * 0.299 +
-                        this.previousFrameBuffer[i + 1] * 0.587 +
-                        this.previousFrameBuffer[i + 2] * 0.114
+                        (this.previousFrameBuffer[i] * 0.299 +
+                         this.previousFrameBuffer[i + 1] * 0.587 +
+                         this.previousFrameBuffer[i + 2] * 0.114) * 0.5
                     );
                     tempImageData.data[i] = gray;
                     tempImageData.data[i + 1] = gray;
                     tempImageData.data[i + 2] = gray;
-                    tempImageData.data[i + 3] = 200;  // Semi-transparent
+                    tempImageData.data[i + 3] = 255;  // Fully opaque
                 }
                 tempCtx.putImageData(tempImageData, 0, 0);
 
@@ -2681,13 +2682,14 @@
         }
 
         drawNoBitmapOverlay() {
-            // No Bitmap mode: Show 8x8 cells with diagonal crosses using ink/paper colors
+            // No Bitmap mode: Show cells with diagonal crosses using ink/paper colors
+            // For multicolor support: extract ink/paper colors from the already-rendered frame buffer
+            // (attribute memory has final values, but frame buffer has correct per-scanline colors)
             if (!this.overlayCtx) return;
             const ctx = this.overlayCtx;
             const dims = this.ula.getDimensions();
             const zoom = this.zoom;
-            const palette = this.ula.palette;
-            const screenRam = this.memory.getScreenBase().ram;
+            const frameBuffer = this.ula.frameBuffer;
 
             // Clear overlay canvas
             ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
@@ -2699,57 +2701,70 @@
             const tempCtx = tempCanvas.getContext('2d');
             const tempImageData = tempCtx.createImageData(dims.width, dims.height);
 
-            // Process each 8x8 character cell
-            for (let charRow = 0; charRow < 24; charRow++) {
-                for (let charCol = 0; charCol < 32; charCol++) {
-                    // Get attribute for this cell
-                    const attrAddr = 0x1800 + charRow * 32 + charCol;
-                    const attr = screenRam[attrAddr];
-
-                    let ink = attr & 0x07;
-                    let paper = (attr >> 3) & 0x07;
-                    const bright = (attr & 0x40) ? 8 : 0;
-                    const flash = attr & 0x80;
-
-                    // Apply flash swap if needed
-                    if (flash && this.ula.flashState) {
-                        const tmp = ink; ink = paper; paper = tmp;
+            // Copy border from frame buffer
+            for (let y = 0; y < dims.height; y++) {
+                for (let x = 0; x < dims.width; x++) {
+                    const isScreen = x >= dims.borderLeft && x < dims.borderLeft + dims.screenWidth &&
+                                     y >= dims.borderTop && y < dims.borderTop + dims.screenHeight;
+                    if (!isScreen) {
+                        const idx = (y * dims.width + x) * 4;
+                        tempImageData.data[idx] = frameBuffer[idx];
+                        tempImageData.data[idx + 1] = frameBuffer[idx + 1];
+                        tempImageData.data[idx + 2] = frameBuffer[idx + 2];
+                        tempImageData.data[idx + 3] = 255;
                     }
-                    ink += bright;
-                    paper += bright;
+                }
+            }
 
-                    // Get RGB colors from palette
-                    const inkColor = palette ? palette[ink] : [0, 0, 0, 255];
-                    const paperColor = palette ? palette[paper] : [205, 205, 205, 255];
+            // Process each scanline for multicolor support
+            for (let y = 0; y < 192; y++) {
+                const visY = dims.borderTop + y;
+                const lineInCell = y % 8;
 
-                    // Cell position on screen
+                for (let charCol = 0; charCol < 32; charCol++) {
                     const cellX = dims.borderLeft + charCol * 8;
-                    const cellY = dims.borderTop + charRow * 8;
 
-                    // Draw 8x8 cell with diagonal cross pattern
-                    for (let py = 0; py < 8; py++) {
-                        for (let px = 0; px < 8; px++) {
-                            const x = cellX + px;
-                            const y = cellY + py;
-                            const idx = (y * dims.width + x) * 4;
+                    // Extract ink and paper colors from frame buffer for this 8-pixel span
+                    // Sample all 8 pixels and find the two unique colors
+                    const colors = new Map();
+                    for (let px = 0; px < 8; px++) {
+                        const idx = (visY * dims.width + cellX + px) * 4;
+                        const r = frameBuffer[idx];
+                        const g = frameBuffer[idx + 1];
+                        const b = frameBuffer[idx + 2];
+                        const key = (r << 16) | (g << 8) | b;
+                        colors.set(key, (colors.get(key) || 0) + 1);
+                    }
 
-                            // Draw X pattern: pixels on diagonals use ink, others use paper
-                            const onDiagonal = (px === py) || (px === 7 - py);
-                            const color = onDiagonal ? inkColor : paperColor;
+                    // Get the two most common colors (paper usually more common than ink)
+                    const sorted = [...colors.entries()].sort((a, b) => b[1] - a[1]);
+                    const paperKey = sorted[0] ? sorted[0][0] : 0;
+                    const inkKey = sorted[1] ? sorted[1][0] : paperKey;
 
-                            tempImageData.data[idx] = color[0];
-                            tempImageData.data[idx + 1] = color[1];
-                            tempImageData.data[idx + 2] = color[2];
-                            tempImageData.data[idx + 3] = 255;
-                        }
+                    const paperColor = [(paperKey >> 16) & 0xFF, (paperKey >> 8) & 0xFF, paperKey & 0xFF];
+                    const inkColor = [(inkKey >> 16) & 0xFF, (inkKey >> 8) & 0xFF, inkKey & 0xFF];
+
+                    // Draw 8 pixels of this scanline with diagonal cross pattern
+                    for (let px = 0; px < 8; px++) {
+                        const x = cellX + px;
+                        const idx = (visY * dims.width + x) * 4;
+
+                        // Draw X pattern: pixels on diagonals use ink, others use paper
+                        const onDiagonal = (px === lineInCell) || (px === 7 - lineInCell);
+                        const color = onDiagonal ? inkColor : paperColor;
+
+                        tempImageData.data[idx] = color[0];
+                        tempImageData.data[idx + 1] = color[1];
+                        tempImageData.data[idx + 2] = color[2];
+                        tempImageData.data[idx + 3] = 255;
                     }
                 }
             }
 
             tempCtx.putImageData(tempImageData, 0, 0);
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(tempCanvas, dims.borderLeft, dims.borderTop, dims.screenWidth, dims.screenHeight,
-                          dims.borderLeft * zoom, dims.borderTop * zoom, dims.screenWidth * zoom, dims.screenHeight * zoom);
+            ctx.drawImage(tempCanvas, 0, 0, dims.width, dims.height,
+                          0, 0, dims.width * zoom, dims.height * zoom);
         }
 
         // ========== Start/Stop/Speed Control ==========
@@ -3021,10 +3036,20 @@
             const borderOnly = this.overlayMode === 'screen' || this.overlayMode === 'reveal' || this.overlayMode === 'beamscreen';
             this.ula.borderOnly = borderOnly;
 
-            // Initialize border changes with current border color (for static rendering)
-            this.ula.borderChanges = [{tState: 0, color: this.ula.borderColor}];
+            // In beam modes, preserve the scanline-by-scanline rendered frame buffer
+            // (don't re-render entire screen which would lose per-scanline attribute changes)
+            const isBeamMode = this.overlayMode === 'beam' || this.overlayMode === 'beamscreen';
+            let frameBuffer;
 
-            const frameBuffer = this.ula.renderFrame();
+            if (isBeamMode) {
+                // Render scanlines up to current T-state position for accurate beam display
+                this.ula.updateScanline(this.cpu.tStates);
+                frameBuffer = this.ula.frameBuffer;
+            } else {
+                // Initialize border changes with current border color (for static rendering)
+                this.ula.borderChanges = [{tState: 0, color: this.ula.borderColor}];
+                frameBuffer = this.ula.renderFrame();
+            }
 
             // Handle border-only modes: replace paper area with border color
             const borderOnlyMode = this.overlayMode === 'screen' || this.overlayMode === 'beamscreen';
@@ -3070,13 +3095,16 @@
 
             // Save frame for beam visualization modes AFTER border-only modification
             // so previousFrameBuffer includes border lines in paper area
-            this.savePreviousFrame(frameBuffer);
+            // But don't save in beam mode - we want to keep the last complete frame
+            if (!isBeamMode) {
+                this.savePreviousFrame(frameBuffer);
+            }
 
             this.imageData.data.set(frameBuffer);
             this.ctx.putImageData(this.imageData, 0, 0);
             this.drawOverlay();
         }
-        
+
         // Execute until past current instruction (skip over CALL/RST)
         stepOver() {
             if (this.running || !this.romLoaded) return false;
@@ -5129,6 +5157,10 @@
                 this.ula.screenBankChanges = [{tState: 0, bank: this.memory.screenBank || 5}];
 
                 this.ula.setBorder(result.border);
+                // Initialize frame state for beam mode, but clear attrInitial
+                // since we don't know the true frame-start values after loading a snapshot
+                this.ula.startFrame();
+                this.ula.attrInitial = null;  // Force use of current memory values
                 const frameBuffer = this.ula.renderFrame();
                 this.imageData.data.set(frameBuffer);
                 this.ctx.putImageData(this.imageData, 0, 0);
@@ -5186,6 +5218,10 @@
                 this.ula.deferPaperRendering = false;
                 this.ula.screenBankChanges = [{tState: 0, bank: this.memory.screenBank || 5}];
 
+                // Initialize frame state for beam mode, but clear attrInitial
+                // since we don't know the true frame-start values after loading a snapshot
+                this.ula.startFrame();
+                this.ula.attrInitial = null;  // Force use of current memory values
                 // Update display
                 const frameBuffer = this.ula.renderFrame();
                 this.imageData.data.set(frameBuffer);
@@ -5234,6 +5270,10 @@
                 this._lastTapeUpdate = 0;
 
                 this.ula.setBorder(result.border);
+                // Initialize frame state for beam mode, but clear attrInitial
+                // since we don't know the true frame-start values after loading a snapshot
+                this.ula.startFrame();
+                this.ula.attrInitial = null;  // Force use of current memory values
                 const frameBuffer = this.ula.renderFrame();
                 this.imageData.data.set(frameBuffer);
                 this.ctx.putImageData(this.imageData, 0, 0);
@@ -5244,7 +5284,7 @@
                 throw e;
             }
         }
-        
+
         loadTape(data, storeName = null) {
             if (!this.tapeLoader.load(data)) throw new Error('Failed to parse TAP file');
             this.tapeTrap.setTape(this.tapeLoader);

@@ -2,6 +2,15 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.17
+- **Fix**: Debugger "Go to address" navigation error (navHistory not defined)
+- **Fix**: Beam mode rendering improvements for multicolor programs after snapshot load
+- **Fix**: Beam mode now preserves last complete frame as background (not overwritten when stepping)
+- **Fix**: "No Bitmap" overlay mode now respects multicolor (per-scanline attributes)
+- **Improve**: Beam mode previous frame is darker (50%) for better contrast with current colored region
+
+## v0.9.16
+
 ## v0.9.15
 - **Test Suite Enhancements**: Extended automated test capabilities
   - Added RZX file support for input recording playback tests
