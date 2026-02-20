@@ -1,13 +1,10 @@
 /**
  * ZX-M8XXX - Z80 Disassembler
- * @version 0.9.18
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
-
-    const VERSION = '0.9.18';
 
     const r = ['B', 'C', 'D', 'E', 'H', 'L', '(HL)', 'A'];
     const rp = ['BC', 'DE', 'HL', 'SP'];
@@ -17,8 +14,6 @@
     const rot = ['RLC', 'RRC', 'RL', 'RR', 'SLA', 'SRA', 'SLL', 'SRL'];
 
     class Disassembler {
-        static get VERSION() { return VERSION; }
-        
         constructor(memory) {
             this.memory = memory;
         }

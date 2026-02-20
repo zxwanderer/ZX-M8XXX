@@ -50,6 +50,7 @@
             this.FULL_BORDER_SIZES = {
                 '48k':     { top: 64, left: 48, right: 48, bottom: 56 },
                 '128k':    { top: 63, left: 48, right: 48, bottom: 56 },
+                '+2':      { top: 63, left: 48, right: 48, bottom: 56 },
                 'pentagon': { top: 80, left: 48, right: 48, bottom: 48 }
             };
 
@@ -58,6 +59,7 @@
             this.NORMAL_BORDER_SIZES = {
                 '48k':     { top: 24, left: 32, right: 32, bottom: 24 },
                 '128k':    { top: 26, left: 32, right: 32, bottom: 24 },
+                '+2':      { top: 26, left: 32, right: 32, bottom: 24 },
                 'pentagon': { top: 24, left: 32, right: 32, bottom: 24 }
             };
 
@@ -91,7 +93,7 @@
                 this.BORDER_TIMING_OFFSET = 0;  // No border offset needed for Pentagon
                 this.BORDER_PHASE = 0;  // Pentagon has no 4T quantization
                 this.ULA_READ_AHEAD = 0;  // Pentagon has no contention, no read-ahead needed
-            } else if (machineType === '128k') {
+            } else if (is128kCompat(machineType)) {
                 // 128K: 228 T-states/line × 311 lines = 70908 T-states/frame
                 // Line structure (from libspectrum): 24 left + 128 screen + 24 right + 52 retrace = 228
                 // Frame structure: 63 top + 192 screen + 56 bottom = 311
@@ -1311,7 +1313,7 @@
                         } else {
                             ulaPal32 = ulaplus.palette32;
                         }
-                        const machineOffset = (this.machineType === '128k') ? (this.mc128kOffset || 0) : 0;
+                        const machineOffset = is128kCompat(this.machineType) ? (this.mc128kOffset || 0) : 0;
 
                         for (let col = 0; col < 32; col++) {
                             const pixelByte = screenRam[pixelAddr + col];
@@ -1508,7 +1510,7 @@
                 if (this.hadAttrChanges) {
                     // Multicolor path: read attributes at ULA scan time
                     // 128K-specific offset tuning (adjustable via console: spectrum.ula.mc128kOffset)
-                    const machineOffset = (this.machineType === '128k') ? (this.mc128kOffset || 0) : 0;
+                    const machineOffset = is128kCompat(this.machineType) ? (this.mc128kOffset || 0) : 0;
                     const attrChanges = this.attrChanges;
                     const attrInitial = this.attrInitial;
 

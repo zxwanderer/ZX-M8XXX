@@ -44,6 +44,7 @@
                     this.trdosRom = new Uint8Array(0x4000);
                     break;
                 case '128k':
+                case '+2':
                 case 'pentagon':
                     this.rom = [new Uint8Array(0x4000), new Uint8Array(0x4000)];
                     this.ram = [];

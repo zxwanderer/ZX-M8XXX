@@ -2,6 +2,46 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.20
+- **ZX Spectrum +2 Support**: First-class machine type with dedicated ROM
+  - New "+2" option in machine selector dropdown
+  - +2 ROM section in ROM dialog (`plus2.rom`, 32KB)
+  - Auto-loads from `roms/plus2.rom` on startup
+  - ROM dialog reopens with Close button when switching to a machine with missing ROM
+  - Identical hardware to 128K (same ULA timing, contention, AY, memory banking) — only ROM differs
+  - `is128kCompat()` helper function for 128K-compatible hardware checks
+  - Z80 snapshot hwMode 12 maps to +2; SZX machineId 3 maps to +2
+  - Z80/SZX export writes correct machine identifiers for +2
+  - SNA load preserves +2 machine type when already selected
+  - Tape trap ROM bank check includes +2
+
+## v0.9.19
+- **Auto Load**: Automatic load-and-run for tape and disk files
+  - New "Auto Load" checkbox in Settings → Media (enabled by default)
+  - TAP/TZX: Resets machine, types `LOAD ""` (128K: selects BASIC from menu first)
+  - TRD/SCL: Boots into TR-DOS automatically
+  - Pure turbo TZX (no standard blocks): Switches to real-time mode automatically
+  - setTimeout-based key injection using `ula.keyDown()`/`ula.keyUp()`
+  - Cancels cleanly on machine change, reset, or new file load
+  - Setting saved/restored in project files
+- **TZX Turbo Block Handoff**: Flash load to real-time turbo transition
+  - Dual tape system: `tapeLoader` (standard blocks only) + `tapePlayer` (all blocks)
+  - `standardBlockMap` maps flash-loaded block indices to full tape positions
+  - After flash-loading standard blocks, turbo blocks auto-start via `_turboBlockPending` flag
+  - Auto-start triggers in `portRead()` when custom loader reads port 0xFE
+  - Critical `PC >= 0x4000` guard prevents false trigger from ROM keyboard scan
+- **Tape Block Catalog**: Block listing in Settings → Media
+  - Shows all TZX/TAP blocks with type labels (Standard, Turbo, Pure Tone, etc.)
+  - Displays block sizes and current playback position
+- **Fix**: Disk auto-load (TRD/SCL) crashed on Pentagon instead of booting TR-DOS
+  - `bootTrdos()` was manually constructing system variables and jumping to wrong entry point (0x3D13)
+  - Rewritten to use FUSE-style approach: reset machine, select ROM bank 1, page in TR-DOS ROM, boot from address 0
+  - TR-DOS ROM runs its own initialization from address 0, properly setting up all system variables and workspace
+- **Fix**: Beta Disk auto-paging only worked on Pentagon, not on 48K/128K with Beta Disk enabled
+  - Main loop gated `updateBetaDiskPaging()` by `isPentagon` instead of `_betaDiskPagingEnabled`
+- **Fix**: Loading TRD/SCL on machine without Beta Disk no longer forces switch to Pentagon
+  - Now shows warning message instead of automatically changing machine type
+
 ## v0.9.18
 - **Fix**: Screen flicker in double-buffered games (e.g., Cubix) on 128K/Pentagon
   - Deferred paper rendering was incorrectly triggered by simple double-buffering (1 bank swap per frame)

@@ -1279,8 +1279,8 @@
 
             // Extended header (bytes 32-85)
             header[32] = cpu.pc & 0xff; header[33] = (cpu.pc >> 8) & 0xff;
-            // Hardware mode: 0=48k, 4=128k, 9=Pentagon (v3)
-            header[34] = isPentagon ? 9 : (is128k ? 4 : 0);
+            // Hardware mode: 0=48k, 4=128k, 9=Pentagon, 12=+2 (v3)
+            header[34] = isPentagon ? 9 : (memory.machineType === '+2' ? 12 : (is128k ? 4 : 0));
 
             // Port 7FFD for 128K
             if (is128k) {
@@ -1576,7 +1576,7 @@
             if (pc === 0x056c || pc === 0x0556) {
                 // In 128K mode, only trap when ROM 1 (48K BASIC) is active
                 // ROM 0 is the 128K editor which has different code at these addresses
-                if (this.memory.machineType === '128k' || this.memory.machineType === 'pentagon') {
+                if (is128kCompat(this.memory.machineType) || this.memory.machineType === 'pentagon') {
                     if (this.memory.currentRomBank !== 1) {
                         return false;  // Don't trap - wrong ROM bank
                     }
@@ -3771,7 +3771,7 @@
             header[2] = 0x53; header[3] = 0x54;  // "ST"
             header[4] = 1;    // Major version
             header[5] = 4;    // Minor version
-            header[6] = memory.machineType === 'pentagon' ? 7 : (is128k ? 2 : 1);  // Machine ID: 1=48k, 2=128k, 7=pentagon
+            header[6] = memory.machineType === 'pentagon' ? 7 : (memory.machineType === '+2' ? 3 : (is128k ? 2 : 1));  // Machine ID: 1=48k, 2=128k, 3=+2, 7=pentagon
             header[7] = 0;    // Flags
             chunks.push(header);
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZX-M8XXX v0.9.18</title>
+    <title>ZX-M8XXX v0.9.20</title>
     <style>
         * { box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -1802,6 +1802,32 @@
         }
         .settings-subtab-content.active {
             display: block;
+        }
+        .media-catalog-bar {
+            display: flex;
+            gap: 2px;
+            margin-top: 6px;
+            border-bottom: 1px solid var(--bg-button);
+        }
+        .media-catalog-btn {
+            padding: 3px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--bg-button);
+            border-bottom: none;
+            border-radius: 3px 3px 0 0;
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            margin-bottom: -1px;
+        }
+        .media-catalog-btn:hover {
+            background: var(--bg-button);
+            color: var(--text-primary);
+        }
+        .media-catalog-btn.active {
+            background: var(--bg-secondary);
+            color: var(--cyan);
+            border-bottom: 1px solid var(--bg-secondary);
         }
         .settings-tab-content {
             padding: 15px;
@@ -5293,6 +5319,7 @@
             <ul style="color: var(--text-secondary); font-size: 0.9em; margin: 10px 0;">
                 <li><code>roms/48.rom</code> - ZX Spectrum 48K</li>
                 <li><code>roms/128.rom</code> - ZX Spectrum 128K</li>
+                <li><code>roms/plus2.rom</code> - ZX Spectrum +2</li>
                 <li><code>roms/pentagon.rom</code> - Pentagon 128K</li>
                 <li><code>roms/trdos.rom</code> - TR-DOS 5.03/5.04t (for TRD/SCL disk images)</li>
             </ul>
@@ -5314,6 +5341,14 @@
             </div>
             
             <div class="rom-section">
+                <h4>+2 ROM (Optional)</h4>
+                <div class="rom-buttons">
+                    <button id="btnSelectPlus2Rom">Select plus2.rom</button>
+                </div>
+                <div class="rom-status" id="statusPlus2Rom">Not loaded (+2 mode unavailable)</div>
+            </div>
+
+            <div class="rom-section">
                 <h4>Pentagon ROM (Optional)</h4>
                 <div class="rom-buttons">
                     <button id="btnSelectPentagonRom">Select pentagon.rom</button>
@@ -5331,6 +5366,7 @@
 
             <div class="modal-actions">
                 <button id="btnStartEmulator" class="primary" disabled>Start Emulator</button>
+                <button id="btnCloseRomModal" class="hidden">Close</button>
             </div>
             
             <p class="modal-hint">
@@ -5392,6 +5428,7 @@
             <select id="machineSelect" class="toolbar-select" title="Select machine type">
                 <option value="48k">ZX Spectrum 48K</option>
                 <option value="128k">ZX Spectrum 128K</option>
+                <option value="+2">ZX Spectrum +2</option>
                 <option value="pentagon">Pentagon 128K</option>
             </select>
             <select id="loadSelect" class="toolbar-select" title="Load file" style="width:auto;padding:4px 6px;">
@@ -5409,7 +5446,7 @@
                 <option value="project">Project</option>
                 <option value="quick">Quick (F2)</option>
             </select>
-            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.18 — Help">Help</button>
+            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.20 — Help">Help</button>
             <button id="themeToggle" class="theme-btn" title="Toggle light/dark theme">☀️</button>
             <input type="file" id="projectFileInput" class="file-input" accept=".zxproj,.json">
         </div>
@@ -5473,6 +5510,7 @@
         </div>
         <input type="file" id="rom48Input" class="file-input" accept=".rom,.bin">
         <input type="file" id="rom128Input" class="file-input" accept=".rom,.bin">
+        <input type="file" id="romPlus2Input" class="file-input" accept=".rom,.bin">
         <input type="file" id="romPentagonInput" class="file-input" accept=".rom,.bin">
         <input type="file" id="romTrdosInput" class="file-input" accept=".rom,.bin">
         <input type="file" id="fileInput" class="file-input" accept=".sna,.tap,.tzx,.z80,.szx,.zip,.rzx,.trd,.scl">
@@ -6371,7 +6409,7 @@ start:
                     </div>
 
                     <div class="info-section">
-                        <h4>Memory Map (128K/Pentagon)</h4>
+                        <h4>Memory Map (128K/+2/Pentagon)</h4>
                         <table class="info-table">
                             <thead>
                                 <tr><th>Address</th><th>Content</th><th>Contention</th></tr>
@@ -6629,12 +6667,19 @@ start:
             <div class="settings-tab-content">
                 <div class="settings-section">
                     <div class="settings-row">
+                        <label style="min-width: 80px;">Last File:</label>
+                        <span id="lastLoadedFile" style="color: var(--cyan); font-size: 11px;">—</span>
+                    </div>
+                    <div class="settings-row">
                         <label class="checkbox-label" title="Flash load = instant (trap), unchecked = real-time with border stripes and sound">
                             <input type="checkbox" id="chkFlashLoad" checked> Flash Load
                         </label>
                         <span id="tapeLoadMode" style="margin-left: 10px; color: var(--text-dim); font-size: 11px;">(instant)</span>
                         <label class="checkbox-label" title="Enable tape loading sounds (real-time mode)" style="margin-left: 15px;">
                             <input type="checkbox" id="chkTapeAudio" checked> Tape Sound
+                        </label>
+                        <label class="checkbox-label" title="Automatically type LOAD &quot;&quot; for tape files, boot TR-DOS for disk images" style="margin-left: 15px;">
+                            <input type="checkbox" id="chkAutoLoad" checked> Auto Load
                         </label>
                     </div>
                     <div class="settings-row">
@@ -6658,6 +6703,14 @@ start:
                     </div>
                     <div class="settings-row">
                         <span id="bootTrdName" style="color: var(--text-dim); font-size: 11px; margin-left: 80px;">No boot file selected</span>
+                    </div>
+                    <div id="mediaCatalogContainer" style="display: none; margin-top: 6px;">
+                        <div class="media-catalog-bar" id="mediaCatalogBar">
+                            <button class="media-catalog-btn" id="mediaCatalogTapeBtn" data-catalog="tape" style="display: none;">Tape</button>
+                            <button class="media-catalog-btn" id="mediaCatalogDiskBtn" data-catalog="disk" style="display: none;">Disk</button>
+                        </div>
+                        <div id="tapeCatalog" style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 11px; display: none; border: 1px solid var(--border); border-top: none; border-radius: 0 0 3px 3px; padding: 2px 0;"></div>
+                        <div id="diskCatalog" style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 11px; display: none; border: 1px solid var(--border); border-top: none; border-radius: 0 0 3px 3px; padding: 2px 0;"></div>
                     </div>
                 </div>
             </div>
@@ -7429,7 +7482,7 @@ start:
     <div class="fullhelp-dialog hidden" id="fullHelpDialog">
         <div class="fullhelp-content">
             <div class="fullhelp-header">
-                <h3>ZX-M8XXX <span class="help-version">v0.9.18</span> Help</h3>
+                <h3>ZX-M8XXX <span class="help-version">v0.9.20</span> Help</h3>
                 <button class="fullhelp-close" id="btnFullHelpClose">&times;</button>
             </div>
             <div class="fullhelp-body">
@@ -7457,8 +7510,8 @@ start:
                     <h5>Features</h5>
                     <ul>
                         <li>Full Z80 CPU emulation (all documented + undocumented opcodes)</li>
-                        <li>48K, 128K, and Pentagon machine support</li>
-                        <li>Memory banking (128K/Pentagon)</li>
+                        <li>48K, 128K, +2, and Pentagon machine support</li>
+                        <li>Memory banking (128K/+2/Pentagon)</li>
                         <li>ULA video generation with border</li>
                         <li>ULAplus extended palette (64 colors, HAM256 raster effects)</li>
                         <li>Memory contention emulation</li>
@@ -7478,7 +7531,7 @@ start:
                     </ul>
                     <h5>Quick Start</h5>
                     <ol>
-                        <li>Place ROM files in <code>roms/</code> directory (48.rom, 128.rom, pentagon.rom, trdos.rom)</li>
+                        <li>Place ROM files in <code>roms/</code> directory (48.rom, 128.rom, plus2.rom, pentagon.rom, trdos.rom)</li>
                         <li>Open index.html in a modern browser</li>
                         <li>Use Load → Web to browse and download games online</li>
                         <li>Or Load → File to load SNA/Z80/SZX snapshots, TAP/TZX tapes, TRD/SCL disks</li>
@@ -7809,7 +7862,7 @@ start:
                     <table>
                         <tr><td><strong>SNA</strong></td><td>48K/128K - simple format, widely supported</td></tr>
                         <tr><td><strong>SZX</strong></td><td>Spectaculator format with zlib compression</td></tr>
-                        <tr><td><strong>Z80</strong></td><td>v1/v2/v3 load, v3 save (48K/128K/Pentagon)</td></tr>
+                        <tr><td><strong>Z80</strong></td><td>v1/v2/v3 load, v3 save (48K/128K/+2/Pentagon)</td></tr>
                     </table>
                     <h5>Quicksave / Quickload</h5>
                     <p>Instant state save/restore during gameplay using browser localStorage.</p>
@@ -8024,7 +8077,7 @@ start:
             "id": "unique-id",
             "name": "Display Name",
             "file": "tests/program.tap",
-            "machine": "48k",           // 48k, 128k, pentagon
+            "machine": "48k",           // 48k, 128k, +2, pentagon
             "earlyTimings": true,       // Use early ULA timings
             "ulaplus": false,           // Enable ULAplus (default: false)
             "palette": "default",       // Color palette
@@ -8199,7 +8252,7 @@ start:
 window.spectrum
 
 // Get version
-Spectrum.VERSION
+APP_VERSION
 
 // Memory access
 spectrum.peek(0x4000)
@@ -8294,6 +8347,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
     <div class="drop-zone" id="dropZone">Drop ROM or Snapshot here</div>
 
+    <script>
+        function is128kCompat(type) { return type === '128k' || type === '+2'; }
+    </script>
+
     <!-- Load modules in dependency order -->
     <script src="pako.min.js"></script>
     <script src="z80.js"></script>
@@ -8320,9 +8377,34 @@ labelManager.importJSON(jsonStr, merge)</pre>
     <script src="sjasmplus/assembler.js"></script>
     
     <script>
-        const APP_VERSION = '0.9.18';
+        const APP_VERSION = '0.9.20';
         console.log('ZX-M8XXX v' + APP_VERSION);
-        
+
+        // Auto Load timing constants (ms)
+        const AUTO_LOAD_ROM_WAIT     = 3000;  // Wait for ROM init after reset
+        const AUTO_LOAD_128K_WAIT    = 1500;  // Extra wait after 128K menu "1" press
+        const AUTO_LOAD_KEY_HOLD     = 200;   // How long to hold each key
+        const AUTO_LOAD_KEY_GAP      = 150;   // Gap between keypresses
+
+        // Tape header constants
+        const TAPE_STD_PILOT_PULSE   = 2168;  // Standard pilot pulse length (T-states)
+        const TAPE_TURBO_TOLERANCE   = 50;    // Deviation from standard to classify as turbo
+        const TAPE_STD_FLAG          = 0x00;  // Flag byte for standard header blocks
+        const TAPE_HDR_MIN_LENGTH    = 18;    // Minimum data length for a valid header
+        const TAPE_HDR_TYPE_PROGRAM  = 0;
+        const TAPE_HDR_TYPE_NUM_ARR  = 1;
+        const TAPE_HDR_TYPE_CHR_ARR  = 2;
+        const TAPE_HDR_TYPE_BYTES    = 3;
+
+        // TRD disk geometry
+        const TRD_SECTOR_SIZE        = 256;
+        const TRD_SECTOR9_OFFSET     = 8 * TRD_SECTOR_SIZE;  // Sector 9 (system info)
+        const TRD_FREE_SECS_LO      = 0xE5;  // Offset within sector 9
+        const TRD_FREE_SECS_HI      = 0xE6;
+        const TRD_LABEL_OFFSET       = 0xF5;  // Disk label start within sector 9
+        const TRD_LABEL_LENGTH       = 8;
+        const TRD_MIN_IMAGE_SIZE     = 0x8E7; // Minimum size to have valid system sector
+
         // Help modal
         const helpModal = document.getElementById('helpModal');
         const btnHelpClose = document.getElementById('btnHelpClose');
@@ -12562,6 +12644,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 const machineMap = {
                     '48k': '48k',
                     '128k': '128k',
+                    '+2': '+2',
                     'pentagon': 'pentagon',
                     'p128': 'pentagon'
                 };
@@ -12573,6 +12656,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     // Load appropriate ROM for the new machine type
                     if (targetMachine === '48k' && rom48Data) {
                         this.spectrum.memory.loadRom(rom48Data, 0);
+                        this.spectrum.romLoaded = true;
+                    } else if (targetMachine === '+2' && romPlus2Data) {
+                        this.spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                        this.spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
                         this.spectrum.romLoaded = true;
                     } else if (targetMachine === '128k' && rom128Data) {
                         this.spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
@@ -12606,6 +12693,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 const machineType = this.spectrum.machineType;
                 if (machineType === '48k' && rom48Data) {
                     this.spectrum.memory.loadRom(rom48Data, 0);
+                    this.spectrum.romLoaded = true;
+                } else if (machineType === '+2' && romPlus2Data) {
+                    this.spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                    this.spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
                     this.spectrum.romLoaded = true;
                 } else if (machineType === '128k' && rom128Data) {
                     this.spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
@@ -12742,7 +12833,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 const mem = this.spectrum.memory;
                 const cpu = this.spectrum.cpu;
                 const ula = this.spectrum.ula;
-                const is128K = this.spectrum.machineType === '128k';
+                const is128K = is128kCompat(this.spectrum.machineType);
 
                 if (is128K) {
                     // 128K mode: select 128 BASIC from menu, then type LOAD "" like 48K
@@ -13716,6 +13807,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         // ROM storage
         let rom48Data = null;
         let rom128Data = null;
+        let romPlus2Data = null;
         let romPentagonData = null;
         let romTrdosData = null;  // Separate TR-DOS ROM (16KB)
 
@@ -13724,6 +13816,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
             const romPaths = [
                 { path: 'roms/48.rom', type: '48k' },
                 { path: 'roms/128.rom', type: '128k' },
+                { path: 'roms/plus2.rom', type: 'plus2' },
                 { path: 'roms/pentagon.rom', type: 'pentagon' },
                 { path: 'roms/trdos.rom', type: 'trdos' }
             ];
@@ -13735,6 +13828,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         const data = await response.arrayBuffer();
                         if (rom.type === '48k') rom48Data = data;
                         else if (rom.type === '128k') rom128Data = data;
+                        else if (rom.type === 'plus2') romPlus2Data = data;
                         else if (rom.type === 'pentagon') romPentagonData = data;
                         else if (rom.type === 'trdos') romTrdosData = data;
                         console.log(`Loaded ${rom.path}`);
@@ -13789,14 +13883,17 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const romModal = document.getElementById('romModal');
         const btnSelect48Rom = document.getElementById('btnSelect48Rom');
         const btnSelect128Rom = document.getElementById('btnSelect128Rom');
+        const btnSelectPlus2Rom = document.getElementById('btnSelectPlus2Rom');
         const btnSelectPentagonRom = document.getElementById('btnSelectPentagonRom');
         const btnSelectTrdosRom = document.getElementById('btnSelectTrdosRom');
         const btnStartEmulator = document.getElementById('btnStartEmulator');
         const status48Rom = document.getElementById('status48Rom');
         const status128Rom = document.getElementById('status128Rom');
+        const statusPlus2Rom = document.getElementById('statusPlus2Rom');
         const statusPentagonRom = document.getElementById('statusPentagonRom');
         const rom48Input = document.getElementById('rom48Input');
         const rom128Input = document.getElementById('rom128Input');
+        const romPlus2Input = document.getElementById('romPlus2Input');
         const romPentagonInput = document.getElementById('romPentagonInput');
         const romTrdosInput = document.getElementById('romTrdosInput');
         
@@ -19007,13 +19104,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
                 // Parse embedded snapshot for registers
                 if (result.snapshot && result.snapshotType) {
-                    console.log('[RZX Explorer] Snapshot type:', result.snapshotType, 'size:', result.snapshot.length);
                     if (result.snapshotType === 'sna') {
                         result.embeddedParsed = explorerParseSNA(result.snapshot);
                     } else if (result.snapshotType === 'z80') {
                         result.embeddedParsed = explorerParseZ80(result.snapshot);
-                        console.log('[RZX Explorer] Z80 parsed:', 'version:', result.embeddedParsed.version,
-                            'hwMode:', result.embeddedParsed.hwMode, 'pages:', result.embeddedParsed.pages);
                     }
                 }
 
@@ -19954,7 +20048,6 @@ labelManager.importJSON(jsonStr, merge)</pre>
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            console.log(`Extracted snapshot #${index + 1}: ${ext.toUpperCase()}, ${snapshot.length} bytes`);
         }
 
         // Decode RZX input value to human-readable format
@@ -23985,7 +24078,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 }
 
                 const deviceName = AsmMemory.getDeviceName();
-                const emulatorIs128K = spectrum.memory.machineType === '128k' || spectrum.memory.machineType === 'pentagon';
+                const emulatorIs128K = is128kCompat(spectrum.memory.machineType) || spectrum.memory.machineType === 'pentagon';
 
                 // Check if we have paged assembly (DEVICE directive used)
                 if (deviceName === 'ZXSPECTRUM128' || deviceName === 'ZXSPECTRUM512' || deviceName === 'ZXSPECTRUM1024') {
@@ -25755,12 +25848,13 @@ labelManager.importJSON(jsonStr, merge)</pre>
             const deviceMap = {
                 '48k': 'ZXSPECTRUM48',
                 '128k': 'ZXSPECTRUM128',
+                '+2': 'ZXSPECTRUM128',      // +2 uses 128K memory model
                 'pentagon': 'ZXSPECTRUM128'  // Pentagon uses 128K memory model
             };
             const device = deviceMap[spectrum.machineType] || 'ZXSPECTRUM48';
 
             // Header with DEVICE
-            lines.push('; Disassembly exported from ZX-M8XXX');
+            lines.push('; Disassembly exported from ZX-M8XXX v' + APP_VERSION);
             lines.push(`; Date: ${timestamp}`);
             lines.push(`; Machine: ${spectrum.machineType.toUpperCase()}`);
             if (usingSnapshot) {
@@ -26059,7 +26153,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
             blocks.push({ start: blockStart, end: blockEnd });
 
             // Check for 128K paged memory (addresses >= 0xC000)
-            const is128K = spectrum.machineType === '128k' || spectrum.machineType === 'pentagon';
+            const is128K = is128kCompat(spectrum.machineType) || spectrum.machineType === 'pentagon';
             let currentBank = -1;
 
             // Generate disassembly for each block
@@ -26669,7 +26763,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 String(now.getMinutes()).padStart(2, '0') + ':' +
                 String(now.getSeconds()).padStart(2, '0');
 
-            let output = '; Disassembly exported from ZX-M8XXX\n';
+            let output = '; Disassembly exported from ZX-M8XXX v' + APP_VERSION + '\n';
             output += `; Date: ${datetime}\n`;
             if (labelManager.currentFile) {
                 output += `; Source: ${labelManager.currentFile}\n`;
@@ -27038,6 +27132,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 status128Rom.classList.remove('loaded');
             }
 
+            if (romPlus2Data) {
+                statusPlus2Rom.textContent = '✓ Loaded (' + (romPlus2Data.byteLength / 1024) + 'KB)';
+                statusPlus2Rom.classList.add('loaded');
+            } else {
+                statusPlus2Rom.textContent = 'Not loaded (+2 mode unavailable)';
+                statusPlus2Rom.classList.remove('loaded');
+            }
+
             if (romPentagonData) {
                 statusPentagonRom.textContent = '✓ Loaded (' + (romPentagonData.byteLength / 1024) + 'KB)';
                 statusPentagonRom.classList.add('loaded');
@@ -27064,6 +27166,8 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 rom48Data = data;
             } else if (type === '128k') {
                 rom128Data = data;
+            } else if (type === 'plus2') {
+                romPlus2Data = data;
             } else if (type === 'pentagon') {
                 romPentagonData = data;
             } else if (type === 'trdos') {
@@ -27078,14 +27182,13 @@ labelManager.importJSON(jsonStr, merge)</pre>
             } else if (spectrum.machineType === '128k' && rom128Data) {
                 spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
                 spectrum.memory.loadRom(rom128Data.slice(16384, 32768), 1);
+            } else if (spectrum.machineType === '+2' && romPlus2Data) {
+                spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
             } else if (spectrum.machineType === 'pentagon' && romPentagonData) {
                 // Pentagon ROM: first 16KB = 128K ROM (bank 0), second 16KB = 48K ROM (bank 1)
-                console.log('[ROM] Loading Pentagon ROM:', romPentagonData.byteLength, 'bytes');
                 spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
                 spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
-                // Verify: Bank 1 (48K ROM) should have CALL 386E at 0x004A (opcode CD)
-                const byte4A_bank1 = spectrum.memory.rom[1][0x4A];
-                console.log('[ROM] Bank 1 (48K ROM) at 0x004A:', byte4A_bank1.toString(16), byte4A_bank1 === 0xCD ? '(CALL - correct)' : '(unexpected)');
             }
             // Load TR-DOS ROM if available (for Beta Disk interface on any machine)
             if (romTrdosData && (spectrum.machineType === 'pentagon' || spectrum.betaDiskEnabled)) {
@@ -27100,6 +27203,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
         function initializeEmulator() {
             // Validate saved machine type has required ROM, fallback to 48k if not
             if (spectrum.machineType === '128k' && !rom128Data) {
+                spectrum.setMachineType('48k');
+                if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
+            } else if (spectrum.machineType === '+2' && !romPlus2Data) {
                 spectrum.setMachineType('48k');
                 if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
             } else if (spectrum.machineType === 'pentagon' && !romPentagonData) {
@@ -27125,6 +27231,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         // ROM Modal handlers
         btnSelect48Rom.addEventListener('click', () => rom48Input.click());
         btnSelect128Rom.addEventListener('click', () => rom128Input.click());
+        btnSelectPlus2Rom.addEventListener('click', () => romPlus2Input.click());
         btnSelectPentagonRom.addEventListener('click', () => romPentagonInput.click());
         if (btnSelectTrdosRom) btnSelectTrdosRom.addEventListener('click', () => romTrdosInput.click());
         
@@ -27148,6 +27255,16 @@ labelManager.importJSON(jsonStr, merge)</pre>
             rom128Input.value = '';
         });
         
+        romPlus2Input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const data = await file.arrayBuffer();
+                await loadRomFile(data, 'plus2');
+                showMessage('+2 ROM loaded');
+            }
+            romPlus2Input.value = '';
+        });
+
         romPentagonInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -27174,7 +27291,12 @@ labelManager.importJSON(jsonStr, merge)</pre>
         btnStartEmulator.addEventListener('click', () => {
             initializeEmulator();
         });
-        
+
+        const btnCloseRomModal = document.getElementById('btnCloseRomModal');
+        btnCloseRomModal.addEventListener('click', () => {
+            romModal.classList.add('hidden');
+        });
+
         // Allow dropping ROMs on modal
         romModal.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -27196,6 +27318,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 if (typeof updateBetaDiskStatus === 'function') {
                     updateBetaDiskStatus();
                 }
+            } else if (name.includes('plus2') || name.includes('+2')) {
+                await loadRomFile(data, 'plus2');
+                showMessage('+2 ROM loaded');
             } else if (name.includes('pentagon')) {
                 await loadRomFile(data, 'pentagon');
                 showMessage('Pentagon ROM loaded');
@@ -28891,11 +29016,15 @@ labelManager.importJSON(jsonStr, merge)</pre>
         
         btnReset.addEventListener('click', () => {
             if (!confirm('Reset machine? This will lose current state.')) return;
+            cancelAutoLoad();
             spectrum.reset();
             // Hide media indicators (tape/disk cleared on reset)
             diskActivityEl.style.display = 'none';
             document.getElementById('tapeInfo').style.display = 'none';
             document.getElementById('diskInfo').style.display = 'none';
+            if (tapeCatalogEl) { tapeCatalogEl.innerHTML = ''; }
+            if (diskCatalogEl) { diskCatalogEl.innerHTML = ''; }
+            if (mediaCatalogContainer) { mediaCatalogContainer.style.display = 'none'; }
             showMessage('Machine reset');
         });
 
@@ -29093,7 +29222,8 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         overlayMode: overlaySelect.value,
                         fullscreenMode: fullscreenMode.value,
                         tapeFlashLoad: spectrum.getTapeFlashLoad(),
-                        tapeAudioEnabled: spectrum.tapeAudioEnabled
+                        tapeAudioEnabled: spectrum.tapeAudioEnabled,
+                        autoLoad: chkAutoLoad.checked
                     },
                     // CPU timing state (not stored in SNA format)
                     cpuTiming: {
@@ -29493,6 +29623,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         document.getElementById('chkTapeAudio').checked = project.settings.tapeAudioEnabled;
                         spectrum.tapeAudioEnabled = project.settings.tapeAudioEnabled;
                     }
+                    if (project.settings.autoLoad !== undefined) {
+                        document.getElementById('chkAutoLoad').checked = project.settings.autoLoad;
+                    }
                 }
 
                 // Restore CPU timing state (tStates, halted, IFF)
@@ -29574,6 +29707,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         if (project.media.tapeBlock !== undefined) {
                             spectrum.setTapeBlock(project.media.tapeBlock);
                         }
+                        // Rebuild disk catalog for TRD/SCL media
+                        if (project.media.type === 'trd' || project.media.type === 'scl') {
+                            const Loader = project.media.type === 'trd' ? TRDLoader : SCLLoader;
+                            try { spectrum.loadedDiskFiles = Loader.listFiles(mediaData); } catch (e2) {}
+                            buildDiskCatalog();
+                        }
+                        // Rebuild tape catalog
+                        buildTapeCatalog();
                     } catch (e) {
                         console.warn('Failed to restore media:', e);
                     }
@@ -29689,20 +29830,20 @@ labelManager.importJSON(jsonStr, merge)</pre>
         });
         
         machineSelect.addEventListener('change', () => {
+            cancelAutoLoad();
             const type = machineSelect.value;
-            
-            // Check if we have the required ROM
-            if (type === '128k' && !rom128Data) {
-                showMessage('128K ROM not loaded.', 'error');
+
+            // Check if we have the required ROM - open ROM dialog if not
+            if ((type === '128k' && !rom128Data) ||
+                (type === '+2' && !romPlus2Data) ||
+                (type === 'pentagon' && !romPentagonData)) {
+                showMessage(type.toUpperCase() + ' ROM not loaded. Please select the ROM file.', 'error');
                 machineSelect.value = spectrum.machineType;
+                btnCloseRomModal.classList.remove('hidden');
+                romModal.classList.remove('hidden');
                 return;
             }
-            if (type === 'pentagon' && !romPentagonData) {
-                showMessage('Pentagon ROM not loaded.', 'error');
-                machineSelect.value = spectrum.machineType;
-                return;
-            }
-            
+
             const wasRunning = spectrum.isRunning();
             if (wasRunning) spectrum.stop();
             
@@ -30078,6 +30219,163 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const tapeLoadModeEl = document.getElementById('tapeLoadMode');
         const tapePositionEl = document.getElementById('tapePosition');
         const tapeProgressEl = document.getElementById('tapeProgress');
+        const tapeCatalogEl = document.getElementById('tapeCatalog');
+        const diskCatalogEl = document.getElementById('diskCatalog');
+        const mediaCatalogContainer = document.getElementById('mediaCatalogContainer');
+        const mediaCatalogTapeBtn = document.getElementById('mediaCatalogTapeBtn');
+        const mediaCatalogDiskBtn = document.getElementById('mediaCatalogDiskBtn');
+
+        function selectCatalogTab(which) {
+            const isTape = which === 'tape';
+            mediaCatalogTapeBtn.classList.toggle('active', isTape);
+            mediaCatalogDiskBtn.classList.toggle('active', !isTape);
+            tapeCatalogEl.style.display = isTape ? 'block' : 'none';
+            diskCatalogEl.style.display = !isTape ? 'block' : 'none';
+        }
+
+        function updateCatalogTabs(activate) {
+            const hasTape = tapeCatalogEl.children.length > 0;
+            const hasDisk = diskCatalogEl.children.length > 0;
+            mediaCatalogTapeBtn.style.display = hasTape ? '' : 'none';
+            mediaCatalogDiskBtn.style.display = hasDisk ? '' : 'none';
+            if (!hasTape && !hasDisk) {
+                mediaCatalogContainer.style.display = 'none';
+                return;
+            }
+            mediaCatalogContainer.style.display = 'block';
+            if (activate === 'tape' && hasTape) selectCatalogTab('tape');
+            else if (activate === 'disk' && hasDisk) selectCatalogTab('disk');
+            else if (hasTape && !hasDisk) selectCatalogTab('tape');
+            else if (hasDisk && !hasTape) selectCatalogTab('disk');
+        }
+
+        mediaCatalogTapeBtn.addEventListener('click', () => selectCatalogTab('tape'));
+        mediaCatalogDiskBtn.addEventListener('click', () => selectCatalogTab('disk'));
+
+        function describeTapeBlock(block, index) {
+            if (!block) return `${index}: ?`;
+            const num = String(index + 1).padStart(2, ' ');
+            if (block.type === 'pause') return `${num}  Pause ${block.pauseMs || 0}ms`;
+            if (block.type === 'stop') return `${num}  Stop Tape`;
+            if (block.type !== 'data') return `${num}  ${block.type}`;
+            const isTurbo = block.pilotPulse && Math.abs(block.pilotPulse - TAPE_STD_PILOT_PULSE) >= TAPE_TURBO_TOLERANCE;
+            const prefix = isTurbo ? 'Turbo' : 'Std';
+            const size = block.data ? block.data.length : block.length || 0;
+            // Decode standard header
+            if (!isTurbo && block.flag === TAPE_STD_FLAG && block.data && block.data.length >= TAPE_HDR_MIN_LENGTH) {
+                const d = block.data;
+                const hdrType = d[1];
+                let name = '';
+                for (let i = 2; i < 12; i++) name += String.fromCharCode(d[i] & 0x7f);
+                name = name.trimEnd();
+                if (hdrType === TAPE_HDR_TYPE_PROGRAM) return `${num}  Header: Program "${name}"`;
+                if (hdrType === TAPE_HDR_TYPE_BYTES) return `${num}  Header: Bytes "${name}"`;
+                if (hdrType === TAPE_HDR_TYPE_NUM_ARR) return `${num}  Header: Num Array "${name}"`;
+                if (hdrType === TAPE_HDR_TYPE_CHR_ARR) return `${num}  Header: Char Array "${name}"`;
+                return `${num}  Header: "${name}"`;
+            }
+            return `${num}  ${prefix} Data (${size} bytes)`;
+        }
+
+        function buildTapeCatalog() {
+            const blocks = spectrum.tapePlayer.blocks;
+            tapeCatalogEl.innerHTML = '';
+            if (!blocks || blocks.length === 0) {
+                updateCatalogTabs(null);
+                return;
+            }
+            for (let i = 0; i < blocks.length; i++) {
+                const row = document.createElement('div');
+                row.className = 'tape-catalog-row';
+                row.dataset.index = i;
+                row.textContent = describeTapeBlock(blocks[i], i);
+                row.style.cssText = 'padding: 1px 6px; cursor: pointer; white-space: nowrap;';
+                row.addEventListener('click', () => {
+                    spectrum.tapePlayer.setBlock(i);
+                    updateTapePosition();
+                    updateTapeCatalogHighlight();
+                });
+                tapeCatalogEl.appendChild(row);
+            }
+            updateTapeCatalogHighlight();
+            updateCatalogTabs('tape');
+        }
+
+        function updateTapeCatalogHighlight() {
+            const rows = tapeCatalogEl.children;
+            const current = spectrum.tapePlayer.currentBlock;
+            const playing = spectrum.tapePlayer.isPlaying();
+            for (let i = 0; i < rows.length; i++) {
+                if (i === current) {
+                    rows[i].style.background = 'var(--accent)';
+                    rows[i].style.color = 'var(--bg-primary)';
+                } else if (i < current) {
+                    rows[i].style.background = '';
+                    rows[i].style.color = 'var(--text-dim)';
+                } else {
+                    rows[i].style.background = '';
+                    rows[i].style.color = 'var(--text-primary)';
+                }
+            }
+        }
+
+        function buildDiskCatalog() {
+            diskCatalogEl.innerHTML = '';
+            const files = spectrum.loadedDiskFiles;
+            if (!files || files.length === 0) {
+                updateCatalogTabs(null);
+                return;
+            }
+
+            // Header row with disk info
+            const header = document.createElement('div');
+            header.style.cssText = 'padding: 1px 6px; white-space: nowrap; color: var(--cyan); border-bottom: 1px solid var(--bg-secondary); margin-bottom: 2px;';
+            const media = spectrum.loadedMedia;
+            let headerText = '';
+            if (media && media.type === 'trd' && media.data && media.data.length > TRD_MIN_IMAGE_SIZE) {
+                const d = media.data;
+                const freeSectors = d[TRD_SECTOR9_OFFSET + TRD_FREE_SECS_LO] | (d[TRD_SECTOR9_OFFSET + TRD_FREE_SECS_HI] << 8);
+                const freeKB = Math.floor(freeSectors * TRD_SECTOR_SIZE / 1024);
+                let label = '';
+                for (let i = 0; i < TRD_LABEL_LENGTH; i++) {
+                    const ch = d[TRD_SECTOR9_OFFSET + TRD_LABEL_OFFSET + i];
+                    if (ch >= 0x20 && ch < 0x80) label += String.fromCharCode(ch);
+                }
+                label = label.trim();
+                headerText = '\u{1F4BE} ' + (media.name || 'TRD');
+                if (label) headerText += ' [' + label + ']';
+                headerText += ' \u2014 ' + files.length + ' files, ' + freeKB + 'K free';
+            } else {
+                headerText = '\u{1F4BE} ' + ((media && media.name) || 'Disk') + ' \u2014 ' + files.length + ' files';
+            }
+            header.textContent = headerText;
+            diskCatalogEl.appendChild(header);
+
+            // File rows
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const row = document.createElement('div');
+                row.style.cssText = 'padding: 1px 6px; white-space: nowrap;';
+                const num = String(i + 1).padStart(2, ' ');
+                const name = f.name.padEnd(8, ' ');
+                const startHex = f.start.toString(16).toUpperCase().padStart(4, '0');
+                const size = String(f.length).padStart(5, ' ');
+                const secs = String(f.sectors).padStart(3, ' ');
+                row.textContent = num + '  ' + name + '.' + f.ext + '  ' + startHex + 'h ' + size + 'b ' + secs + 's';
+                const isBoot = f.name.trim().toLowerCase() === 'boot';
+                if (isBoot) {
+                    row.style.color = 'var(--cyan)';
+                    row.title = 'Boot file (auto-run on TR-DOS startup)';
+                }
+                diskCatalogEl.appendChild(row);
+            }
+            updateCatalogTabs('disk');
+        }
+
+        function clearDiskCatalog() {
+            diskCatalogEl.innerHTML = '';
+            updateCatalogTabs(null);
+        }
 
         function updateTapePosition() {
             const pos = spectrum.getTapePosition();
@@ -30100,6 +30398,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     tapeProgressEl.textContent = '';
                 }
             }
+            updateTapeCatalogHighlight();
         }
 
         // Set up TapePlayer callbacks
@@ -30129,6 +30428,113 @@ labelManager.importJSON(jsonStr, merge)</pre>
         // Initialize flash load state from checkbox on page load
         spectrum.setTapeFlashLoad(chkFlashLoad.checked);
         tapeLoadModeEl.textContent = chkFlashLoad.checked ? '(instant)' : '(real-time)';
+
+        // Auto Load engine
+        const chkAutoLoad = document.getElementById('chkAutoLoad');
+        let autoLoadTimers = [];
+        let autoLoadActive = false;
+
+        function cancelAutoLoad() {
+            for (const id of autoLoadTimers) clearTimeout(id);
+            autoLoadTimers = [];
+            if (autoLoadActive) {
+                spectrum.ula.keyboardState.fill(0xFF);
+                autoLoadActive = false;
+            }
+        }
+
+        function autoLoadTimeout(fn, delay) {
+            const id = setTimeout(() => {
+                const idx = autoLoadTimers.indexOf(id);
+                if (idx >= 0) autoLoadTimers.splice(idx, 1);
+                fn();
+            }, delay);
+            autoLoadTimers.push(id);
+        }
+
+        function startAutoLoadTape(isTzx) {
+            cancelAutoLoad();
+            autoLoadActive = true;
+            const is128K = spectrum.machineType !== '48k';
+            const ula = spectrum.ula;
+
+            // Reset (tape data survives reset - only rewinds)
+            spectrum.stop();
+            spectrum.reset();
+            spectrum.start();
+
+            let t = 0;
+
+            if (is128K) {
+                // Wait for 128K menu, press "1" for BASIC
+                t += AUTO_LOAD_ROM_WAIT;
+                autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyDown('1'); }, t);
+                t += AUTO_LOAD_KEY_HOLD;
+                autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyUp('1'); ula.keyboardState.fill(0xFF); }, t);
+                t += AUTO_LOAD_128K_WAIT;
+            } else {
+                t += AUTO_LOAD_ROM_WAIT;
+            }
+
+            // J = LOAD
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyDown('j'); }, t);
+            t += AUTO_LOAD_KEY_HOLD;
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyUp('j'); ula.keyboardState.fill(0xFF); }, t);
+            t += AUTO_LOAD_KEY_GAP;
+
+            // Symbol+P = first "
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyDown('Alt'); ula.keyDown('p'); }, t);
+            t += AUTO_LOAD_KEY_HOLD;
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyUp('p'); ula.keyUp('Alt'); ula.keyboardState.fill(0xFF); }, t);
+            t += AUTO_LOAD_KEY_GAP;
+
+            // Symbol+P = second "
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyDown('Alt'); ula.keyDown('p'); }, t);
+            t += AUTO_LOAD_KEY_HOLD;
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyUp('p'); ula.keyUp('Alt'); ula.keyboardState.fill(0xFF); }, t);
+            t += AUTO_LOAD_KEY_GAP;
+
+            // For TZX + flash load: no wrapper needed. The loadTZX callback in
+            // spectrum.js sets _turboBlockPending after the last standard block before
+            // a turbo gap. The auto-start mechanism (portRead, line ~911) starts the
+            // tapePlayer when the custom loader first reads port 0xFE. This is the
+            // correct timing — the pilot starts exactly when the loader is ready.
+            //
+            // For pure turbo TZX (no standard blocks at all): disable flash load
+            // so the ROM's real tape routine reads via port 0xFE from the start.
+            if (isTzx && spectrum.getTapeFlashLoad() &&
+                spectrum.tapeLoader.getBlockCount() === 0 &&
+                spectrum.tapePlayer.hasMoreBlocks()) {
+                spectrum.setTapeFlashLoad(false);
+                chkFlashLoad.checked = false;
+                tapeLoadModeEl.textContent = '(real-time)';
+            }
+
+            // Enter
+            autoLoadTimeout(() => { if (!autoLoadActive) return; ula.keyDown('Enter'); }, t);
+            t += AUTO_LOAD_KEY_HOLD;
+            autoLoadTimeout(() => {
+                if (!autoLoadActive) return;
+                ula.keyUp('Enter');
+                ula.keyboardState.fill(0xFF);
+                if (!spectrum.getTapeFlashLoad()) {
+                    // Flash load off: start real-time tape playback
+                    if (!spectrum.tapePlayer.isPlaying()) {
+                        spectrum.playTape();
+                    }
+                }
+                // For TZX + flash load on: standard blocks load via trap,
+                // turbo blocks auto-start via _turboBlockPending in spectrum.js
+                autoLoadActive = false;
+            }, t);
+        }
+
+        function startAutoLoadDisk() {
+            cancelAutoLoad();
+            if (spectrum.bootTrdos()) {
+                spectrum.start();
+            }
+        }
 
         // Tape audio toggle
         const chkTapeAudio = document.getElementById('chkTapeAudio');
@@ -30181,6 +30587,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
             diskStatusEl.textContent = 'ready';
             diskLedEl.style.color = '';
             showMessage('Blank formatted disk inserted');
+            clearDiskCatalog();
         });
 
         // Boot TRD file selection
@@ -30730,13 +31137,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
             // Ensure context is resumed (browser autoplay policy)
             if (spectrum.audio && spectrum.audio.context) {
                 if (spectrum.audio.context.state === 'suspended') {
-                    console.log('Audio context suspended, attempting resume...');
                     try {
                         await spectrum.audio.context.resume();
-                        console.log('Audio context resumed, state:', spectrum.audio.context.state);
-                    } catch (e) {
-                        console.warn('Failed to resume audio context:', e);
-                    }
+                    } catch (e) { /* ignore */ }
                 }
             }
         }
@@ -32984,36 +33387,14 @@ PSG_DATA:
             localStorage.setItem('zx-theme', darkTheme ? 'dark' : 'light');
         });
         
-        // Handle disk image insertion with machine switch if needed
+        // Handle disk image insertion - requires Beta Disk to be available
         function handleDiskInserted(result, fileName) {
-            // Switch to Pentagon mode if needed
-            if (result.needsMachineSwitch && romPentagonData && romTrdosData) {
-                spectrum.stop();
-                spectrum.setMachineType('pentagon');
-                // Pentagon ROM: first 16KB = 48K ROM (bank 1), second 16KB = 128K ROM (bank 0)
-                spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
-                spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
-                spectrum.memory.loadTrdosRom(romTrdosData);
-                spectrum.trdosTrap.updateTrdosRomFlag();
-                spectrum.romLoaded = true;
-                spectrum.reset();
-
-                // Re-load disk into Beta Disk (was cleared by reset)
-                // Boot injection already applied during initial load via spectrum.onBeforeTrdLoad
-                spectrum.betaDisk.loadDisk(result._diskData, result.diskType);
-                // Re-setup TR-DOS trap handler
-                spectrum.trdosTrap.setDisk(result._diskData, result._diskFiles, result.diskType);
-
-                machineSelect.value = 'pentagon';
-                disasm = null; // Reset to use fresh memory reference
-                updateCanvasSize();
-                if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
-            } else if (result.needsMachineSwitch) {
-                // Beta Disk not available - need to enable it or switch to Pentagon
+            if (result.needsMachineSwitch) {
+                // Beta Disk not available on current machine - don't force machine switch
                 if (!romTrdosData) {
                     showMessage('TR-DOS ROM required for disk images. Load trdos.rom first.', 'error');
                 } else {
-                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon mode.', 'error');
+                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon mode for disk images.', 'error');
                 }
                 return;
             }
@@ -33035,20 +33416,33 @@ PSG_DATA:
 
         // Handle loaded result (shared between file input and ZIP selection)
         function handleLoadResult(result, fileName) {
+            // Cancel any in-progress auto load sequence
+            cancelAutoLoad();
+
             // Stop any running RZX playback when loading new file (unless this IS an RZX)
             if (result.frames === undefined && spectrum.isRZXPlaying()) {
                 spectrum.rzxStop();
                 updateRZXStatus();
             }
 
+            // Update last loaded file label
+            const lastFileEl = document.getElementById('lastLoadedFile');
+            if (lastFileEl) lastFileEl.textContent = fileName;
+
             // Update media indicators based on result type
             if (result.diskInserted || result.diskFile) {
                 updateMediaIndicator(fileName, 'disk');
+                if (typeof buildDiskCatalog === 'function') {
+                    buildDiskCatalog();
+                }
             } else if (result.blocks !== undefined) {
                 updateMediaIndicator(fileName, 'tape');
-                // Update tape position display
+                // Update tape position display and catalog
                 if (typeof updateTapePosition === 'function') {
                     updateTapePosition();
+                }
+                if (typeof buildTapeCatalog === 'function') {
+                    buildTapeCatalog();
                 }
             }
 
@@ -33064,10 +33458,18 @@ PSG_DATA:
             // Check result type by properties
             if (result.diskInserted) {
                 // TRD/SCL disk inserted into Beta Disk interface
-                if (!spectrum.isRunning()) spectrum.start();
-
-                const typeStr = result.diskType.toUpperCase();
-                showMessage(`${typeStr} disk inserted: ${result.diskName} (${result.fileCount} files). Select TR-DOS from menu, use LIST/LOAD/RUN commands.`);
+                // Auto-load only if Beta Disk is actually available on this machine
+                const canBootTrdos = spectrum.machineType === 'pentagon' ||
+                    (spectrum.betaDiskEnabled && spectrum.memory.hasTrdosRom());
+                if (chkAutoLoad.checked && canBootTrdos) {
+                    const typeStr = result.diskType.toUpperCase();
+                    showMessage(`${typeStr} disk inserted: ${result.diskName} (${result.fileCount} files). Auto booting TR-DOS...`);
+                    startAutoLoadDisk();
+                } else {
+                    if (!spectrum.isRunning()) spectrum.start();
+                    const typeStr = result.diskType.toUpperCase();
+                    showMessage(`${typeStr} disk inserted: ${result.diskName} (${result.fileCount} files). Select TR-DOS from menu, use LIST/LOAD/RUN commands.`);
+                }
             } else if (result.diskFile) {
                 // TRD/SCL disk file - ensure emulator is running
                 if (!spectrum.isRunning()) spectrum.start();
@@ -33095,8 +33497,14 @@ PSG_DATA:
                     }
                 }
             } else if (result.blocks !== undefined) {
-                // TAP file
-                showMessage(`TAP loaded: ${result.blocks} blocks. Type LOAD "" to load.`);
+                // TAP/TZX file
+                const isTzx = /\.tzx/i.test(fileName);
+                if (chkAutoLoad.checked) {
+                    showMessage(`${isTzx ? 'TZX' : 'TAP'} loaded: ${result.blocks} blocks. Auto loading...`);
+                    startAutoLoadTape(isTzx);
+                } else {
+                    showMessage(`${isTzx ? 'TZX' : 'TAP'} loaded: ${result.blocks} blocks. Type LOAD "" to load.`);
+                }
             } else if (result.frames !== undefined) {
                 // RZX file - stop immediately and show debugger
                 spectrum.stop();
@@ -33107,6 +33515,10 @@ PSG_DATA:
                     if (result.machineType === 'pentagon' && romPentagonData) {
                         spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
                         spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                        spectrum.romLoaded = true;
+                    } else if (result.machineType === '+2' && romPlus2Data) {
+                        spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                        spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
                         spectrum.romLoaded = true;
                     } else if (result.machineType === '128k' && rom128Data) {
                         spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
@@ -33139,6 +33551,11 @@ PSG_DATA:
                 if (result.machineType === 'pentagon' && romPentagonData) {
                     spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
                     spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                    spectrum.romLoaded = true;
+                    romReloaded = true;
+                } else if (result.machineType === '+2' && romPlus2Data) {
+                    spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                    spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
                     spectrum.romLoaded = true;
                     romReloaded = true;
                 } else if (result.machineType === '128k' && rom128Data) {
@@ -33175,35 +33592,15 @@ PSG_DATA:
             const modalTitle = zipModal.querySelector('h2');
             const modalDesc = zipModal.querySelector('p');
 
-            // Handle machine switch for disk images (only if Beta Disk not available)
-            // Beta Disk is available if: Pentagon mode OR (enabled setting AND TR-DOS ROM loaded)
+            // Check Beta Disk availability for disk images
             if (isDisk && result.needsMachineSwitch) {
-                // needsMachineSwitch means Beta Disk not available on current machine
-                if (romTrdosData && romPentagonData) {
-                    // Switch to Pentagon mode with TR-DOS ROM
-                    spectrum.stop();
-                    spectrum.setMachineType('pentagon');
-                    // Pentagon ROM: first 16KB = 128K ROM (bank 0), second 16KB = 48K ROM (bank 1)
-                    spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
-                    spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
-                    spectrum.memory.loadTrdosRom(romTrdosData);
-                    spectrum.trdosTrap.updateTrdosRomFlag();
-                    spectrum.romLoaded = true;
-                    spectrum.reset();
-
-                    // Re-load disk into Beta Disk (was cleared by reset)
-                    // Boot injection already applied during initial load via spectrum.onBeforeTrdLoad
-                    spectrum.betaDisk.loadDisk(result._diskData, result.diskType);
-
-                    machineSelect.value = 'pentagon';
-                    disasm = null; // Reset to use fresh memory reference
-                    if (typeof updateULAplusStatus === 'function') updateULAplusStatus();
-                    showMessage('Switched to Pentagon mode for TR-DOS');
-                } else if (!romTrdosData) {
-                    showMessage('TR-DOS ROM required. Load trdos.rom first, or enable Beta Disk in Settings.', 'error');
+                // Beta Disk not available - warn user and don't force machine switch
+                if (!romTrdosData) {
+                    showMessage('TR-DOS ROM required for disk images. Load trdos.rom first.', 'error');
                 } else {
-                    showMessage('Enable Beta Disk in Settings, or load Pentagon ROM to switch.', 'error');
+                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon mode for disk images.', 'error');
                 }
+                return;
             } else if (isDisk && romTrdosData && !spectrum.memory.hasTrdosRom()) {
                 // TR-DOS ROM available but not loaded into memory - load it now
                 spectrum.memory.loadTrdosRom(romTrdosData);
@@ -33276,6 +33673,10 @@ PSG_DATA:
                                 if (loadResult.machineType === 'pentagon' && romPentagonData) {
                                     spectrum.memory.loadRom(romPentagonData.slice(0, 16384), 0);
                                     spectrum.memory.loadRom(romPentagonData.slice(16384, 32768), 1);
+                                    spectrum.romLoaded = true;
+                                } else if (loadResult.machineType === '+2' && romPlus2Data) {
+                                    spectrum.memory.loadRom(romPlus2Data.slice(0, 16384), 0);
+                                    spectrum.memory.loadRom(romPlus2Data.slice(16384, 32768), 1);
                                     spectrum.romLoaded = true;
                                 } else if (loadResult.machineType === '128k' && rom128Data) {
                                     spectrum.memory.loadRom(rom128Data.slice(0, 16384), 0);
@@ -33986,7 +34387,7 @@ PSG_DATA:
         
         console.log('');
         console.log('Usage:');
-        console.log('1. Place ROMs in roms/ directory (48.rom, 128.rom, pentagon.rom, trdos.rom)');
+        console.log('1. Place ROMs in roms/ directory (48.rom, 128.rom, plus2.rom, pentagon.rom, trdos.rom)');
         console.log('2. Or select ROM files in dialog if not found');
         console.log('3. Load SNA/Z80/SZX snapshots, TAP/TZX tapes, or TRD/SCL disk images');
     </script>

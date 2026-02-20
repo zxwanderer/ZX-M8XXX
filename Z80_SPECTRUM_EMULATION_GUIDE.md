@@ -1,6 +1,6 @@
 # Z80 and ZX Spectrum Emulation Technical Guide
 
-**Version 1.2** | For emulator developers
+**Version 1.3** | For emulator developers
 
 This document describes the technical requirements for cycle-accurate emulation of the Z80 CPU and ZX Spectrum family (48K, 128K, Pentagon 128, and extended clones). It covers timing, contention, sound, undocumented behavior, and edge cases that must be implemented for perfect emulation.
 
@@ -25,7 +25,8 @@ This document describes the technical requirements for cycle-accurate emulation 
 15. [Performance Optimization](#15-performance-optimization-without-wasm)
 16. [Testing and Validation](#16-testing-and-validation)
 17. [RZX Input Recording Format](#17-rzx-input-recording-format)
-18. [References](#18-references)
+18. [Tape Loading: Flash Load and Turbo Block Handoff](#18-tape-loading-flash-load-and-turbo-block-handoff)
+19. [References](#19-references)
 
 ---
 
@@ -500,11 +501,25 @@ Written to any port where A15=0 and A1=0:
 | 4 | ROM select (0=ROM 0/128K, 1=ROM 1/48K BASIC) |
 | 5 | Paging disable (locks paging until reset) |
 
-### 8.3 Pentagon TR-DOS Paging
+### 8.3 Beta Disk Auto-Paging (TR-DOS ROM Switching)
 
-Pentagon has automatic TR-DOS ROM paging:
-- Accessing 0x3Dxx with TR-DOS ROM loaded pages in TR-DOS
-- Returning from TR-DOS (to RAM) pages out TR-DOS
+The Beta Disk interface uses automatic ROM paging based on PC address:
+- **Page IN**: When M1 fetch hits 0x3D00-0x3DFF, TR-DOS ROM is paged in over the normal ROM
+- **Page OUT**: When M1 fetch hits address >= 0x4000 (RAM), TR-DOS ROM is paged out
+
+**Machine-specific rules:**
+- **Pentagon**: Auto-paging always active when TR-DOS ROM is loaded
+- **128K/+2**: Auto-paging only activates when `currentRomBank === 1` (48K BASIC ROM selected). This prevents accidental TR-DOS entry from the 128K editor ROM.
+- **48K with Beta Disk**: Auto-paging always active (only one ROM bank)
+
+**Critical implementation detail:** Auto-paging must run before EVERY instruction fetch in the main execution loop, not just for Pentagon. Any machine with Beta Disk support needs it:
+
+```javascript
+// In main frame loop — must check for ALL machines with Beta Disk, not just Pentagon
+if (this._betaDiskPagingEnabled) this.updateBetaDiskPaging();
+```
+
+The `_betaDiskPagingEnabled` flag should be true when TR-DOS ROM is loaded AND the machine supports Beta Disk (Pentagon, or user-enabled setting for 48K/128K).
 
 ### 8.4 Screen Bank Switching
 
@@ -1183,14 +1198,50 @@ Note: FPGA implementations are hardware recreations, not clones. They can achiev
 0xFF: System register (drive select, side, density, HLD, etc.)
 ```
 
-**TR-DOS ROM Paging (Pentagon):**
-- ROM pages in when PC enters 0x3D00-0x3DFF
+**TR-DOS ROM Paging:**
+- ROM pages in when PC enters 0x3D00-0x3DFF (see section 8.3 for machine-specific rules)
 - ROM pages out when PC exits to RAM (0x4000+)
+
+**TR-DOS Entry Points (0x3D00-0x3DFF):**
+```
+0x3D00: Enter TR-DOS command prompt (interactive mode)
+0x3D03: Execute TR-DOS command from BASIC (via REM trick)
+0x3D13: Low-level function dispatch (register C = function number)
+```
+**Warning:** 0x3D13 is NOT the command prompt — it expects register C to contain a function number. Using it as an entry point without proper register setup causes crashes. The correct entry for interactive TR-DOS is 0x3D00.
+
+**TR-DOS Boot (Emulator Auto-Load):**
+
+No major emulator manually constructs Spectrum system variables to boot TR-DOS. The system variables area (0x5C00-0x5CFF) requires complex initialization including channel information blocks, linked workspace pointers, stream tables, and calculator stack — far too fragile to replicate manually.
+
+**Recommended approach (FUSE-style `beta128_48boot`):**
+1. Full machine reset (clears CPU, memory, ULA)
+2. Select ROM bank 1 (48K BASIC ROM as background — required for auto-paging re-entry)
+3. Set `trdosActive = true` (page in TR-DOS ROM)
+4. Set PC = 0 — TR-DOS ROM has its own initialization at address 0
+
+```javascript
+bootTrdos() {
+    this.stop();
+    this.reset();
+    // Preserve disk state across reset
+    this.memory.currentRomBank = 1;  // Required for auto-paging re-entry
+    this.memory.trdosActive = true;
+    this.cpu.pc = 0;  // TR-DOS ROM runs its own init from address 0
+}
+```
+
+The TR-DOS ROM initialization at address 0 properly sets up all system variables, channels, streams, screen, and BASIC workspace. If a disk with a `boot.B` file is inserted, TR-DOS will automatically load and run it.
+
+**Other emulator approaches for reference:**
+- **FUSE**: `beta128_48boot` mode (pages Beta ROM at reset, runs from address 0)
+- **UnrealSpeccy**: Injects synthetic `boot.B` file into disk image if none exists
+- **Spectaculator**: Auto-loads first BASIC program from disk
 
 **TRD Disk Format:**
 - 80 tracks, 2 sides, 16 sectors/track, 256 bytes/sector
 - Total: 640KB (655360 bytes)
-- First track contains directory and disk info
+- First track contains directory (sectors 0-7, 128 entries × 16 bytes) and disk info (sector 8)
 
 ### 13.9 Adding New Machine Support
 
@@ -2000,15 +2051,112 @@ Most RZX recordings work correctly. Some games with unusual timing (e.g., Batty)
 
 ---
 
-## 18. References
+## 18. Tape Loading: Flash Load and Turbo Block Handoff
 
-### 18.1 Official Documentation
+### 18.1 Overview
+
+TZX files can contain mixed block types: standard blocks (ROM-compatible headers/data) and turbo blocks (custom loaders with non-standard timings). An emulator that supports flash loading (instant ROM trap) must handle the transition from flash-loaded standard blocks to real-time turbo blocks.
+
+### 18.2 Dual Tape System
+
+Two separate tape mechanisms are needed:
+
+**Standard Block Loader (`tapeLoader`):**
+- Contains only standard blocks (block type 0x10 with standard pilot/sync/data timings)
+- Used by the flash load ROM trap (intercepts at PC=0x056C in the Spectrum ROM)
+- Instantly transfers block data to memory without real-time emulation
+
+**Full Block Player (`tapePlayer`):**
+- Contains ALL blocks from the TZX file (standard + turbo + control blocks)
+- Used for real-time EAR-bit playback via port 0xFE bit 6
+- Generates pilot tones, sync pulses, and data bits at correct T-state timings
+
+### 18.3 Block Index Mapping
+
+Since the two systems have different block counts, a mapping is required:
+
+```javascript
+// Built during TZX loading
+const standardBlockMap = [];   // tapeLoader index → tapePlayer index
+const standardBlockSet = new Set();  // tapePlayer indices that are standard
+
+// Example for a TZX with: [std, std, std, std, turbo, turbo]
+// standardBlockMap = [0, 1, 2, 3]
+// standardBlockSet = {0, 1, 2, 3}
+// tapeLoader has 4 blocks, tapePlayer has 6
+```
+
+### 18.4 Flash-to-Turbo Handoff
+
+After each flash-loaded block completes, check if the next block in the full sequence is non-standard:
+
+```javascript
+tapeTrap.onBlockLoaded = (loadedBlockIndex) => {
+    const fullIdx = standardBlockMap[loadedBlockIndex];
+    const nextFullIdx = fullIdx + 1;
+
+    if (nextFullIdx < allBlocks.length && !standardBlockSet.has(nextFullIdx)) {
+        // Next block is turbo — prepare for real-time playback
+        tapePlayer.setBlock(nextFullIdx);
+        this._turboBlockPending = true;
+    }
+};
+```
+
+### 18.5 Auto-Start Mechanism
+
+When the custom loader begins reading port 0xFE to detect the turbo pilot tone, the emulator must start the tape player. This is done in the port read handler:
+
+```javascript
+// In portRead() for port 0xFE
+if (this._turboBlockPending && !this.tapePlayer.isPlaying() &&
+    this.cpu.pc >= 0x4000) {
+    this.tapePlayer.play();
+    this._turboBlockPending = false;
+}
+```
+
+### 18.6 The PC >= 0x4000 Guard (Critical)
+
+The `this.cpu.pc >= 0x4000` check is essential. Without it, the auto-start triggers from the **ROM keyboard scan** rather than the custom loader:
+
+**Problem sequence without guard:**
+1. Flash load completes block 3, sets `_turboBlockPending = true`
+2. BASIC executes `RANDOMIZE USR 38912` to jump to custom loader
+3. Before the USR call completes, a maskable interrupt fires
+4. ROM interrupt handler at 0x0038 → 0x028E scans all 8 keyboard half-rows via `IN A,(0xFE)`
+5. The first `IN` triggers auto-start — turbo pilot begins playing
+6. Interrupt handler does 7 more `IN`s (consuming pilot T-states)
+7. ROM returns from interrupt, BASIC finishes USR call, custom loader starts
+8. By now the pilot tone has expired — loader cannot sync, loading fails
+
+**Solution:** On stock ROMs (48K, 128K, Pentagon 128), custom loaders reside in RAM (address >= 0x4000). ROM keyboard scans execute at addresses < 0x4000 (interrupt handler at 0x0038, keyboard routine at ~0x028E). The PC check ensures the auto-start only fires when the custom loader itself reads port 0xFE.
+
+**Caveat:** Some modified ROMs (e.g., service ROMs, custom firmware) contain turbo loaders in ROM space (< 0x4000). The PC >= 0x4000 guard would prevent auto-start for these. This is out of scope for the standard supported machines but worth noting for emulators targeting extended clones or custom ROM sets.
+
+### 18.7 Auto Load (UI-Level)
+
+The Auto Load feature in the UI layer types `LOAD ""` automatically:
+
+1. Reset machine (tape data survives reset — only rewinds)
+2. For 128K: press `1` to select BASIC from the menu (4s wait)
+3. Type `J` (LOAD keyword), `Symbol+P` twice (two quote marks), `Enter`
+4. Flash load handles standard blocks; turbo handoff handles the rest
+5. For pure turbo TZX (no standard blocks): disable flash load, start tape playback after Enter
+
+Key injection uses setTimeout-based scheduling with the emulator's `ula.keyDown()`/`ula.keyUp()` methods. The running emulator naturally reads keyboard state each frame.
+
+---
+
+## 19. References
+
+### 19.1 Official Documentation
 
 - Zilog Z80 User Manual
 - ZX Spectrum Service Manual
 - ZX Spectrum 128K Technical Reference
 
-### 18.2 Community Resources
+### 19.2 Community Resources
 
 - [Z80 Documented](http://z80.info/z80doc.htm) - Sean Young's complete guide
 - [Sinclair Wiki](https://sinclair.wiki.zxnet.co.uk/) - Spectrum technical details
@@ -2022,7 +2170,7 @@ Most RZX recordings work correctly. Some games with unusual timing (e.g., Batty)
 - [hoglet67/Z80Decoder](https://github.com/hoglet67/Z80Decoder) - Z80 decode/timing analysis
 - [maziac/z80-instruction-set](https://github.com/maziac/z80-instruction-set) - Z80 instruction reference
 
-### 18.3 Reference Emulators
+### 19.3 Reference Emulators
 
 | Emulator | Notable Features |
 |----------|------------------|
@@ -2037,7 +2185,7 @@ Most RZX recordings work correctly. Some games with unusual timing (e.g., Batty)
 | Spectaculator | Windows, commercial, very accurate |
 | ZX Spin | Windows, good debugging, tape analysis |
 
-### 18.4 Test Suites
+### 19.4 Test Suites
 
 **Classic tests:**
 - FUSE Z80 test suite - comprehensive but older (mid-2000s)
@@ -2230,5 +2378,5 @@ Frequency = CPU_Clock / (2 × (13×B - 5))
 
 ---
 
-*Document created for ZX-M8XXX emulator project. Version 1.2 - February 2026.*
+*Document created for ZX-M8XXX emulator project. Version 1.3 - February 2026.*
 *Contributions and corrections welcome.*

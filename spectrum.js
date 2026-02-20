@@ -1,17 +1,12 @@
 /**
  * ZX-M8XXX - Spectrum Machine Integration
- * @version 0.9.18
  * @license GPL-3.0
  */
 
 (function(global) {
     'use strict';
 
-    const VERSION = '0.9.18';
-
     class Spectrum {
-        static get VERSION() { return VERSION; }
-        
         constructor(canvas, options = {}) {
             this.canvas = canvas;
             this.ctx = canvas.getContext('2d');
@@ -468,7 +463,7 @@
             // Contended banks: 1, 3, 5, 7 (odd-numbered banks)
             // Bank 5 is always at 0x4000-0x7FFF
             // Selected bank can be paged at 0xC000-0xFFFF
-            if (this.machineType === '128k') {
+            if (is128kCompat(this.machineType)) {
                 this.contentionFunc = null;
                 let mcycleOffset = 0;
                 this.accumulatedContention = 0;
@@ -907,11 +902,23 @@
                     // Issue 4+ ULA: reads HIGH when no tape connected
                     // We emulate Issue 2/3 behavior (most compatible with tests)
 
-                    // Auto-start turbo block playback when custom loader reads port 0xFE
-                    if (this._turboBlockPending && !this.tapePlayer.isPlaying()) {
+                    // Auto-start turbo block playback when custom loader reads port 0xFE.
+                    // Only trigger from RAM (PC >= 0x4000) to avoid false triggers from
+                    // ROM keyboard scan (ISR at ~0x0038→0x028E reads port 0xFE for all
+                    // 8 half-rows). Without this check, the pilot starts playing during
+                    // an interrupt BEFORE the custom loader runs, and short pilots expire
+                    // before the loader can sync.
+                    if (this._turboBlockPending && !this.tapePlayer.isPlaying() &&
+                        this.cpu.pc >= 0x4000) {
                         this._lastTapeUpdate = this.cpu.tStates;  // Reset tape timing tracker
                         this.tapePlayer.play();
                         this._turboBlockPending = false;
+                        console.log('[TZX] Auto-start turbo playback at PC=' +
+                            this.cpu.pc.toString(16).padStart(4, '0') +
+                            ', tStates=' + this.cpu.tStates +
+                            ', block=' + this.tapePlayer.currentBlock +
+                            ', phase=' + this.tapePlayer.phase +
+                            ', flashLoad=' + this.tapeFlashLoad);
                     }
 
                     // CRITICAL: Update tape to the T-state when I/O actually occurs
@@ -1084,7 +1091,7 @@
                 let ioOffset;
                 if (this.machineType === 'pentagon') {
                     ioOffset = 11;
-                } else if (this.machineType === '128k') {
+                } else if (is128kCompat(this.machineType)) {
                     // OUT (C),r (12T) needs +4 more than OUT (n),A for ULA128 test
                     ioOffset = (instructionTiming === 12) ? 13 : 9;
                 } else {
@@ -1239,7 +1246,7 @@
             const totalLines = Math.floor(tstatesPerFrame / tstatesPerLine);
 
             // INT pulse duration (32 T-states for 48K, 36 for 128K/Pentagon)
-            const intPulseDuration = (this.machineType === '128k' || this.machineType === 'pentagon') ? 36 : 32;
+            const intPulseDuration = (is128kCompat(this.machineType) || this.machineType === 'pentagon') ? 36 : 32;
             let intFired = false;
 
             // Early/Late INT timing (Swan-style):
@@ -1303,7 +1310,7 @@
             const autoMapEnabled = this.autoMap.enabled;
             const xrefEnabled = this.xrefTrackingEnabled && this.onInstructionExecuted;
             const needsInstrPC = xrefEnabled || tracing;
-            const contentionEnabled = (this.machineType === '48k' || this.machineType === '128k') && this.contentionEnabled;
+            const contentionEnabled = (this.machineType === '48k' || is128kCompat(this.machineType)) && this.contentionEnabled;
             const isPentagon = this.machineType === 'pentagon';
             const tapeTrapsEnabled = this.tapeTrapsEnabled;
             const tapeIsPlaying = this.tapePlayer.isPlaying();
@@ -1323,8 +1330,8 @@
                     }
                 }
 
-                // Beta Disk automatic ROM paging (Pentagon only)
-                if (isPentagon) this.updateBetaDiskPaging();
+                // Beta Disk automatic ROM paging (Pentagon, or 48K/128K with Beta Disk enabled)
+                if (this._betaDiskPagingEnabled) this.updateBetaDiskPaging();
 
                 // Check breakpoint using unified trigger system (skip if no breakpoints)
                 const execTrigger = hasBreakpoints ? this.checkExecTriggers(this.cpu.pc) : null;
@@ -1769,7 +1776,7 @@
             }
 
             // INT pulse duration (32 T-states for 48K, 36 for 128K/Pentagon)
-            const intPulseDuration = (this.machineType === '128k' || this.machineType === 'pentagon') ? 36 : 32;
+            const intPulseDuration = (is128kCompat(this.machineType) || this.machineType === 'pentagon') ? 36 : 32;
             let intFired = false;
 
             // Early/Late INT timing (Swan-style):
@@ -1831,7 +1838,7 @@
                 if (this.tapeTrapsEnabled && this.trdosTrap.checkTrap()) continue;
 
                 // Apply ULA contention per-line for 48K and 128K
-                if ((this.machineType === '48k' || this.machineType === '128k') && this.contentionEnabled) {
+                if ((this.machineType === '48k' || is128kCompat(this.machineType)) && this.contentionEnabled) {
                     const ulaContention = this.ula.ULA_CONTENTION_TSTATES || 0;
                     if (ulaContention > 0) {
                         const line = Math.floor(this.cpu.tStates / tstatesPerLine);
@@ -3260,7 +3267,7 @@
         // Returns true if interrupt was fired
         handleFrameBoundary() {
             const tstatesPerFrame = this.getTstatesPerFrame();
-            const intPulseDuration = (this.machineType === '128k' || this.machineType === 'pentagon') ? 36 : 32;
+            const intPulseDuration = (is128kCompat(this.machineType) || this.machineType === 'pentagon') ? 36 : 32;
             const intOffset = this.getIntOffset();
 
             // Set INT pending when we reach frame end
@@ -4825,9 +4832,12 @@
         }
 
         // Boot into TR-DOS mode
-        // Performs full system initialization like other emulators (UnrealSpeccy, Fuse, etc.)
+        // Uses the FUSE-style approach: reset machine, select ROM bank 1,
+        // page in TR-DOS ROM, and let it run from address 0.
+        // The TR-DOS ROM has its own initialization at address 0 that properly
+        // sets up system variables, channels, and workspace — much more reliable
+        // than manually constructing system variables.
         bootTrdos() {
-
             // Check if TR-DOS ROM is loaded
             if (!this.memory.hasTrdosRom()) {
                 console.warn('[TR-DOS] Cannot boot TR-DOS: TR-DOS ROM not loaded');
@@ -4840,15 +4850,17 @@
                 return false;
             }
 
-            // Save disk state before reset
+            // Save disk state before reset (spectrum.reset() doesn't touch betaDisk,
+            // but be safe in case that changes)
             const diskState = this.betaDisk ? {
                 hasDisk: this.betaDisk.hasDisk(),
                 diskData: this.betaDisk.diskImage,
                 diskType: this.betaDisk.diskType
             } : null;
 
-            // Full CPU reset to known state
-            this.cpu.reset();
+            // Full machine reset — clears CPU, memory, ULA, tape state
+            this.stop();
+            this.reset();
 
             // Restore disk after reset
             if (diskState && diskState.hasDisk && diskState.diskData) {
@@ -4856,107 +4868,18 @@
                 this.betaDisk.diskType = diskState.diskType;
             }
 
-            // Activate TR-DOS ROM
+            // Select ROM bank 1 (48K BASIC) as background ROM.
+            // TR-DOS auto-paging only re-activates when currentRomBank === 1.
+            // On real Pentagon, the 128K menu switches to ROM bank 1 before entering TR-DOS.
+            this.memory.currentRomBank = 1;
+
+            // Page in TR-DOS ROM and start from address 0.
+            // The TR-DOS ROM at address 0x0000 contains its own initialization code
+            // (similar to the Spectrum ROM NEW routine) that properly sets up all
+            // system variables, channels, streams, screen, and BASIC workspace.
+            // This is the same approach FUSE uses (beta128_48boot mode).
             this.memory.trdosActive = true;
-
-            // Clear screen with TR-DOS standard colors (cyan on black)
-            for (let i = 0x4000; i < 0x5800; i++) {
-                this.memory.write(i, 0);
-            }
-            for (let i = 0x5800; i < 0x5B00; i++) {
-                this.memory.write(i, 0x38);  // White ink, black paper, no flash/bright
-            }
-
-            // Initialize Spectrum system variables (required for TR-DOS to work)
-            // These are the essential variables that TR-DOS expects
-            const sysVars = {
-                0x5C3A: 0x00,       // ERR_NR - no error
-                0x5C3B: 0x00,       // FLAGS
-                0x5C3C: 0x00,       // TV_FLAG
-                0x5C3D: 0x00,       // ERR_SP low
-                0x5C3E: 0x5D,       // ERR_SP high (0x5D00)
-                0x5C48: 0x01,       // BORDCR - border color (blue)
-                0x5C4F: 0x00,       // CHANS low
-                0x5C50: 0x5C,       // CHANS high
-                0x5C51: 0x00,       // DATADD
-                0x5C57: 0x00,       // PROG low
-                0x5C58: 0x5D,       // PROG high
-                0x5C59: 0x00,       // VARS low
-                0x5C5A: 0x5D,       // VARS high
-                0x5C5B: 0x00,       // DEST
-                0x5C5D: 0x00,       // CHANS
-                0x5C61: 0x00,       // WORKSP low
-                0x5C62: 0x5D,       // WORKSP high
-                0x5C63: 0x00,       // STKBOT low
-                0x5C64: 0x5D,       // STKBOT high
-                0x5C65: 0x00,       // STKEND low
-                0x5C66: 0x5D,       // STKEND high
-                0x5C6B: 0x01,       // DF_SZ - lines in lower screen
-                0x5C6C: 0x21,       // S_TOP
-                0x5C6E: 0x00,       // OLDPPC
-                0x5C72: 0x00,       // FLAGX
-                0x5C74: 0x00,       // STRLEN
-                0x5C78: 0x38,       // ATTR_P - permanent attribute
-                0x5C79: 0x38,       // MASK_P
-                0x5C7A: 0x38,       // ATTR_T - temporary attribute
-                0x5C7B: 0x38,       // MASK_T
-                0x5C7C: 0x00,       // P_FLAG
-                0x5C8C: 0x00,       // SCR_CT - scroll count
-                0x5C8D: 0x38,       // ATTR_P duplicate
-                0x5C8E: 0x38,       // MASK_P duplicate
-                0x5C8F: 0x21,       // P_POSN_X
-                0x5C90: 0x17,       // P_POSN_Y (line 23)
-                0x5C91: 0x00,       // DF_CC low - display file address
-                0x5C92: 0x50,       // DF_CC high
-                0x5CB0: 0x00,       // RASP
-                0x5CB1: 0x00,       // PIP
-                0x5CB2: 0x00,       // FRAMES low
-                0x5CB3: 0x00,       // FRAMES mid
-                0x5CB4: 0x00,       // FRAMES high
-                0x5CB6: 0x00,       // UDG low
-                0x5CB7: 0x00,       // UDG high
-                0x5CB8: 0x21,       // COORDS_X
-                0x5CB9: 0x17,       // COORDS_Y
-                0x5CBA: 0x00,       // P_POSN
-                0x5CC2: 0x00,       // DF_SZ
-                0x5CCC: 0x00,       // ECHO_E
-            };
-
-            for (const [addr, val] of Object.entries(sysVars)) {
-                this.memory.write(parseInt(addr), val);
-            }
-
-            // Initialize TR-DOS workspace (0x5D00-0x5DFF)
-            // Clear workspace area
-            for (let i = 0x5D00; i < 0x5E00; i++) {
-                this.memory.write(i, 0);
-            }
-
-            // TR-DOS specific variables
-            this.memory.write(0x5D04, 0x00);  // Current drive (A:)
-            this.memory.write(0x5D16, 0x01);  // Number of drives
-            this.memory.write(0x5D19, 0x10);  // Sectors per track
-
-            // Set up CPU registers for TR-DOS entry
-            this.cpu.sp = 0x5D00;          // Stack in TR-DOS workspace
-            this.cpu.iy = 0x5C3A;          // System variables pointer (standard)
-            this.cpu.ix = 0x5C3A;          // Also commonly set to sysvar area
-            this.cpu.af = 0x00FF;          // A=0 (drive A), F=0xFF
-            this.cpu.bc = 0x0000;
-            this.cpu.de = 0x0000;
-            this.cpu.hl = 0x0000;
-            this.cpu.im = 1;               // Interrupt mode 1
-            this.cpu.iff1 = true;          // Enable interrupts
-            this.cpu.iff2 = true;
-
-            // Jump to TR-DOS command interpreter
-            // 0x3D13 is the command entry point that prints prompt and waits for input
-            this.cpu.pc = 0x3D13;
-
-            // Put return address on stack (TR-DOS entry point for error recovery)
-            this.cpu.sp -= 2;
-            this.memory.write(this.cpu.sp, 0x13);      // Low byte of 0x3D13
-            this.memory.write(this.cpu.sp + 1, 0x3D);  // High byte
+            this.cpu.pc = 0;
 
             return true;
         }
@@ -5131,8 +5054,9 @@
                         if (hwMode === 3 || hwMode === 4) targetType = '128k';
                     } else {
                         // V3: 4=128K, 5=128K+IF1, 6=128K+MGT, 7=+3, 12=+2, 13=+2A
-                        if (hwMode >= 4 && hwMode <= 7) targetType = '128k';
-                        else if (hwMode === 12 || hwMode === 13) targetType = '128k';
+                        if (hwMode === 12) targetType = '+2';
+                        else if (hwMode >= 4 && hwMode <= 7) targetType = '128k';
+                        else if (hwMode === 13) targetType = '128k';
                     }
                 }
 
@@ -5182,8 +5106,8 @@
 
                 // Determine target machine type
                 let targetType = info.machineType;
-                if (targetType === '+2' || targetType === '+3' || targetType === '+2A' || targetType === '+3e') {
-                    targetType = '128k';  // Treat +2/+3 as 128K
+                if (targetType === '+3' || targetType === '+2A' || targetType === '+3e') {
+                    targetType = '128k';  // Treat +3/+2A as 128K (no dedicated support yet)
                 } else if (targetType === 'scorpion' || targetType === 'didaktik') {
                     targetType = '128k';  // Treat other 128K clones as 128K
                 } else if (targetType === '16k') {
@@ -5247,8 +5171,8 @@
             // Pentagon uses same snapshot format as 128K, so preserve it
             let targetType;
             if (is128k) {
-                // Keep Pentagon if already set, otherwise use 128K
-                targetType = (this.machineType === 'pentagon') ? 'pentagon' : '128k';
+                // Keep Pentagon/+2 if already set, otherwise use 128K
+                targetType = this.machineType === 'pentagon' ? 'pentagon' : (is128kCompat(this.machineType) ? this.machineType : '128k');
             } else {
                 targetType = '48k';
             }
@@ -5336,31 +5260,43 @@
                        (!b.onePulse || Math.abs(b.onePulse - stdOne) < tolerance);
             };
 
-            // Convert compatible blocks to TapeLoader format
-            const tapCompatibleBlocks = this.tzxLoader.blocks
-                .filter(b => b.type === 'data' && !b.noPilot && isStandardTiming(b))
-                .map(b => ({ flag: b.flag, data: b.data, length: b.length }));
+            // Convert compatible blocks to TapeLoader format, tracking their
+            // positions in the full block array for correct tapePlayer positioning
+            const allBlocks = this.tzxLoader.blocks;
+            const tapCompatibleBlocks = [];
+            const standardBlockMap = [];  // standardBlockMap[tapeLoaderIdx] = full array idx
+            const standardBlockSet = new Set();
+            for (let i = 0; i < allBlocks.length; i++) {
+                const b = allBlocks[i];
+                if (b.type === 'data' && !b.noPilot && isStandardTiming(b)) {
+                    standardBlockSet.add(i);
+                    standardBlockMap.push(i);
+                    tapCompatibleBlocks.push({ flag: b.flag, data: b.data, length: b.length });
+                }
+            }
 
             if (tapCompatibleBlocks.length > 0) {
                 this.tapeLoader.blocks = tapCompatibleBlocks;
                 this.tapeLoader.currentBlock = 0;
                 this.tapeTrap.setTape(this.tapeLoader);
 
-                // Track count of standard blocks vs total blocks for turbo block auto-start
-                const standardBlockCount = tapCompatibleBlocks.length;
-                const totalBlocks = this.tzxLoader.blocks.length;
-                const hasTurboBlocks = totalBlocks > standardBlockCount;
+                const hasTurboBlocks = allBlocks.length > tapCompatibleBlocks.length;
 
                 if (hasTurboBlocks) {
-                    // Set up callback to prepare for turbo block real-time playback
+                    // Set up callback to switch to real-time when next tape block is non-standard.
+                    // Standard blocks can be interleaved with turbo (e.g. std,std,std,turbo,turbo,std)
+                    // so we trigger as soon as the next block in tape order isn't standard.
                     this.tapeTrap.onBlockLoaded = (loadedBlockIndex) => {
-                        // Check if all standard blocks have been flash-loaded
-                        if (loadedBlockIndex >= standardBlockCount - 1) {
-                            // All standard blocks loaded - turbo blocks need real-time playback
-                            // Set tapePlayer to first turbo block position (but don't start yet)
-                            this.tapePlayer.setBlock(standardBlockCount);
-                            // Set flag to auto-start when port 0xFE is read
+                        const fullIdx = standardBlockMap[loadedBlockIndex];
+                        const nextFullIdx = fullIdx + 1;
+                        console.log('[TZX] onBlockLoaded: tapeLoader index', loadedBlockIndex,
+                            '→ fullIdx', fullIdx, ', nextFullIdx', nextFullIdx,
+                            ', nextIsStandard', standardBlockSet.has(nextFullIdx));
+                        // Trigger if next block in tape sequence is non-standard
+                        if (nextFullIdx < allBlocks.length && !standardBlockSet.has(nextFullIdx)) {
+                            this.tapePlayer.setBlock(nextFullIdx);
                             this._turboBlockPending = true;
+                            console.log('[TZX] Turbo pending! tapePlayer positioned at block', nextFullIdx);
                         }
                     };
                 } else {
@@ -5901,8 +5837,8 @@
             for (let i = 0; i < 20; i++) {
                 creatorBlock[5 + i] = i < creatorName.length ? creatorName.charCodeAt(i) : 0;
             }
-            // Version (major, minor) - parse from VERSION constant
-            const versionParts = VERSION.split('.');
+            // Version (major, minor) - parse from APP_VERSION (defined in index.html)
+            const versionParts = (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '0.0.0').split('.');
             creatorBlock[25] = parseInt(versionParts[0], 10) || 0; // Major
             creatorBlock[26] = parseInt(versionParts[1], 10) || 0; // Minor
             // Custom data length (2 bytes, 0 = none)
