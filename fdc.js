@@ -896,11 +896,26 @@
         }
 
         /**
-         * Check if any drive has a disk inserted
+         * Check if a specific drive (or any drive) has a disk inserted
+         * @param {number} [driveIndex] - Drive index (0-3). If omitted, checks any drive.
          * @returns {boolean}
          */
-        hasDisk() {
+        hasDisk(driveIndex) {
+            if (driveIndex !== undefined) {
+                return this.drives[driveIndex & 0x03].disk !== null;
+            }
             return this.drives.some(d => d.disk !== null);
+        }
+
+        /**
+         * Eject disk from specified drive
+         * @param {number} driveIndex - Drive index (0-3)
+         */
+        ejectDisk(driveIndex) {
+            const drv = this.drives[driveIndex & 0x03];
+            drv.disk = null;
+            drv.track = 0;
+            drv.motorOn = false;
         }
 
         // ========== Command Decoding ==========
@@ -1240,7 +1255,7 @@
 
             // Activity callback
             if (this.onDiskActivity) {
-                this.onDiskActivity('read', this.opCylinder, this.opSector, head);
+                this.onDiskActivity('read', this.opCylinder, this.opSector, head, driveNum);
             }
 
             this.phase = this.PHASE_EXECUTION;
@@ -1485,7 +1500,7 @@
             };
 
             if (this.onDiskActivity) {
-                this.onDiskActivity('read', drive.track, this.opSector, head);
+                this.onDiskActivity('read', drive.track, this.opSector, head, driveNum);
             }
 
             this.phase = this.PHASE_EXECUTION;
@@ -1562,7 +1577,7 @@
 
             // Activity callback
             if (this.onDiskActivity) {
-                this.onDiskActivity('write', r.physicalTrack, r.sectorStart, r.head);
+                this.onDiskActivity('write', r.physicalTrack, r.sectorStart, r.head, r.driveNum);
             }
 
             // Abnormal termination + EN (TC not connected on +3)
@@ -1617,7 +1632,7 @@
             drive.disk.tracks[trackIdx] = track;
 
             if (this.onDiskActivity) {
-                this.onDiskActivity('write', drive.track, 0, fi.head);
+                this.onDiskActivity('write', drive.track, 0, fi.head, fi.driveNum);
             }
 
             // Abnormal termination + EN (TC not connected on +3)

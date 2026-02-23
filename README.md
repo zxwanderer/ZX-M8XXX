@@ -1,6 +1,6 @@
 # ZX-M8XXX
 
-**Version 0.9.26** | [Changelog](CHANGELOG.md)
+**Version 0.9.27** | [Changelog](CHANGELOG.md)
 
 ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integrated debugger designed for reverse engineering and development. No build tools, no dependencies - just open `index.html` in your browser.
 
@@ -8,7 +8,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 
 ### Emulation
 - Full Z80 CPU emulation (all documented + undocumented opcodes)
-- 48K, 128K, +2, +2A, +3, and Pentagon machine support
+- 48K, 128K, +2, +2A, +3, Pentagon, Pentagon 1024, and Scorpion ZS 256 machine support
 - Memory banking and contention emulation
 - Pixel-perfect ULA video timing with border effects
 - ULAplus extended palette (64 colors, HAM256 raster effects)
@@ -19,6 +19,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - Auto Load: automatic LOAD "" for tapes, TR-DOS boot for disks (turbo block handoff)
 - TRD/SCL disk image support (TR-DOS format) with boot injection
 - DSK disk image support (+3 µPD765 FDC, standard and extended CPC DSK format)
+- Multi-drive support: BetaDisk 4 drives (A-D), FDC 2 drives (A-B), simultaneous tape+disk
 - ZIP archive support
 - RZX playback
 - Kempston Joystick (numpad) with extended buttons support
@@ -56,7 +57,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - Text Scanner for string search
 - Programmer Calculator (hex/dec/oct/bin)
 - Compare Tool (snapshots, binaries, emulator state)
-- Explorer (BASIC decoder, disassembly, hex dump for file analysis)
+- Explorer (TAP, TZX, SNA, Z80, SZX, RZX, TRD, SCL, DSK, ZIP — BASIC decoder, disassembly, hex dump)
 - Z80 Opcodes reference
 
 ## Quick Start
@@ -68,6 +69,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
    - `plus2a.rom` - ZX Spectrum +2A (64KB, optional)
    - `plus3.rom` - ZX Spectrum +3 (64KB, optional)
    - `pentagon.rom` - Pentagon 128K (32KB, optional)
+   - `scorpion.rom` - Scorpion ZS 256 (64KB, optional)
    - `trdos.rom` - TR-DOS 5.03/5.04t (16KB, for disk images)
 2. Open `index.html` in a modern browser
 3. Click **Help** button for comprehensive documentation

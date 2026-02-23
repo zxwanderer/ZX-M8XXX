@@ -2,6 +2,35 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.27
+- **Port Trace Filter**: Whitelist filter for trace logging and Port I/O log
+  - When empty, all ports are traced (default behavior); when ports are specified, only matching ports are recorded
+  - Applies to both runtime trace port ops and standalone Port I/O log
+  - Mask-based matching using same `parsePortSpec` format as breakpoints: `FE`, `7FFD`, `FE&FF`
+  - UI: Port filter row in Trace panel with add/remove/clear controls and filter list
+  - Filter state (`portTraceFilters`) persisted in project save/load
+- **Fix**: Port I/O Export button no longer opens save dialog twice
+- **Multi-Drive Support**: BetaDisk 4 drives (A-D) + FDC 2 drives (A-B) + simultaneous tape
+  - **BetaDisk per-drive state** (`loaders.js`): `drives[]` array with per-drive `diskData`, `diskType`, and `headTrack`
+    - WD1793 track register remains shared (real hardware behavior); physical head position tracked per drive
+    - `loadDisk(data, type, driveIndex)` — load into specific drive
+    - `ejectDisk(driveIndex)` / `hasDisk(driveIndex)` / `hasAnyDisk()` — per-drive management
+    - `createBlankDisk(label, driveIndex)` — blank formatted disk in specific drive
+  - **FDC per-drive updates** (`fdc.js`): `ejectDisk(driveIndex)`, drive number in activity callback
+  - **Tape + Disk coexistence** (`spectrum.js`): Loading tape no longer ejects disk and vice versa
+    - Separate state: `loadedTape`, `loadedBetaDisks[4]`, `loadedFDCDisks[2]`
+    - Separate file listings per controller: `loadedBetaDiskFiles[4]`, `loadedFDCDiskFiles[2]`
+    - `clearTape()` / `clearDisk(driveIndex, type)` for selective clearing
+  - **Drive selector UI** (`index.html`): Dropdown to choose target drive (A-D) when loading disk images
+  - **Per-drive catalog tabs**: Dynamic drive sub-tabs in Settings → Media disk catalog
+    - Simple labels (`A:`, `B:`, etc.) when one controller is active
+    - Prefixed labels (`3DOS:A`, `3DOS:B`, `TRD:A`, `TRD:B`) when both FDC and Beta Disk have disks simultaneously
+    - Each tab shows only its controller's catalog content
+  - **Disk activity indicator**: Drive letter prefix (e.g., `A:T00:S01:A`), tooltip lists all loaded drives
+  - **Auto-load gating**: Only triggers when loading into drive A (index 0)
+  - **Project save/load v2**: `mediaVersion: 2` format stores tape + per-drive Beta Disk + per-drive FDC disk
+    - Backward compatible with old single-media project format
+
 ## v0.9.26
 - **Scorpion ZS 256 Support**: New machine type — Soviet clone with 256KB RAM
   - New "scorpion" option in machine selector dropdown (group: Scorpion)

@@ -1871,8 +1871,14 @@
         static get VERSION() { return VERSION; }
 
         constructor() {
-            this.diskData = null;      // Current disk image (Uint8Array)
-            this.diskType = null;      // 'trd' or 'scl'
+            // Per-drive state: each drive has its own disk image and head position
+            // WD1793 is a single controller — track/sector/side registers are shared
+            this.drives = [
+                { diskData: null, diskType: null, headTrack: 0 },
+                { diskData: null, diskType: null, headTrack: 0 },
+                { diskData: null, diskType: null, headTrack: 0 },
+                { diskData: null, diskType: null, headTrack: 0 },
+            ];
 
             // WD1793 registers
             this.command = 0;
@@ -1881,7 +1887,7 @@
             this.sector = 1;           // Sectors are 1-based in TR-DOS
             this.data = 0;
 
-            // Disk activity callback: function(type, track, sector, side)
+            // Disk activity callback: function(type, track, sector, side, drive)
             // type: 'read', 'write', 'seek', 'idle'
             this.onDiskActivity = null;
 
@@ -1926,22 +1932,32 @@
             this.intrq = false;        // Interrupt request
         }
 
-        // Load disk image
-        loadDisk(data, type) {
+        // Load disk image into specified drive (default: drive 0)
+        loadDisk(data, type, driveIndex = 0) {
+            const drv = this.drives[driveIndex & 0x03];
             if (type === 'scl') {
                 // Convert SCL to TRD format
-                this.diskData = this.sclToTrd(data);
+                drv.diskData = this.sclToTrd(data);
             } else {
-                this.diskData = new Uint8Array(data);
+                drv.diskData = new Uint8Array(data);
             }
-            this.diskType = 'trd';
-            this.status = 0;           // Disk ready
-            this.track = 0;
-            this.sector = 1;
+            drv.diskType = 'trd';
+            drv.headTrack = 0;
+            // Reset WD1793 state only if loading into current drive
+            if ((driveIndex & 0x03) === this.drive) {
+                this.status = 0;           // Disk ready
+                this.track = 0;
+                this.sector = 1;
+            }
         }
 
-        // Create and insert a blank formatted TRD disk
-        createBlankDisk(label = 'BLANK') {
+        // Convenience getter for current drive's state
+        get currentDisk() {
+            return this.drives[this.drive];
+        }
+
+        // Create and insert a blank formatted TRD disk into specified drive
+        createBlankDisk(label = 'BLANK', driveIndex = 0) {
             // Create blank TRD image (640KB = 2560 sectors)
             const trd = new Uint8Array(655360);
             trd.fill(0);
@@ -1965,12 +1981,16 @@
                 trd[sector9 + 0xF5 + i] = paddedLabel.charCodeAt(i);
             }
 
-            // Load the blank disk
-            this.diskData = trd;
-            this.diskType = 'trd';
-            this.status = 0;
-            this.track = 0;
-            this.sector = 1;
+            // Load the blank disk into specified drive
+            const drv = this.drives[driveIndex & 0x03];
+            drv.diskData = trd;
+            drv.diskType = 'trd';
+            drv.headTrack = 0;
+            if ((driveIndex & 0x03) === this.drive) {
+                this.status = 0;
+                this.track = 0;
+                this.sector = 1;
+            }
 
             return true;
         }
@@ -2084,14 +2104,33 @@
             return trd;
         }
 
-        ejectDisk() {
-            this.diskData = null;
-            this.diskType = null;
+        ejectDisk(driveIndex) {
+            if (driveIndex !== undefined) {
+                const drv = this.drives[driveIndex & 0x03];
+                drv.diskData = null;
+                drv.diskType = null;
+                drv.headTrack = 0;
+            } else {
+                // Eject current drive
+                const drv = this.currentDisk;
+                drv.diskData = null;
+                drv.diskType = null;
+                drv.headTrack = 0;
+            }
             this.status = this.NOT_READY;
         }
 
-        hasDisk() {
-            return this.diskData !== null;
+        hasDisk(driveIndex) {
+            if (driveIndex !== undefined) {
+                return this.drives[driveIndex & 0x03].diskData !== null;
+            }
+            // Check current drive (backward compat)
+            return this.currentDisk.diskData !== null;
+        }
+
+        // Check if any drive has a disk inserted
+        hasAnyDisk() {
+            return this.drives.some(d => d.diskData !== null);
         }
 
         // Calculate sector offset in disk image
@@ -2115,7 +2154,7 @@
             switch (reg) {
                 case 0x1F: // Status register
                     this.intrq = false;
-                    if (!this.diskData) {
+                    if (!this.currentDisk.diskData) {
                         return this.NOT_READY;
                     }
                     let st = this.status;
@@ -2225,7 +2264,7 @@
             this.status = 0;
             this.intrq = false;
 
-            if (!this.diskData) {
+            if (!this.currentDisk.diskData) {
                 this.status = this.NOT_READY;
                 this.intrq = true;
                 return;
@@ -2234,6 +2273,7 @@
             const cmdType = cmd >> 4;
 
             // Type I commands (restore, seek, step)
+            // Update both WD1793 track register AND per-drive headTrack
             if ((cmd & 0x80) === 0) {
                 this.lastCmdType = 1;
                 this.status |= this.BUSY;
@@ -2241,10 +2281,12 @@
                 if ((cmd & 0xF0) === 0x00) {
                     // Restore (seek to track 0)
                     this.track = 0;
+                    this.currentDisk.headTrack = 0;
                     this.status |= this.TRACK0;
                 } else if ((cmd & 0xF0) === 0x10) {
                     // Seek to track in data register
                     this.track = this.data;
+                    this.currentDisk.headTrack = this.data;
                     if (this.track === 0) this.status |= this.TRACK0;
                 } else if ((cmd & 0xE0) === 0x20) {
                     // Step (keep direction)
@@ -2252,9 +2294,11 @@
                 } else if ((cmd & 0xE0) === 0x40) {
                     // Step in
                     if (this.track < 79) this.track++;
+                    this.currentDisk.headTrack = this.track;
                 } else if ((cmd & 0xE0) === 0x60) {
                     // Step out
                     if (this.track > 0) this.track--;
+                    this.currentDisk.headTrack = this.track;
                     if (this.track === 0) this.status |= this.TRACK0;
                 }
 
@@ -2317,24 +2361,23 @@
         }
 
         readSector() {
+            const drv = this.currentDisk;
             const offset = this.getSectorOffset(this.track, this.side, this.sector);
-            // Also compute what linear offset would be for comparison
-            const linearOffset = (this.track * 16 + (this.sector - 1)) * 256;
 
-            // Notify disk activity
+            // Notify disk activity (include drive number)
             if (this.onDiskActivity) {
-                this.onDiskActivity('read', this.track, this.sector, this.side);
+                this.onDiskActivity('read', this.track, this.sector, this.side, this.drive);
             }
 
-            if (offset + this.bytesPerSector > this.diskData.length) {
-                console.warn(`[BetaDisk] READ failed: offset ${offset} + ${this.bytesPerSector} > ${this.diskData.length}`);
+            if (offset + this.bytesPerSector > drv.diskData.length) {
+                console.warn(`[BetaDisk] READ failed: offset ${offset} + ${this.bytesPerSector} > ${drv.diskData.length}`);
                 this.status |= this.RNF;
                 this.status &= ~this.BUSY;
                 this.intrq = true;
                 return;
             }
 
-            this.dataBuffer = this.diskData.slice(offset, offset + this.bytesPerSector);
+            this.dataBuffer = drv.diskData.slice(offset, offset + this.bytesPerSector);
 
             this.dataPos = 0;
             this.dataLen = this.bytesPerSector;
@@ -2343,14 +2386,15 @@
         }
 
         writeSector() {
+            const drv = this.currentDisk;
             const offset = this.getSectorOffset(this.track, this.side, this.sector);
 
-            // Notify disk activity
+            // Notify disk activity (include drive number)
             if (this.onDiskActivity) {
-                this.onDiskActivity('write', this.track, this.sector, this.side);
+                this.onDiskActivity('write', this.track, this.sector, this.side, this.drive);
             }
 
-            if (offset + this.bytesPerSector > this.diskData.length) {
+            if (offset + this.bytesPerSector > drv.diskData.length) {
                 this.status |= this.RNF;
                 this.status &= ~this.BUSY;
                 this.intrq = true;
@@ -2367,7 +2411,7 @@
 
         flushWriteBuffer() {
             if (this.writeOffset !== undefined && this.dataBuffer) {
-                this.diskData.set(this.dataBuffer, this.writeOffset);
+                this.currentDisk.diskData.set(this.dataBuffer, this.writeOffset);
             }
         }
 

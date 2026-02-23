@@ -67,6 +67,7 @@
             this.running = false;
             this.lastFrameTime = 0;
             this.frameCount = 0;
+            this.totalFrames = 0;       // Monotonic frame counter (never reset, for port I/O log)
             this.actualFps = 0;
             
             this.updateDisplayDimensions();
@@ -138,9 +139,12 @@
             this.traceMemOpsLimit = 8; // Max memory ops to record per instruction
             this.haltTraced = false; // Track if current HALT state has been traced
 
-            // Media storage for project save/load
-            // Stores original TAP/TRD/SCL data so programs can load additional files
-            this.loadedMedia = null; // { type: 'tap'|'trd'|'scl', data: Uint8Array, name: string }
+            // Media storage for project save/load — separate tape and per-drive disk state
+            this.loadedTape = null;          // { type: 'tap'|'tzx', data: Uint8Array, name: string }
+            this.loadedBetaDisks = [null, null, null, null];  // Per-drive { data: Uint8Array, name: string }
+            this.loadedFDCDisks = [null, null];               // Per-drive { data: Uint8Array, name: string }
+            this.loadedBetaDiskFiles = [null, null, null, null];  // Per-drive file listings for Beta Disk
+            this.loadedFDCDiskFiles = [null, null];               // Per-drive file listings for FDC
 
             // Callback for processing TRD data before loading (used for boot injection)
             this.onBeforeTrdLoad = null; // function(data, filename) => processedData
@@ -172,6 +176,7 @@
             this.rzxDebugLog = [];      // Collected debug info for export
             this.portLog = [];          // Port I/O log for debugging
             this.portLogEnabled = false; // Whether to log port I/O
+            this.portTraceFilters = [];  // Array of {port, mask} — empty = trace all
 
             // RZX recording state
             this.rzxRecording = false;      // Whether RZX recording is active
@@ -1002,11 +1007,11 @@
                 const highByte = (port >> 8) & 0xff;
 
                 // Beta Disk ports (Pentagon with disk inserted)
-                // Ports are accessible whenever disk is inserted, not just when ROM is paged in
+                // Ports are accessible whenever any disk is inserted, not just when ROM is paged in
                 // (TR-DOS code runs in RAM but still needs disk access)
-                // Beta Disk active when: enabled setting AND disk inserted AND TR-DOS ROM loaded
+                // Beta Disk active when: enabled setting AND any disk inserted AND TR-DOS ROM loaded
                 const betaDiskActive = this.betaDiskEnabled &&
-                    this.betaDisk && this.betaDisk.hasDisk() && this.memory.hasTrdosRom();
+                    this.betaDisk && this.betaDisk.hasAnyDisk() && this.memory.hasTrdosRom();
 
 
                 if ((lowByte & 0x01) === 0) {
@@ -1130,18 +1135,19 @@
             }
 
             // Track port read for trace (only during runtime tracing, not step tracing)
-            if (this.runtimeTraceEnabled && this.onBeforeStep) {
+            if (this.runtimeTraceEnabled && this.onBeforeStep && this.matchesPortTraceFilter(port)) {
                 this.tracePortOps.push({ dir: 'in', port, val: result });
             }
 
             // Port I/O logging for debugging
-            if (this.portLogEnabled) {
+            if (this.portLogEnabled && this.matchesPortTraceFilter(port)) {
                 this.portLog.push({
                     dir: 'IN',
                     port: port,
                     value: result,
                     pc: this.cpu.pc,
-                    frame: this.rzxPlaying ? this.rzxFrame : -1,
+                    frame: this.totalFrames,
+                    rzxFrame: this.rzxPlaying ? this.rzxFrame : -1,
                     t: this.cpu.tStates
                 });
             }
@@ -1156,18 +1162,19 @@
 
         portWrite(port, val, instructionTiming = 12) {
             // Track port write for trace (only during runtime tracing, not step tracing)
-            if (this.runtimeTraceEnabled && this.onBeforeStep) {
+            if (this.runtimeTraceEnabled && this.onBeforeStep && this.matchesPortTraceFilter(port)) {
                 this.tracePortOps.push({ dir: 'out', port, val });
             }
 
             // Port I/O logging for debugging
-            if (this.portLogEnabled) {
+            if (this.portLogEnabled && this.matchesPortTraceFilter(port)) {
                 this.portLog.push({
                     dir: 'OUT',
                     port: port,
                     value: val,
                     pc: this.cpu.pc,
-                    frame: this.rzxPlaying ? this.rzxFrame : -1,
+                    frame: this.totalFrames,
+                    rzxFrame: this.rzxPlaying ? this.rzxFrame : -1,
                     t: this.cpu.tStates
                 });
             }
@@ -1185,10 +1192,10 @@
 
             const lowByte = port & 0xff;
 
-            // Beta Disk ports (when enabled and disk inserted)
-            // Ports are accessible whenever disk is inserted, not just when ROM is paged in
+            // Beta Disk ports (when enabled and any disk inserted)
+            // Ports are accessible whenever any disk is inserted, not just when ROM is paged in
             const betaDiskActive = this.betaDiskEnabled &&
-                this.betaDisk && this.betaDisk.hasDisk() && this.memory.hasTrdosRom();
+                this.betaDisk && this.betaDisk.hasAnyDisk() && this.memory.hasTrdosRom();
 
             if ((lowByte & 0x01) === 0) {
                 // Track border changes in T-states for pixel-perfect rendering
@@ -1790,6 +1797,7 @@
             this.drawOverlay();
 
             this.frameCount++;
+            this.totalFrames++;
             if (this.onFrame) this.onFrame(this.frameCount);
 
             // Process AY + beeper + tape audio for this frame (skip at high speeds - audio would be meaningless)
@@ -2109,6 +2117,7 @@
             this.ula.endFrame();
 
             this.frameCount++;
+            this.totalFrames++;
 
             // Process AY + beeper + tape audio for this frame (skip at high speeds - audio would be meaningless)
             if (this.audio && this.audio.enabled && this.speed > 0 && this.speed <= 200) {
@@ -4902,7 +4911,7 @@
 
         // ========== File Loading ==========
 
-        async loadFile(file) {
+        async loadFile(file, driveIndex = 0) {
             let data = await file.arrayBuffer();
             let fileName = file.name;
 
@@ -4919,7 +4928,8 @@
                     return {
                         needsSelection: true,
                         files: spectrumFiles.map(f => ({ name: f.name, type: f.type })),
-                        _zipFiles: spectrumFiles  // Internal: full data for loading
+                        _zipFiles: spectrumFiles,  // Internal: full data for loading
+                        _driveIndex: driveIndex     // Pass through drive index
                     };
                 }
 
@@ -4936,19 +4946,19 @@
 
             // Check for DSK disk images (ZX Spectrum +3)
             if (type === 'dsk') {
-                return this.loadDSKImage(data, fileName);
+                return this.loadDSKImage(data, fileName, driveIndex);
             }
 
             // Check for TRD/SCL disk images (contain multiple files)
             if (type === 'trd' || type === 'scl') {
-                return this.loadDiskImage(data, type, fileName);
+                return this.loadDiskImage(data, type, fileName, driveIndex);
             }
 
             return this.loadFileData(data, fileName);
         }
 
         // Load TRD/SCL disk image - inserts disk into Beta Disk interface
-        loadDiskImage(data, type, fileName) {
+        loadDiskImage(data, type, fileName, driveIndex = 0) {
             const originalType = type;  // Preserve original format name for display
             let processedData = data;
 
@@ -4958,8 +4968,8 @@
                 type = 'trd';
             }
 
-            // Apply boot injection callback if configured
-            if (this.onBeforeTrdLoad) {
+            // Apply boot injection callback if configured (drive 0 only)
+            if (driveIndex === 0 && this.onBeforeTrdLoad) {
                 processedData = this.onBeforeTrdLoad(processedData, fileName);
             }
 
@@ -4969,19 +4979,21 @@
                 throw new Error('No files found in disk image');
             }
 
-            // Store disk image for project save and TR-DOS trap access
-            this.loadedMedia = {
-                type: 'trd',
-                data: new Uint8Array(processedData),
+            // Store disk image for project save (per-drive)
+            const diskData = new Uint8Array(processedData);
+            this.loadedBetaDisks[driveIndex & 0x03] = {
+                data: diskData,
                 name: fileName
             };
-            this.loadedDiskFiles = files;  // Keep file list for TR-DOS operations
+            this.loadedBetaDiskFiles[driveIndex & 0x03] = files;
 
             // Load disk into Beta Disk interface (already TRD format)
-            this.betaDisk.loadDisk(processedData, 'trd');
+            this.betaDisk.loadDisk(processedData, 'trd', driveIndex);
 
-            // Set up TR-DOS trap handler with disk data (fallback)
-            this.trdosTrap.setDisk(this.loadedMedia.data, files, type);
+            // Set up TR-DOS trap handler with disk data (drive 0 only — boot drive)
+            if (driveIndex === 0) {
+                this.trdosTrap.setDisk(diskData, files, type);
+            }
 
             // Request switch to Pentagon if Beta Disk not available on current machine
             // No switch needed if: Pentagon mode OR (Beta Disk enabled AND TR-DOS ROM loaded)
@@ -4999,13 +5011,14 @@
                 fileCount: files.length,
                 _diskData: processedData,
                 _diskFiles: files,
+                _driveIndex: driveIndex,
                 needsMachineSwitch: needsMachineSwitch,
                 targetMachine: 'pentagon'
             };
         }
 
         // Load DSK disk image - inserts disk into µPD765 FDC (+3)
-        loadDSKImage(data, fileName) {
+        loadDSKImage(data, fileName, driveIndex = 0) {
             if (!this.fdc) {
                 throw new Error('DSK files require ZX Spectrum +3 (no FDC on this machine)');
             }
@@ -5014,16 +5027,16 @@
             let files = [];
             try { files = DSKLoader.listFiles(dskImage); } catch (e) { /* non-CP/M disk */ }
 
-            // Insert disk into drive 0
-            this.fdc.drives[0].disk = dskImage;
+            // Insert disk into specified drive
+            this.fdc.drives[driveIndex & 0x01].disk = dskImage;
 
-            // Store for project save and catalog display
-            this.loadedMedia = {
-                type: 'dsk',
-                data: new Uint8Array(data instanceof Uint8Array ? data : new Uint8Array(data)),
+            // Store for project save and catalog display (per-drive)
+            const rawData = new Uint8Array(data instanceof Uint8Array ? data : new Uint8Array(data));
+            this.loadedFDCDisks[driveIndex & 0x01] = {
+                data: rawData,
                 name: fileName
             };
-            this.loadedDiskFiles = files;
+            this.loadedFDCDiskFiles[driveIndex & 0x01] = files;
 
             return {
                 isDSK: true,
@@ -5033,6 +5046,7 @@
                 fileCount: files.length,
                 _dskImage: dskImage,
                 _diskFiles: files,
+                _driveIndex: driveIndex,
                 needsMachineSwitch: this.machineType !== '+3',
                 targetMachine: '+3'
             };
@@ -5086,22 +5100,27 @@
                 return false;
             }
 
-            // Save disk state before reset (spectrum.reset() doesn't touch betaDisk,
+            // Save per-drive disk state before reset (spectrum.reset() doesn't touch betaDisk,
             // but be safe in case that changes)
-            const diskState = this.betaDisk ? {
-                hasDisk: this.betaDisk.hasDisk(),
-                diskData: this.betaDisk.diskImage,
-                diskType: this.betaDisk.diskType
-            } : null;
+            const savedDrives = this.betaDisk ? this.betaDisk.drives.map(d => ({
+                diskData: d.diskData,
+                diskType: d.diskType,
+                headTrack: d.headTrack
+            })) : null;
 
             // Full machine reset — clears CPU, memory, ULA, tape state
             this.stop();
             this.reset();
 
-            // Restore disk after reset
-            if (diskState && diskState.hasDisk && diskState.diskData) {
-                this.betaDisk.diskImage = diskState.diskData;
-                this.betaDisk.diskType = diskState.diskType;
+            // Restore all drive disk data after reset
+            if (savedDrives && this.betaDisk) {
+                for (let i = 0; i < 4; i++) {
+                    if (savedDrives[i].diskData) {
+                        this.betaDisk.drives[i].diskData = savedDrives[i].diskData;
+                        this.betaDisk.drives[i].diskType = savedDrives[i].diskType;
+                        this.betaDisk.drives[i].headTrack = 0; // Reset head position
+                    }
+                }
             }
 
             // Select BASIC ROM bank as background ROM.
@@ -5129,7 +5148,7 @@
             // In Pentagon mode with TR-DOS ROM + disk, don't auto-boot
             // Just return info so user can select TR-DOS from menu manually
             // The disk is already loaded in betaDisk
-            if (this.profile.betaDiskDefault && this.betaDisk.hasDisk() && this.memory.hasTrdosRom()) {
+            if (this.profile.betaDiskDefault && this.betaDisk.hasAnyDisk() && this.memory.hasTrdosRom()) {
                 // Start emulator if not running
                 if (!this.running) {
                     this.start();
@@ -5247,7 +5266,7 @@
         }
 
         // Load from pre-extracted data (used after ZIP selection)
-        loadFileData(data, fileName) {
+        loadFileData(data, fileName, driveIndex = 0) {
             const type = this.snapshotLoader.detectType(data, fileName);
             switch (type) {
                 case 'sna': return this.loadSnapshot(data);
@@ -5256,10 +5275,10 @@
                 case 'tap': return this.loadTape(data, fileName);  // Store TAP with name
                 case 'tzx': return this.loadTZX(data, fileName);  // Store TZX with name
                 case 'dsk':
-                    return this.loadDSKImage(data, fileName);
+                    return this.loadDSKImage(data, fileName, driveIndex);
                 case 'trd':
                 case 'scl':
-                    return this.loadDiskImage(data, type, fileName);
+                    return this.loadDiskImage(data, type, fileName, driveIndex);
                 case 'rzx': throw new Error('Use loadRZX for RZX files');
                 default: throw new Error('Unknown file format');
             }
@@ -5268,7 +5287,7 @@
         // Load specific file from ZIP selection result
         loadFromZipSelection(zipResult, index) {
             const file = zipResult._zipFiles[index];
-            return this.loadFileData(file.data, file.name);
+            return this.loadFileData(file.data, file.name, zipResult._driveIndex || 0);
         }
         
         loadZ80Snapshot(data) {
@@ -5466,7 +5485,7 @@
 
             // Store original TAP data for project save (if not from disk conversion)
             if (storeName) {
-                this.loadedMedia = {
+                this.loadedTape = {
                     type: 'tap',
                     data: new Uint8Array(data),
                     name: storeName
@@ -5558,7 +5577,7 @@
 
             // Store original TZX data for project save
             if (storeName) {
-                this.loadedMedia = {
+                this.loadedTape = {
                     type: 'tzx',
                     data: new Uint8Array(data),
                     name: storeName
@@ -5574,27 +5593,110 @@
         // ========== Media Management ==========
 
         getLoadedMedia() {
-            return this.loadedMedia;
+            // Return structured state for project save
+            return {
+                tape: this.loadedTape,
+                betaDisks: this.loadedBetaDisks,
+                fdcDisks: this.loadedFDCDisks,
+                tapeBlock: this.getTapeBlock()
+            };
         }
 
         setLoadedMedia(media) {
-            this.loadedMedia = media;
-            // Restore tape/disk if present
-            if (media && media.data) {
+            if (!media) return;
+
+            // New multi-drive format (mediaVersion 2)
+            if (media.tape !== undefined) {
+                if (media.tape && media.tape.data) {
+                    this.loadedTape = media.tape;
+                    if (media.tape.type === 'tap') {
+                        this.tapeLoader.load(media.tape.data.buffer);
+                        this.tapeTrap.setTape(this.tapeLoader);
+                        this.tapePlayer.loadFromTapeLoader(this.tapeLoader);
+                    } else if (media.tape.type === 'tzx') {
+                        this.loadTZX(media.tape.data.buffer, null);
+                    }
+                }
+                // Restore Beta Disk drives
+                if (media.betaDisks) {
+                    for (let i = 0; i < 4; i++) {
+                        if (media.betaDisks[i] && media.betaDisks[i].data) {
+                            this.betaDisk.loadDisk(media.betaDisks[i].data, 'trd', i);
+                            this.loadedBetaDisks[i] = media.betaDisks[i];
+                            // Rebuild file listing for this drive
+                            try {
+                                this.loadedBetaDiskFiles[i] = TRDLoader.listFiles(media.betaDisks[i].data);
+                            } catch (e) { /* ignore */ }
+                            // Set up trap for drive 0
+                            if (i === 0 && this.loadedBetaDiskFiles[0]) {
+                                this.trdosTrap.setDisk(media.betaDisks[i].data, this.loadedBetaDiskFiles[0], 'trd');
+                            }
+                        }
+                    }
+                }
+                // Restore FDC drives
+                if (media.fdcDisks && this.fdc) {
+                    for (let i = 0; i < 2; i++) {
+                        if (media.fdcDisks[i] && media.fdcDisks[i].data) {
+                            const dskImage = DSKLoader.parse(media.fdcDisks[i].data.buffer || media.fdcDisks[i].data);
+                            this.fdc.drives[i].disk = dskImage;
+                            this.loadedFDCDisks[i] = media.fdcDisks[i];
+                            try {
+                                this.loadedFDCDiskFiles[i] = DSKLoader.listFiles(dskImage);
+                            } catch (e) { /* non-CP/M disk */ }
+                        }
+                    }
+                }
+            } else if (media.data) {
+                // Legacy single-media format (backward compat with old projects)
                 if (media.type === 'tap') {
+                    this.loadedTape = media;
                     this.tapeLoader.load(media.data.buffer);
                     this.tapeTrap.setTape(this.tapeLoader);
                     this.tapePlayer.loadFromTapeLoader(this.tapeLoader);
                 } else if (media.type === 'tzx') {
-                    this.loadTZX(media.data.buffer, null);  // Don't re-store
+                    this.loadedTape = media;
+                    this.loadTZX(media.data.buffer, null);
+                } else if (media.type === 'trd') {
+                    this.loadedBetaDisks[0] = media;
+                    this.betaDisk.loadDisk(media.data, 'trd', 0);
+                    try {
+                        this.loadedBetaDiskFiles[0] = TRDLoader.listFiles(media.data);
+                        this.trdosTrap.setDisk(media.data, this.loadedBetaDiskFiles[0], 'trd');
+                    } catch (e) { /* ignore */ }
+                } else if (media.type === 'dsk' && this.fdc) {
+                    this.loadedFDCDisks[0] = media;
+                    const dskImage = DSKLoader.parse(media.data.buffer || media.data);
+                    this.fdc.drives[0].disk = dskImage;
+                    try {
+                        this.loadedFDCDiskFiles[0] = DSKLoader.listFiles(dskImage);
+                    } catch (e) { /* non-CP/M disk */ }
                 }
-                // For TRD/SCL, data is stored but not pre-loaded
-                // User can load additional files via ROM trap or manual selection
             }
         }
 
         clearLoadedMedia() {
-            this.loadedMedia = null;
+            this.loadedTape = null;
+            this.loadedBetaDisks = [null, null, null, null];
+            this.loadedFDCDisks = [null, null];
+            this.loadedBetaDiskFiles = [null, null, null, null];
+            this.loadedFDCDiskFiles = [null, null];
+        }
+
+        clearTape() {
+            this.loadedTape = null;
+        }
+
+        clearDisk(driveIndex, type) {
+            if (type === 'fdc') {
+                if (this.fdc) this.fdc.ejectDisk(driveIndex & 0x01);
+                this.loadedFDCDisks[driveIndex & 0x01] = null;
+                this.loadedFDCDiskFiles[driveIndex & 0x01] = null;
+            } else {
+                this.betaDisk.ejectDisk(driveIndex & 0x03);
+                this.loadedBetaDisks[driveIndex & 0x03] = null;
+                this.loadedBetaDiskFiles[driveIndex & 0x03] = null;
+            }
         }
 
         // Tape position for project save/restore
@@ -6461,6 +6563,45 @@
 
         clearPortLog() {
             this.portLog = [];
+        }
+
+        // ========== Port Trace Filters ==========
+
+        addPortTraceFilter(spec) {
+            if (typeof spec === 'string') {
+                const parsed = this.parsePortSpec(spec);
+                if (!parsed) return null;
+                spec = parsed;
+            }
+            // Dedup: don't add if same port+mask already exists
+            for (const f of this.portTraceFilters) {
+                if (f.port === spec.port && f.mask === spec.mask) return f;
+            }
+            const entry = { port: spec.port, mask: spec.mask };
+            this.portTraceFilters.push(entry);
+            return entry;
+        }
+
+        removePortTraceFilter(index) {
+            if (index >= 0 && index < this.portTraceFilters.length) {
+                this.portTraceFilters.splice(index, 1);
+            }
+        }
+
+        clearPortTraceFilters() {
+            this.portTraceFilters = [];
+        }
+
+        getPortTraceFilters() {
+            return this.portTraceFilters;
+        }
+
+        matchesPortTraceFilter(port) {
+            if (this.portTraceFilters.length === 0) return true;
+            for (const f of this.portTraceFilters) {
+                if ((port & f.mask) === (f.port & f.mask)) return true;
+            }
+            return false;
         }
 
         // ========== Auto-Mapping ==========
