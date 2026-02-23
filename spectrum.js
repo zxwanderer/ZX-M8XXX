@@ -317,8 +317,8 @@
                 // Multicolor tracking for Pentagon (no contention, simple tStates)
                 this.ula.mcWriteAdjust = 5;
                 this.cpu.onMemWrite = (addr, val) => {
-                    if (addr >= 0x5800 && addr <= 0x5AFF) {
-                        this.ula.setAttrAt(addr - 0x5800, val, this.cpu.tStates);
+                    if (addr >= SCREEN_ATTR && addr <= SCREEN_END) {
+                        this.ula.setAttrAt(addr - SCREEN_ATTR, val, this.cpu.tStates);
                         this.ula.hadAttrChanges = true;
                     }
                 };
@@ -459,11 +459,11 @@
                 // mcWriteAdjust = 0 because we pass the actual write time (not instruction start)
                 this.ula.mcWriteAdjust = 0;
                 this.cpu.onMemWrite = (addr, val) => {
-                    if (addr >= 0x5800 && addr <= 0x5AFF) {
+                    if (addr >= SCREEN_ATTR && addr <= SCREEN_END) {
                         // Calculate write time: cpu.tStates already has contention delays,
                         // mcycleOffset tracks position in instruction for accurate timing
                         const writeT = this.cpu.tStates + mcycleOffset;
-                        this.ula.setAttrAt(addr - 0x5800, val, writeT);
+                        this.ula.setAttrAt(addr - SCREEN_ATTR, val, writeT);
                         this.ula.hadAttrChanges = true;
                     }
                 };
@@ -565,9 +565,9 @@
 
                 this.ula.mcWriteAdjust = 0;
                 this.cpu.onMemWrite = (addr, val) => {
-                    if (addr >= 0x5800 && addr <= 0x5AFF) {
+                    if (addr >= SCREEN_ATTR && addr <= SCREEN_END) {
                         const writeT = this.cpu.tStates + mcycleOffset;
-                        this.ula.setAttrAt(addr - 0x5800, val, writeT);
+                        this.ula.setAttrAt(addr - SCREEN_ATTR, val, writeT);
                         this.ula.hadAttrChanges = true;
                     }
                 };
@@ -681,9 +681,9 @@
                 // Multicolor tracking with accurate timing (same as 48K)
                 this.ula.mcWriteAdjust = 0;
                 this.cpu.onMemWrite = (addr, val) => {
-                    if (addr >= 0x5800 && addr <= 0x5AFF) {
+                    if (addr >= SCREEN_ATTR && addr <= SCREEN_END) {
                         const writeT = this.cpu.tStates + mcycleOffset;
-                        this.ula.setAttrAt(addr - 0x5800, val, writeT);
+                        this.ula.setAttrAt(addr - SCREEN_ATTR, val, writeT);
                         this.ula.hadAttrChanges = true;
                     }
                 };
@@ -699,8 +699,8 @@
             this.contentionEnabled = false;
             this.ula.mcWriteAdjust = 5;
             this.cpu.onMemWrite = (addr, val) => {
-                if (addr >= 0x5800 && addr <= 0x5AFF) {
-                    this.ula.setAttrAt(addr - 0x5800, val, this.cpu.tStates);
+                if (addr >= SCREEN_ATTR && addr <= SCREEN_END) {
+                    this.ula.setAttrAt(addr - SCREEN_ATTR, val, this.cpu.tStates);
                     this.ula.hadAttrChanges = true;
                 }
             };
@@ -1061,20 +1061,20 @@
 
                     const ear = this.tapeEarBit ? 0x40 : 0x00;
                     result = keyboard | 0xa0 | ear; // Bits 5,7 always high
-                } else if (this.fdc && (port & 0xF002) === 0x2000) {
+                } else if (this.fdc && (port & DECODE_PLUS2A_MASK2) === DECODE_FDC_MSR) {
                     // µPD765 FDC Main Status Register (0x2FFD) — ZX Spectrum +3
                     result = this.fdc.readMSR();
-                } else if (this.fdc && (port & 0xF002) === 0x3000) {
+                } else if (this.fdc && (port & DECODE_PLUS2A_MASK2) === DECODE_FDC_DATA) {
                     // µPD765 FDC Data Register (0x3FFD) — ZX Spectrum +3
                     result = this.fdc.readData();
-                } else if (betaDiskActive && (lowByte === 0x1f || lowByte === 0x3f ||
-                           lowByte === 0x5f || lowByte === 0x7f)) {
+                } else if (betaDiskActive && (lowByte === PORT_WD_CMD || lowByte === PORT_WD_TRACK ||
+                           lowByte === PORT_WD_SECTOR || lowByte === PORT_WD_DATA)) {
                     // Beta Disk WD1793 registers
                     result = this.betaDisk.read(port);
-                } else if (betaDiskActive && lowByte === 0xff) {
+                } else if (betaDiskActive && lowByte === PORT_WD_SYS) {
                     // Beta Disk system register
                     result = this.betaDisk.read(port);
-                } else if (lowByte === 0x1f) {
+                } else if (lowByte === PORT_WD_CMD) {
                     // Port 0x1F: Kempston joystick (only when no Beta Disk)
                     // Bits 0-4: standard (Right, Left, Down, Up, Fire/B)
                     // Bits 5-7: extended (C, A, Start) - active high
@@ -1104,10 +1104,10 @@
                         // FFDF: Y position (0-255)
                         result = this.kempstonMouseY & 0xff;
                     }
-                } else if (this.ula.ulaplus.enabled && port === 0xff3b) {
+                } else if (this.ula.ulaplus.enabled && port === PORT_ULAPLUS_REG) {
                     // ULAplus data port read
                     result = this.ula.ulaplusReadData();
-                } else if ((port & 0xC002) === 0xC000) {
+                } else if ((port & DECODE_AY_MASK) === DECODE_AY_REG) {
                     // Port 0xFFFD: AY register read (128K/Pentagon, or 48K with AY enabled)
                     if (this.ayEnabled || (this.machineType === '48k' && this.ay48kEnabled)) {
                         result = this.ay.readRegister();
@@ -1271,24 +1271,26 @@
 
                 // Don't return - port $7FFC triggers BOTH ULA AND paging for scroll17 effect
             }
-            if (betaDiskActive && (lowByte === 0x1f || lowByte === 0x3f ||
-                lowByte === 0x5f || lowByte === 0x7f)) {
+            if (betaDiskActive && (lowByte === PORT_WD_CMD || lowByte === PORT_WD_TRACK ||
+                lowByte === PORT_WD_SECTOR || lowByte === PORT_WD_DATA)) {
                 // Beta Disk WD1793 registers
                 this.betaDisk.write(port, val);
                 return;
             }
-            if (betaDiskActive && lowByte === 0xff) {
+            if (betaDiskActive && lowByte === PORT_WD_SYS) {
                 // Beta Disk system register
                 this.betaDisk.write(port, val);
                 return;
             }
             // Port 0x7FFD: memory paging
-            // 128K/+2/Pentagon: (port & 0x8002) === 0 (A15=0, A1=0) — loose decode
-            // +2A: (port & 0xC002) === 0x4000 (A15=0, A14=1, A1=0) — stricter decode
+            // 128K/+2/Pentagon: (port & DECODE_128K_MASK) === 0 (A15=0, A1=0) — loose decode
+            // +2A: (port & DECODE_PLUS2A_MASK) === DECODE_7FFD_PLUS2A (A15=0, A14=1, A1=0) — stricter decode
             // Without this, +2A port 0x1FFD writes also trigger 0x7FFD handler
             const is7FFD = this.profile.pagingModel === '+2a'
-                ? (port & 0xC002) === 0x4000
-                : (port & 0x8002) === 0;
+                ? (port & DECODE_PLUS2A_MASK) === DECODE_7FFD_PLUS2A
+                : (this.profile.pagingModel === 'scorpion'
+                    ? (port & DECODE_128K_MASK) === 0 && port !== PORT_1FFD
+                    : (port & DECODE_128K_MASK) === 0);
             if (this.profile.pagingModel !== 'none' && is7FFD) {
                 const oldScreenBank = this.memory.screenBank;
                 this.memory.writePaging(val);
@@ -1305,28 +1307,33 @@
             }
 
             // +2A/+3 port 0x1FFD: special paging, ROM bank high bit, and FDC motor control
-            if (this.profile.pagingModel === '+2a' && (port & 0xF002) === 0x1000) {
+            if (this.profile.pagingModel === '+2a' && (port & DECODE_PLUS2A_MASK2) === DECODE_1FFD_PLUS2A) {
                 this.memory.write1FFD(val);
                 if (this.fdc) this.fdc.setMotor(!!(val & 0x08));
             }
 
             // µPD765 FDC data register write (port 0x3FFD)
-            if (this.fdc && (port & 0xF002) === 0x3000) {
+            if (this.fdc && (port & DECODE_PLUS2A_MASK2) === DECODE_FDC_DATA) {
                 this.fdc.writeData(val);
             }
 
+            // Scorpion port 0x1FFD: extended paging (RAM page high bit, ROM bank high bit, RAM-over-ROM)
+            if (this.profile.pagingModel === 'scorpion' && port === PORT_1FFD) {
+                this.memory.writeScorpion1FFD(val);
+            }
+
             // Pentagon 1024 port 0xEFF7: extended memory control
-            // Port decode: A12=0, A13=1, A14=1, A15=1 → (port & 0xF008) === 0xE000
-            if (this.profile.pagingModel === 'pentagon1024' && (port & 0xF008) === 0xE000) {
+            // Port decode: A12=0, A13=1, A14=1, A15=1
+            if (this.profile.pagingModel === 'pentagon1024' && (port & DECODE_P1024_MASK) === DECODE_P1024_VAL) {
                 this.memory.writePortEFF7(val);
             }
 
             // AY-3-8910 ports (128K/Pentagon, or 48K with AY enabled)
             if (this.ayEnabled || (this.machineType === '48k' && this.ay48kEnabled)) {
-                if ((port & 0xC002) === 0xC000) {
+                if ((port & DECODE_AY_MASK) === DECODE_AY_REG) {
                     // Port 0xFFFD: AY register select
                     this.ay.selectRegister(val);
-                } else if ((port & 0xC002) === 0x8000) {
+                } else if ((port & DECODE_AY_MASK) === DECODE_AY_DATA) {
                     // Port 0xBFFD: AY register write
                     this.ay.writeRegister(val);
                 }
@@ -1334,10 +1341,10 @@
 
             // ULAplus ports (when enabled)
             if (this.ula.ulaplus.enabled) {
-                if (port === 0xbf3b) {
+                if (port === PORT_ULAPLUS_DATA) {
                     // ULAplus register select
                     this.ula.ulaplusWriteRegister(val);
-                } else if (port === 0xff3b) {
+                } else if (port === PORT_ULAPLUS_REG) {
                     // ULAplus data write - pass T-states for raster effect tracking
                     this.ula.ulaplusWriteData(val, this.cpu.tStates);
                 }
@@ -3406,7 +3413,7 @@
                 return this.memory.read(addr);
             } else {
                 // Attribute address: 010110Y7Y6Y5Y4Y3X4X3X2X1X0
-                const addr = 0x5800 | ((y >> 3) << 5) | x;
+                const addr = SCREEN_ATTR | ((y >> 3) << 5) | x;
                 return this.memory.read(addr);
             }
         }
@@ -5004,7 +5011,8 @@
             }
 
             const dskImage = DSKLoader.parse(data);
-            const files = DSKLoader.listFiles(dskImage);
+            let files = [];
+            try { files = DSKLoader.listFiles(dskImage); } catch (e) { /* non-CP/M disk */ }
 
             // Insert disk into drive 0
             this.fdc.drives[0].disk = dskImage;
@@ -5072,8 +5080,8 @@
                 return false;
             }
 
-            // Check if Beta Disk is available (Pentagon or enabled via setting)
-            if (this.machineType !== 'pentagon' && !this.betaDiskEnabled) {
+            // Check if Beta Disk is available (built-in on Pentagon/Scorpion, or enabled via setting)
+            if (!this.profile.betaDiskDefault && !this.betaDiskEnabled) {
                 console.warn('[TR-DOS] Cannot boot TR-DOS: Beta Disk not enabled');
                 return false;
             }
@@ -5341,7 +5349,9 @@
                     targetType = '+2a';  // Map SZX name to internal type
                 } else if (targetType === '+3' || targetType === '+3e') {
                     targetType = '+2a';  // +3 is hardware-identical to +2A (minus floppy)
-                } else if (targetType === 'scorpion' || targetType === 'didaktik') {
+                } else if (targetType === 'scorpion') {
+                    // Native Scorpion support
+                } else if (targetType === 'didaktik') {
                     targetType = '128k';  // Treat other 128K clones as 128K
                 } else if (targetType === '16k') {
                     targetType = '48k';
@@ -5405,7 +5415,7 @@
             let targetType;
             if (is128k) {
                 // Keep Pentagon/+2 if already set, otherwise use 128K
-                targetType = this.machineType === 'pentagon' ? 'pentagon' : (is128kCompat(this.machineType) ? this.machineType : '128k');
+                targetType = (this.machineType === 'pentagon' || this.machineType === 'pentagon1024' || this.machineType === 'scorpion') ? this.machineType : (is128kCompat(this.machineType) ? this.machineType : '128k');
             } else {
                 targetType = '48k';
             }

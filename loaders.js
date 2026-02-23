@@ -1076,7 +1076,7 @@
             // Check for TRD format
             if (TRDLoader.isTRD(data)) return 'trd';
 
-            if (bytes.length === 49179 || bytes.length === 131103 || bytes.length === 147487) return 'sna';
+            if (bytes.length === SNA_48K_SIZE || bytes.length === SNA_128K_SIZE || bytes.length === SNA_P1024_SIZE) return 'sna';
             if (bytes.length > 30 && (bytes[6] === 0 || bytes[6] === 0xff)) return 'z80';
             if (bytes.length > 2) {
                 const len = bytes[0] | (bytes[1] << 8);
@@ -1087,8 +1087,8 @@
         
         loadSNA48(data, cpu, memory) {
             const bytes = new Uint8Array(data);
-            if (bytes.length < 49179) throw new Error('Invalid SNA file');
-            
+            if (bytes.length < SNA_48K_SIZE) throw new Error('Invalid SNA file');
+
             cpu.i = bytes[0];
             cpu.l_ = bytes[1]; cpu.h_ = bytes[2];
             cpu.e_ = bytes[3]; cpu.d_ = bytes[4];
@@ -1111,8 +1111,8 @@
             cpu.halted = false;
             cpu.eiPending = false;
 
-            for (let i = 0; i < 49152; i++) {
-                memory.write(0x4000 + i, bytes[27 + i]);
+            for (let i = 0; i < SNA_48K_RAM; i++) {
+                memory.write(0x4000 + i, bytes[SNA_HEADER_SIZE + i]);
             }
 
             cpu.pc = memory.read(cpu.sp) | (memory.read(cpu.sp + 1) << 8);
@@ -1123,13 +1123,13 @@
 
         loadSNA128(data, cpu, memory) {
             const bytes = new Uint8Array(data);
-            if (bytes.length < 49181) return this.loadSNA48(data, cpu, memory);
+            if (bytes.length < SNA_128K_MIN) return this.loadSNA48(data, cpu, memory);
 
             // For 128K, we need to set paging BEFORE loading 48KB section
             // Otherwise the wrong bank gets written at C000
-            const offset = 49179;
+            const offset = SNA_48K_SIZE;
             const pagingByte = bytes[offset + 2];
-            const currentBank = pagingByte & 0x07;
+            const currentBank = pagingByte & P7FFD_RAM_MASK;
 
             // Reset paging lock before setting paging state from snapshot
             memory.pagingDisabled = false;
@@ -1160,8 +1160,8 @@
             cpu.eiPending = false;
 
             // Now load 48KB section (banks 5, 2, and currently paged bank)
-            for (let i = 0; i < 49152; i++) {
-                memory.write(0x4000 + i, bytes[27 + i]);
+            for (let i = 0; i < SNA_48K_RAM; i++) {
+                memory.write(0x4000 + i, bytes[SNA_HEADER_SIZE + i]);
             }
 
             // Load PC from 128K extension
@@ -1170,14 +1170,14 @@
             // Load remaining banks (excluding the current one which is in 48KB section)
             const banksToLoad = [0, 1, 3, 4, 6, 7].filter(b => b !== currentBank);
             // Only load as many banks as are present in the file (max 5)
-            const availableBanks = Math.floor((bytes.length - offset - 4) / 16384);
+            const availableBanks = Math.floor((bytes.length - offset - SNA_128K_EXT) / PAGE_SIZE);
             const banksToActuallyLoad = banksToLoad.slice(0, Math.min(banksToLoad.length, availableBanks));
-            let bankOffset = offset + 4;
+            let bankOffset = offset + SNA_128K_EXT;
             for (const bankNum of banksToActuallyLoad) {
-                if (bankOffset + 16384 > bytes.length) break;
+                if (bankOffset + PAGE_SIZE > bytes.length) break;
                 const ramBank = memory.getRamBank(bankNum);
-                ramBank.set(bytes.slice(bankOffset, bankOffset + 16384));
-                bankOffset += 16384;
+                ramBank.set(bytes.slice(bankOffset, bankOffset + PAGE_SIZE));
+                bankOffset += PAGE_SIZE;
             }
             this.machineType = '128k';
             return { border, machineType: '128k' };
@@ -1185,14 +1185,14 @@
         
         loadSNA(data, cpu, memory) {
             const bytes = new Uint8Array(data);
-            if (bytes.length === 49179) return this.loadSNA48(data, cpu, memory);
-            if (bytes.length > 49179) return this.loadSNA128(data, cpu, memory);
+            if (bytes.length === SNA_48K_SIZE) return this.loadSNA48(data, cpu, memory);
+            if (bytes.length > SNA_48K_SIZE) return this.loadSNA128(data, cpu, memory);
             throw new Error('Invalid SNA file');
         }
         
         createSNA(cpu, memory, border = 7) {
             const is128k = memory.profile.ramPages > 1;
-            const size = is128k ? 131103 : 49179;
+            const size = is128k ? SNA_128K_SIZE : SNA_48K_SIZE;
             const bytes = new Uint8Array(size);
             
             bytes[0] = cpu.i;
@@ -1219,17 +1219,17 @@
             bytes[25] = cpu.im;
             bytes[26] = border & 0x07;
             
-            for (let i = 0; i < 49152; i++) {
-                bytes[27 + i] = memory.read(0x4000 + i);
+            for (let i = 0; i < SNA_48K_RAM; i++) {
+                bytes[SNA_HEADER_SIZE + i] = memory.read(0x4000 + i);
             }
-            
+
             if (is128k) {
-                const offset = 49179;
+                const offset = SNA_48K_SIZE;
                 bytes[offset] = cpu.pc & 0xff;
                 bytes[offset + 1] = (cpu.pc >> 8) & 0xff;
                 const ps = memory.getPagingState();
-                bytes[offset + 2] = (ps.ramBank & 0x07) | (ps.screenBank === 7 ? 0x08 : 0x00) |
-                                    (ps.romBank ? 0x10 : 0x00) | (ps.pagingDisabled ? 0x20 : 0x00);
+                bytes[offset + 2] = (ps.ramBank & P7FFD_RAM_MASK) | (ps.screenBank === 7 ? P7FFD_SCREEN_BIT : 0x00) |
+                                    (ps.romBank ? P7FFD_ROM_BIT : 0x00) | (ps.pagingDisabled ? P7FFD_LOCK_BIT : 0x00);
                 bytes[offset + 3] = 0;
                 // Save remaining banks (excluding those in the 48KB section)
                 // 48KB section always has: bank 5 (4000-7FFF), bank 2 (8000-BFFF), and current bank (C000-FFFF)
@@ -1237,12 +1237,12 @@
                 // Banks 2 and 5 are always in 48KB, plus the current bank at C000
                 // Only save banks from [0,1,3,4,6,7] that aren't the current bank
                 const banksToSave = [0, 1, 3, 4, 6, 7].filter(b => b !== currentBank);
-                // Limit to 5 banks max to fit in 131103 byte format
+                // Limit to 5 banks max to fit in SNA_128K_SIZE format
                 const banksToActuallySave = banksToSave.slice(0, 5);
-                let bankOffset = offset + 4;
+                let bankOffset = offset + SNA_128K_EXT;
                 for (const bankNum of banksToActuallySave) {
                     bytes.set(memory.getRamBank(bankNum), bankOffset);
-                    bankOffset += 16384;
+                    bankOffset += PAGE_SIZE;
                 }
             }
             return bytes;
@@ -1307,12 +1307,12 @@
                 // 128K: save all 8 RAM banks as pages 3-10
                 for (let bank = 0; bank < 8; bank++) {
                     const pageData = memory.getRamBank(bank);
-                    // Use 0xFFFF to indicate uncompressed 16384 bytes
-                    const pageChunk = new Uint8Array(3 + 16384);
+                    // Use 0xFFFF to indicate uncompressed PAGE_SIZE bytes
+                    const pageChunk = new Uint8Array(3 + PAGE_SIZE);
                     pageChunk[0] = 0xFF;
                     pageChunk[1] = 0xFF;
                     pageChunk[2] = bank + 3;  // Page number (3-10 for banks 0-7)
-                    pageChunk.set(pageData.subarray(0, 16384), 3);
+                    pageChunk.set(pageData.subarray(0, PAGE_SIZE), 3);
                     chunks.push(pageChunk);
                 }
             } else {
@@ -1323,12 +1323,12 @@
                     { num: 5, start: 0xC000 }   // $C000-$FFFF
                 ];
                 for (const page of pages) {
-                    const pageData = new Uint8Array(16384);
-                    for (let i = 0; i < 16384; i++) {
+                    const pageData = new Uint8Array(PAGE_SIZE);
+                    for (let i = 0; i < PAGE_SIZE; i++) {
                         pageData[i] = memory.read(page.start + i);
                     }
-                    // Use 0xFFFF to indicate uncompressed 16384 bytes
-                    const pageChunk = new Uint8Array(3 + 16384);
+                    // Use 0xFFFF to indicate uncompressed PAGE_SIZE bytes
+                    const pageChunk = new Uint8Array(3 + PAGE_SIZE);
                     pageChunk[0] = 0xFF;
                     pageChunk[1] = 0xFF;
                     pageChunk[2] = page.num;
@@ -1417,7 +1417,7 @@
             if (pc !== 0) {
                 // Version 1 - 48K only
                 cpu.pc = pc;
-                const memData = this.decompressZ80Block(bytes.subarray(30), 49152, compressed);
+                const memData = this.decompressZ80Block(bytes.subarray(30), SNA_48K_RAM, compressed);
                 for (let i = 0; i < memData.length; i++) {
                     memory.write(0x4000 + i, memData[i]);
                 }
@@ -1452,13 +1452,13 @@
                 const pageNum = bytes[offset + 2];
                 offset += 3;
                 
-                if (offset + (blockLen === 0xffff ? 16384 : blockLen) > bytes.length) break;
-                
+                if (offset + (blockLen === 0xffff ? PAGE_SIZE : blockLen) > bytes.length) break;
+
                 const isCompressed = blockLen !== 0xffff;
-                const rawLen = isCompressed ? blockLen : 16384;
+                const rawLen = isCompressed ? blockLen : PAGE_SIZE;
                 const blockData = bytes.subarray(offset, offset + rawLen);
-                const pageData = isCompressed ? 
-                    this.decompressZ80Block(blockData, 16384, true) : blockData;
+                const pageData = isCompressed ?
+                    this.decompressZ80Block(blockData, PAGE_SIZE, true) : blockData;
                 
                 this.loadZ80Page(pageNum, pageData, memory, machineType);
                 offset += rawLen;
@@ -1506,17 +1506,17 @@
             if (machineType === '48k') {
                 switch (pageNum) {
                     case 4: // 0x8000-0xBFFF
-                        for (let i = 0; i < data.length && i < 16384; i++) {
+                        for (let i = 0; i < data.length && i < PAGE_SIZE; i++) {
                             memory.write(0x8000 + i, data[i]);
                         }
                         break;
                     case 5: // 0xC000-0xFFFF
-                        for (let i = 0; i < data.length && i < 16384; i++) {
+                        for (let i = 0; i < data.length && i < PAGE_SIZE; i++) {
                             memory.write(0xC000 + i, data[i]);
                         }
                         break;
                     case 8: // 0x4000-0x7FFF
-                        for (let i = 0; i < data.length && i < 16384; i++) {
+                        for (let i = 0; i < data.length && i < PAGE_SIZE; i++) {
                             memory.write(0x4000 + i, data[i]);
                         }
                         break;
@@ -1530,13 +1530,13 @@
                     // 48K ROM modifications - load into ROM bank 1
                     const romBank = memory.rom[1];
                     if (romBank) {
-                        romBank.set(data.subarray(0, Math.min(data.length, 16384)));
+                        romBank.set(data.subarray(0, Math.min(data.length, PAGE_SIZE)));
                     }
                 } else if (pageNum === 2) {
                     // 128K ROM modifications - load into ROM bank 0
                     const romBank = memory.rom[0];
                     if (romBank) {
-                        romBank.set(data.subarray(0, Math.min(data.length, 16384)));
+                        romBank.set(data.subarray(0, Math.min(data.length, PAGE_SIZE)));
                     }
                 } else {
                     const bankNum = pageNum - 3;
@@ -1544,7 +1544,7 @@
                     if (bankNum >= 0 && bankNum < maxBanks) {
                         const ramBank = memory.getRamBank(bankNum);
                         if (ramBank) {
-                            ramBank.set(data.subarray(0, Math.min(data.length, 16384)));
+                            ramBank.set(data.subarray(0, Math.min(data.length, PAGE_SIZE)));
                         }
                     }
                 }
@@ -1570,9 +1570,9 @@
             if (pc === 0x056c || pc === 0x0556) {
                 // In 128K mode, only trap when ROM 1 (48K BASIC) is active
                 // ROM 0 is the 128K editor which has different code at these addresses
-                if (is128kCompat(this.memory.machineType) || this.memory.machineType === 'pentagon') {
-                    // +2A: 48K BASIC ROM is bank 3 (not bank 1)
-                    const basicRomBank = this.memory.machineType === '+2a' ? 3 : 1;
+                if (this.memory.profile.ramPages > 1) {
+                    // Check that the current ROM bank is the 48K BASIC ROM
+                    const basicRomBank = this.memory.profile.basicRomBank;
                     if (this.memory.currentRomBank !== basicRomBank) {
                         return false;  // Don't trap - wrong ROM bank
                     }
@@ -3733,20 +3733,25 @@
 
             // Load RAM pages
             if (info.is128) {
-                // 128K: load all 8 pages
-                for (let page = 0; page < 8; page++) {
+                // Load all RAM pages (8 for 128K, 16 for Scorpion, 64 for Pentagon 1024)
+                const pageCount = memory.profile.ramPages;
+                for (let page = 0; page < pageCount; page++) {
                     const pageData = this.extractRAMPage(data, info, page);
                     if (pageData) {
                         const bank = memory.getRamBank(page);
-                        if (bank) bank.set(pageData.slice(0, 16384));
+                        if (bank) bank.set(pageData.slice(0, PAGE_SIZE));
                     }
                 }
                 // Reset paging lock before setting paging state from snapshot
                 // (otherwise writePaging returns early if previous program locked paging)
                 memory.pagingDisabled = false;
-                // Set paging state (+2A: apply 0x1FFD before 0x7FFD so ROM bank combines correctly)
-                if (memory.machineType === '+2a') {
+                // Set paging state — apply secondary port before 0x7FFD so ROM bank combines correctly
+                if (memory.profile.pagingModel === '+2a') {
                     memory.write1FFD(port1FFD);
+                } else if (memory.profile.pagingModel === 'scorpion') {
+                    memory.writeScorpion1FFD(port1FFD);
+                } else if (memory.profile.pagingModel === 'pentagon1024') {
+                    memory.writePortEFF7(port1FFD);
                 }
                 memory.writePaging(port7FFD);
             } else {
@@ -3755,9 +3760,9 @@
                 const page2 = this.extractRAMPage(data, info, 2);
                 const page0 = this.extractRAMPage(data, info, 0);
 
-                if (page5) memory.setBlock(0x4000, page5.slice(0, 16384));
-                if (page2) memory.setBlock(0x8000, page2.slice(0, 16384));
-                if (page0) memory.setBlock(0xC000, page0.slice(0, 16384));
+                if (page5) memory.setBlock(0x4000, page5.slice(0, PAGE_SIZE));
+                if (page2) memory.setBlock(0x8000, page2.slice(0, PAGE_SIZE));
+                if (page0) memory.setBlock(0xC000, page0.slice(0, PAGE_SIZE));
             }
 
             return { machineType, info };
@@ -3809,13 +3814,26 @@
             spcrData[0] = border & 0x07;
             if (is128k) {
                 const ps = memory.getPagingState();
-                spcrData[1] = (ps.ramBank & 0x07) | (ps.screenBank === 7 ? 0x08 : 0x00) |
-                              ((ps.romBank & 1) ? 0x10 : 0x00) | (ps.pagingDisabled ? 0x20 : 0x00);
+                // Byte 1: port 0x7FFD value — reconstruct from paging state
+                let port7FFD = (ps.ramBank & P7FFD_RAM_MASK) | (ps.screenBank === 7 ? P7FFD_SCREEN_BIT : 0x00) |
+                              ((ps.romBank & 1) ? P7FFD_ROM_BIT : 0x00) | (ps.pagingDisabled ? P7FFD_LOCK_BIT : 0x00);
+                // Pentagon 1024: bits 6-7 carry RAM bank bits 3-4, bit 5 carries bit 5 in 1MB mode
+                if (memory.profile.pagingModel === 'pentagon1024') {
+                    port7FFD |= (ps.ramBank & 0x18) << 3;  // bits 3,4 → 6,7
+                    if (ps.pentagon1024Mode) {
+                        port7FFD |= (ps.ramBank & 0x20);   // bit 5 → 5
+                    }
+                }
+                spcrData[1] = port7FFD;
             }
             spcrData[2] = border & 0x07;  // Port $FE
-            // Byte 3: port 0x1FFD (+2A/+3)
+            // Byte 3: port 0x1FFD (+2A/+3/Scorpion) or portEFF7 (Pentagon 1024)
             if (memory.profile.pagingModel === '+2a') {
                 spcrData[3] = memory.port1FFD || 0;
+            } else if (memory.profile.pagingModel === 'scorpion') {
+                spcrData[3] = memory.scorpionPort1FFD || 0;
+            } else if (memory.profile.pagingModel === 'pentagon1024') {
+                spcrData[3] = memory.portEFF7 || 0;
             }
             // Bytes 4-7: reserved
             chunks.push(this.makeChunk('SPCR', spcrData));
@@ -3836,8 +3854,8 @@
                     { page: 0, start: 0xC000 }
                 ];
                 for (const { page, start } of pageMap) {
-                    const pageData = new Uint8Array(16384);
-                    for (let i = 0; i < 16384; i++) {
+                    const pageData = new Uint8Array(PAGE_SIZE);
+                    for (let i = 0; i < PAGE_SIZE; i++) {
                         pageData[i] = memory.read(start + i);
                     }
                     chunks.push(this.makeRAMPChunk(page, pageData));

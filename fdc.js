@@ -277,37 +277,141 @@
         }
 
         /**
-         * List files from a +3DOS / CP/M directory on a DSK image
-         * Reads directory sectors from the first track(s) and parses 32-byte CP/M entries.
+         * Read the +3DOS disk specification from the boot sector (track 0).
+         * Returns disk parameters including reserved tracks, block size, etc.
          * @param {DSKImage} dskImage
-         * @returns {Array} Array of {name, ext, size, user, extents}
+         * @returns {object} Disk spec with reservedTracks, blockSize, dirBlocks, etc.
          */
-        static listFiles(dskImage) {
-            // +3DOS uses CP/M-style directory on the first sectors of the disk.
-            // Standard +3 geometry: 40 tracks, 1 side, 9 sectors/track, 512 bytes/sector.
-            // Directory is in the first 4 allocation blocks (each 1024 bytes = 2 sectors).
-            // Sector IDs typically start at 0xC1 (or 0x41 on some disks).
-            // Read all sectors from track 0, side 0 to get directory data.
-
-            const track = dskImage.getTrack(0, 0);
-            if (!track || track.sectors.length === 0) return [];
-
-            // Collect all directory data from track 0 (up to 2048 bytes for standard +3)
-            // Sort sectors by ID to get correct order
-            const sortedSectors = [...track.sectors].sort((a, b) => a.id - b.id);
-
-            // Take first 4 sectors for directory (2048 bytes / 512 bytes per sector)
-            const dirSectors = sortedSectors.slice(0, Math.min(4, sortedSectors.length));
-            const dirData = new Uint8Array(dirSectors.length * 512);
-            let pos = 0;
-            for (const sec of dirSectors) {
-                const len = Math.min(512, sec.data.length);
-                dirData.set(sec.data.subarray(0, len), pos);
-                pos += 512;
+        static getDiskSpec(dskImage) {
+            const track0 = dskImage.getTrack(0, 0);
+            if (!track0 || track0.sectors.length === 0) {
+                return { reservedTracks: 0, blockSize: 1024, dirBlocks: 2, valid: false };
             }
 
+            const sorted = [...track0.sectors].sort((a, b) => a.id - b.id);
+            const bootData = sorted[0].data;
+
+            // +3DOS disk specification block (16 bytes at start of boot sector):
+            // Byte 0: Disk type (0=PCW SS SD, 1=CPC system, 2=CPC data, 3=PCW/+3)
+            // Byte 1: Sides - 1 (0=single, 1=double)
+            // Byte 2: Tracks per side
+            // Byte 3: Sectors per track
+            // Byte 4: First sector number
+            // Byte 5: Sector size log2 (2=512)
+            // Byte 6: Reserved tracks
+            // Byte 7: Block shift (BSH: 3=1K, 4=2K, 5=4K)
+            // Byte 8: Directory blocks (allocation units)
+            // Byte 9: R/W gap length
+            // Byte 10: Format gap length
+            // Bytes 11-14: Reserved (0)
+            // Byte 15: Checksum (bytes 0-15 sum to 0 mod 256)
+            if (bootData && bootData.length >= 16) {
+                let checksum = 0;
+                for (let i = 0; i < 16; i++) checksum = (checksum + bootData[i]) & 0xFF;
+
+                if (checksum === 0) {
+                    const reservedTracks = bootData[6];
+                    const blockShift = bootData[7];
+                    // Validate: blockShift should be 3-5, reservedTracks 0-3
+                    if (blockShift >= 3 && blockShift <= 5 && reservedTracks <= 3) {
+                        return {
+                            diskType: bootData[0],
+                            sides: (bootData[1] & 0x01) + 1,
+                            tracksPerSide: bootData[2],
+                            sectorsPerTrack: bootData[3],
+                            firstSectorId: bootData[4],
+                            sectorSizeLog: bootData[5],
+                            sectorSize: 128 << bootData[5],
+                            reservedTracks: reservedTracks,
+                            blockShift: blockShift,
+                            blockSize: 128 << blockShift,
+                            dirBlocks: bootData[8],
+                            valid: true
+                        };
+                    }
+                }
+            }
+
+            // Fallback: assume standard +3 format (1 reserved track)
+            return {
+                reservedTracks: 1,
+                blockSize: 1024,
+                blockShift: 3,
+                dirBlocks: 2,
+                sectorsPerTrack: sorted.length,
+                sectorSize: sorted[0].data.length || 512,
+                firstSectorId: sorted[0].id,
+                valid: false
+            };
+        }
+
+        /**
+         * Read directory data from a DSK image, accounting for reserved tracks.
+         * @param {DSKImage} dskImage
+         * @param {object} spec - Disk specification from getDiskSpec()
+         * @returns {object} { dirData, sortedSectors (from dir track) } or null
+         */
+        static _readDirectory(dskImage, spec) {
+            // Directory is at the start of the data area (after reserved tracks)
+            const dirTrackNum = spec.reservedTracks;
+            const dirTrack = dskImage.getTrack(dirTrackNum, 0);
+            if (!dirTrack || dirTrack.sectors.length === 0) return null;
+
+            const sortedSectors = [...dirTrack.sectors].sort((a, b) => a.id - b.id);
+
+            // Directory occupies dirBlocks allocation blocks
+            const dirBlocks = spec.dirBlocks || 2;
+            const totalDirBytes = dirBlocks * spec.blockSize;
+            const dirData = new Uint8Array(totalDirBytes);
+            let pos = 0;
+            let currentTrack = dirTrackNum;
+            let sectorIdx = 0;
+
+            // Read sectors sequentially until we have enough directory data.
+            // Sectors may be larger or smaller than the block size.
+            while (pos < totalDirBytes) {
+                const track = dskImage.getTrack(currentTrack, 0);
+                if (!track || track.sectors.length === 0) break;
+                const tSorted = [...track.sectors].sort((a, b) => a.id - b.id);
+                if (sectorIdx >= tSorted.length) {
+                    currentTrack++;
+                    sectorIdx = 0;
+                    continue;
+                }
+                const sec = tSorted[sectorIdx];
+                const copyLen = Math.min(sec.data.length, totalDirBytes - pos);
+                dirData.set(sec.data.subarray(0, copyLen), pos);
+                pos += sec.data.length;
+                sectorIdx++;
+            }
+
+            return { dirData, sortedSectors };
+        }
+
+        /**
+         * List files from a +3DOS / CP/M directory on a DSK image.
+         * Reads disk specification from boot sector to determine reserved tracks,
+         * then parses 32-byte CP/M directory entries.
+         * @param {DSKImage} dskImage
+         * @returns {Array} Array of {name, ext, size, user, blocks}
+         */
+        static listFiles(dskImage) {
+            const spec = DSKLoader.getDiskSpec(dskImage);
+            const dir = DSKLoader._readDirectory(dskImage, spec);
+            if (!dir) return [];
+
+            const { dirData, sortedSectors } = dir;
+            const blockSize = spec.blockSize;
+            // Use spec sectorSize (from boot track geometry) for block mapping.
+            // Directory track sectors may differ in size from data tracks.
+            const sectorSize = spec.sectorSize || 512;
+            const sectorsPerBlock = Math.max(1, Math.round(blockSize / sectorSize));
+            const sectorsPerTrack = spec.sectorsPerTrack || sortedSectors.length;
+            const baseSectorId = spec.firstSectorId !== undefined ? spec.firstSectorId : sortedSectors[0].id;
+            const reservedTracks = spec.reservedTracks;
+
             // Parse CP/M directory entries (32 bytes each)
-            const files = new Map();  // filename -> {name, ext, size, user, blockCount}
+            const files = new Map();
             const maxEntries = Math.floor(dirData.length / 32);
 
             for (let i = 0; i < maxEntries; i++) {
@@ -341,8 +445,8 @@
                 const extent = extentLo + (extentHi * 32);
 
                 // Records count (BC = bytes count in last extent, RC = records count)
-                const bc = dirData[entryBase + 13];  // Byte count in last record (0 = full 128)
-                const rc = dirData[entryBase + 15];  // Records used in this extent (128 bytes each)
+                const bc = dirData[entryBase + 13];
+                const rc = dirData[entryBase + 15];
 
                 // Allocation blocks (16 bytes at offset 16-31)
                 let blockCount = 0;
@@ -360,12 +464,23 @@
                         maxExtent: -1,
                         lastRc: 0,
                         lastBc: 0,
-                        totalBlocks: 0
+                        totalBlocks: 0,
+                        firstBlock: undefined
                     });
                 }
 
                 const entry = files.get(key);
                 entry.totalBlocks += blockCount;
+
+                // Save first allocation block number from extent 0
+                if (extent === 0 && entry.firstBlock === undefined) {
+                    for (let j = 16; j < 32; j++) {
+                        if (dirData[entryBase + j] !== 0) {
+                            entry.firstBlock = dirData[entryBase + j];
+                            break;
+                        }
+                    }
+                }
 
                 // Track the highest extent to calculate total file size
                 if (extent > entry.maxExtent) {
@@ -396,11 +511,174 @@
                     ext: entry.ext,
                     user: entry.user,
                     size: size,
-                    blocks: entry.totalBlocks
+                    rawSize: size,  // CP/M record-level size (before +3DOS header correction)
+                    blocks: entry.totalBlocks,
+                    firstBlock: entry.firstBlock
                 });
             }
 
+            // Read +3DOS headers to get precise file sizes and type info.
+            // +3DOS files have a 128-byte header: "PLUS3DOS" signature at bytes 0-7,
+            // 0x1A at byte 8, file length (incl. header) at bytes 11-14,
+            // file type at byte 15 (0=BASIC, 3=CODE), type-specific data at 16+.
+            for (const file of result) {
+                if (file.firstBlock === undefined) continue;
+
+                // Read first sector of the file's first allocation block
+                const absSector = file.firstBlock * sectorsPerBlock;
+                const trackNum = reservedTracks + Math.floor(absSector / sectorsPerTrack);
+                const sectorInTrack = absSector % sectorsPerTrack;
+                const sectorId = baseSectorId + sectorInTrack;
+
+                const sectorData = dskImage.readSector(trackNum, 0, sectorId);
+                if (!sectorData || sectorData.length < 128) continue;
+
+                // Check +3DOS signature
+                if (sectorData[0] !== 0x50 || sectorData[1] !== 0x4C ||
+                    sectorData[2] !== 0x55 || sectorData[3] !== 0x53 ||
+                    sectorData[4] !== 0x33 || sectorData[5] !== 0x44 ||
+                    sectorData[6] !== 0x4F || sectorData[7] !== 0x53) continue;
+
+                // Verify soft-EOF marker
+                if (sectorData[8] !== 0x1A) continue;
+
+                // File length includes the 128-byte header
+                const totalLen = sectorData[11] | (sectorData[12] << 8) |
+                                 (sectorData[13] << 16) | (sectorData[14] << 24);
+                const dataLen = totalLen - 128;
+
+                if (dataLen > 0 && dataLen <= file.size) {
+                    file.size = dataLen;
+                }
+
+                // File type: 0=BASIC, 1=Number array, 2=Char array, 3=CODE
+                file.plus3Type = sectorData[15];
+                file.hasPlus3Header = true;
+
+                if (file.plus3Type === 3) {
+                    // CODE: load address and data length
+                    file.loadAddress = sectorData[16] | (sectorData[17] << 8);
+                    file.dataLength = sectorData[18] | (sectorData[19] << 8);
+                } else if (file.plus3Type === 0) {
+                    // BASIC: program length, autostart line
+                    file.dataLength = sectorData[16] | (sectorData[17] << 8);
+                    file.autostart = sectorData[18] | (sectorData[19] << 8);
+                }
+            }
+
             return result;
+        }
+
+        /**
+         * Read file data from a DSK image by CP/M filename.
+         * Reads allocation block numbers from all directory extents and
+         * concatenates the corresponding sectors in order.
+         * @param {DSKImage} dskImage
+         * @param {string} fileName - 8-char name (trimmed)
+         * @param {string} fileExt - 3-char extension (trimmed)
+         * @param {number} fileUser - CP/M user number
+         * @param {number} fileSize - Known file size (from listFiles)
+         * @returns {Uint8Array|null} File data or null
+         */
+        static readFileData(dskImage, fileName, fileExt, fileUser, fileSize) {
+            const spec = DSKLoader.getDiskSpec(dskImage);
+            const dir = DSKLoader._readDirectory(dskImage, spec);
+            if (!dir) return null;
+
+            const { dirData, sortedSectors } = dir;
+            const blockSize = spec.blockSize;
+            // Use spec sectorSize (from boot track geometry) for block mapping.
+            // Directory track sectors may differ in size from data tracks.
+            const sectorSize = spec.sectorSize || 512;
+            const sectorsPerBlock = Math.max(1, Math.round(blockSize / sectorSize));
+            const sectorsPerTrack = spec.sectorsPerTrack || sortedSectors.length;
+            const baseSectorId = spec.firstSectorId !== undefined ? spec.firstSectorId : sortedSectors[0].id;
+            const reservedTracks = spec.reservedTracks;
+
+            // Collect all extents for this file, sorted by extent number
+            const extents = [];
+            const maxEntries = Math.floor(dirData.length / 32);
+            for (let i = 0; i < maxEntries; i++) {
+                const entryBase = i * 32;
+                const user = dirData[entryBase];
+                if (user === 0xE5 || user > 15) continue;
+
+                let name = '';
+                for (let j = 1; j <= 8; j++) {
+                    const ch = dirData[entryBase + j] & 0x7F;
+                    if (ch >= 0x20) name += String.fromCharCode(ch);
+                }
+                name = name.trimEnd();
+
+                let ext = '';
+                for (let j = 9; j <= 11; j++) {
+                    const ch = dirData[entryBase + j] & 0x7F;
+                    if (ch >= 0x20) ext += String.fromCharCode(ch);
+                }
+                ext = ext.trimEnd();
+
+                if (user !== fileUser || name !== fileName || ext !== fileExt) continue;
+
+                const extentLo = dirData[entryBase + 12];
+                const extentHi = dirData[entryBase + 14];
+                const extentNum = extentLo + (extentHi * 32);
+
+                // Allocation block numbers (single byte each for small disks)
+                const blocks = [];
+                for (let j = 16; j < 32; j++) {
+                    if (dirData[entryBase + j] !== 0) {
+                        blocks.push(dirData[entryBase + j]);
+                    }
+                }
+
+                extents.push({ extentNum, blocks });
+            }
+
+            if (extents.length === 0) return null;
+
+            // Sort by extent number
+            extents.sort((a, b) => a.extentNum - b.extentNum);
+
+            // Collect all allocation blocks in order
+            const allBlocks = [];
+            for (const ext of extents) {
+                for (const b of ext.blocks) {
+                    allBlocks.push(b);
+                }
+            }
+
+            // Read data from allocation blocks
+            // Block 0 starts at the first track after reserved tracks.
+            // Block N maps to absolute sector N * sectorsPerBlock from start of data area.
+            const totalBytes = allBlocks.length * blockSize;
+            const result = new Uint8Array(totalBytes);
+            let writePos = 0;
+
+            for (const blockNum of allBlocks) {
+                const absoluteSector = blockNum * sectorsPerBlock;
+                const trackNum = reservedTracks + Math.floor(absoluteSector / sectorsPerTrack);
+                const sectorInTrack = absoluteSector % sectorsPerTrack;
+
+                for (let s = 0; s < sectorsPerBlock; s++) {
+                    const curSectorInTrack = sectorInTrack + s;
+                    const curTrack = trackNum + Math.floor(curSectorInTrack / sectorsPerTrack);
+                    const curSector = curSectorInTrack % sectorsPerTrack;
+                    const sectorId = baseSectorId + curSector;
+
+                    const sectorData = dskImage.readSector(curTrack, 0, sectorId);
+                    if (sectorData) {
+                        const copyLen = Math.min(sectorSize, result.length - writePos);
+                        result.set(sectorData.subarray(0, copyLen), writePos);
+                    }
+                    writePos += sectorSize;
+                }
+            }
+
+            // Trim to actual file size
+            if (fileSize > 0 && fileSize < result.length) {
+                return result.slice(0, fileSize);
+            }
+            return result.slice(0, Math.min(writePos, result.length));
         }
     }
 

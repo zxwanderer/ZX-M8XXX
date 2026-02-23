@@ -2,6 +2,63 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.26
+- **Scorpion ZS 256 Support**: New machine type — Soviet clone with 256KB RAM
+  - New "scorpion" option in machine selector dropdown (group: Scorpion)
+  - 256KB RAM (16 × 16KB pages), 4 ROM banks in `scorpion.rom` (64KB)
+  - ROM layout: ROM0=128 BASIC, ROM1=48 BASIC, ROM2=Service Monitor, ROM3=TR-DOS
+  - Pentagon-compatible ULA timing (224 T/line × 320 lines = 71680 T/frame, no contention)
+  - AY clock: 1.75 MHz (Pentagon standard)
+  - Port 0x7FFD: standard 128K paging (RAM pages 0-7, ROM 0/1, screen bank, paging lock)
+  - Port 0x1FFD (exact match): bit 0 = RAM page 0 over ROM, bit 1 = Service Monitor ROM select, bit 4 = RAM page high bit (+8)
+  - 3-way ROM selection (per FUSE): 1FFD bit 1 set → ROM 2 (Service Monitor); unset → 7FFD bit 4 selects ROM 0/1
+  - Built-in TR-DOS: ROM bank 3 loaded into Beta Disk ROMCS (`trdosInRom: true`) — no separate `trdos.rom` required
+  - Beta Disk interface enabled by default (same as Pentagon)
+  - SZX machine ID: 8, Z80 hardware mode: 9 (same as Pentagon)
+  - SZX snapshots save/load all 16 RAM pages + port 0x1FFD state
+  - SNA load preserves Scorpion machine type when already selected
+  - Auto-loads from `roms/scorpion.rom` on startup
+  - ROM dialog with scorpion.rom button and status indicator
+- **Test runner: Scorpion and Pentagon 1024 support**: Both machines now available as test targets
+  - Added `scorpion` and `pentagon1024` to test runner `switchMachine()` mapping
+  - Previously fell through to 48K default silently
+- **Fix SZX snapshot Pentagon 1024**: Save/load now preserves full paging state
+  - Port 0x7FFD reconstruction includes extended bits 6-7 (RAM bank bits 3-4) and bit 5 (1MB mode)
+  - Port 0xEFF7 saved in SPCR byte 3 and restored on load
+  - RAM page count no longer capped at 16 — all 64 pages saved/loaded correctly
+- **Fix SZX snapshot +3 paging**: Port 0x1FFD now restored for +3 (not just +2A)
+  - Changed `machineType === '+2a'` check to `pagingModel === '+2a'` which covers both +2A and +3
+- **Fix SNA load Pentagon 1024**: Machine type preserved when loading 128K SNA snapshots
+  - Previously dropped to generic 128K; now stays on Pentagon 1024 (same as Pentagon and Scorpion)
+- **Fix getFullState() Pentagon 1024**: State dump now includes portEFF7, pentagon1024Mode, and ramInRomMode
+- **Extract shared constants** (`constants.js`): Magic numbers replaced with named constants
+  - Port addresses: `PORT_7FFD`, `PORT_1FFD`, `PORT_EFF7`, `PORT_ULAPLUS_*`, `PORT_WD_*`
+  - Port decode masks: `DECODE_128K_MASK`, `DECODE_PLUS2A_MASK`, `DECODE_AY_MASK`, etc.
+  - Paging bit masks: `P7FFD_RAM_MASK`, `P7FFD_SCREEN_BIT`, `P7FFD_ROM_BIT`, `P7FFD_LOCK_BIT`
+  - SNA format sizes: `SNA_48K_SIZE`, `SNA_128K_SIZE`, `SNA_128K_MIN`, `PAGE_SIZE`
+  - Screen memory: `SCREEN_ATTR`, `SCREEN_END`, `BANK_MASK`
+
+## v0.9.25
+- **Explorer: DSK file support**: Tools → Explorer now parses and displays DSK disk images
+  - Shows disk geometry (format, tracks, sides, sectors, block size, reserved tracks)
+  - +3DOS boot sector parsing: reads disk specification with checksum validation
+  - CP/M directory listing with precise file sizes from +3DOS headers
+  - File types (BASIC/CODE) with load addresses and autostart line numbers
+  - Full filenames with extensions (e.g. `SCREEN.BIN`, `GAME.CODE`)
+  - BASIC program decoding: click a BASIC file to see decoded listing
+  - Boot sector disassembly: Disasm tab shows boot loader code at $FE10
+  - Boot sector hex dump: Hex tab shows full boot sector from $FE00
+  - File content access: click a file for hex dump or disassembly
+  - Screen preview for files matching known screen sizes (6912, 6144, etc.)
+  - DSK files accessible inside ZIP archives (auto-drill and click)
+- **Fix**: DSK Explorer crash on non-standard disk formats ("source array is too long")
+  - Disks with large sectors (e.g. 4096 bytes) caused fractional `sectorsPerBlock`, leading to undersized buffer in `_readDirectory` and overflow in `TypedArray.set()`
+  - `_readDirectory` rewritten to use byte-count loop, handles any sector size
+  - `listFiles`/`readFileData` now use boot track geometry consistently for block-to-sector mapping
+- **Fix**: DSK loading crash on non-CP/M disks (e.g. copy-protected games like Hostages)
+  - `listFiles()` wrapped in try/catch in both `loadDSKImage()` and Explorer
+  - Non-filesystem disks load and auto-boot correctly; Explorer shows geometry without file list
+
 ## v0.9.24
 - **FDC Read Track command (0x02)**: Implement Read Track for copy-protected games (e.g. Batman)
   - Reads all sectors on current track in physical order, ignoring sector IDs

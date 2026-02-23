@@ -40,6 +40,10 @@
             this.pentagon1024Mode = false;   // true = 1MB mode (bit 5 of 7FFD = bank bit)
             this.ramInRomMode = false;       // true = RAM page 0 mapped at 0x0000-0x3FFF
 
+            // Scorpion ZS 256-specific state
+            this.scorpionPort1FFD = 0;          // Last value written to port 0x1FFD
+            this.scorpionRamInRomMode = false;  // true = RAM page 0 mapped at 0x0000-0x3FFF
+
             // Watchpoint callbacks
             this.onRead = null;  // function(addr, val) - called on read
             this.onWrite = null; // function(addr, val) - called on write
@@ -52,20 +56,20 @@
             // Allocate ROM banks
             this.rom = [];
             for (let i = 0; i < p.romBanks; i++) {
-                this.rom.push(new Uint8Array(0x4000));
+                this.rom.push(new Uint8Array(PAGE_SIZE));
             }
             // Allocate RAM
             if (p.ramPages === 1) {
                 // 48K special case: single 48K block
-                this.ram = [new Uint8Array(0xC000)];
+                this.ram = [new Uint8Array(3 * PAGE_SIZE)];
             } else {
                 this.ram = [];
                 for (let i = 0; i < p.ramPages; i++) {
-                    this.ram.push(new Uint8Array(0x4000));
+                    this.ram.push(new Uint8Array(PAGE_SIZE));
                 }
             }
             // TR-DOS ROM (available for all machine types)
-            this.trdosRom = new Uint8Array(0x4000);
+            this.trdosRom = new Uint8Array(PAGE_SIZE);
             this.reset();
         }
 
@@ -88,12 +92,14 @@
             this.portEFF7 = 0;
             this.pentagon1024Mode = false;
             this.ramInRomMode = false;
+            this.scorpionPort1FFD = 0;
+            this.scorpionRamInRomMode = false;
         }
 
         loadRom(data, bank = 0) {
             if (bank < this.rom.length) {
                 const src = new Uint8Array(data);
-                this.rom[bank].set(src.subarray(0, Math.min(src.length, 0x4000)));
+                this.rom[bank].set(src.subarray(0, Math.min(src.length, PAGE_SIZE)));
             }
         }
 
@@ -101,12 +107,21 @@
         loadTrdosRom(data) {
             if (this.trdosRom) {
                 const src = new Uint8Array(data);
-                this.trdosRom.set(src.subarray(0, Math.min(src.length, 0x4000)));
+                this.trdosRom.set(src.subarray(0, Math.min(src.length, PAGE_SIZE)));
             }
         }
 
         // Check if TR-DOS ROM is loaded
         hasTrdosRom() {
+            // Scorpion: TR-DOS is in ROM bank 3 (not a separate chip)
+            if (this.profile.trdosInRom) {
+                const bank = this.rom[this.profile.trdosRomBank];
+                if (!bank) return false;
+                for (let i = 0; i < 256; i++) {
+                    if (bank[i] !== 0) return true;
+                }
+                return false;
+            }
             if (!this.trdosRom) {
                 return false;
             }
@@ -130,13 +145,16 @@
             } else if (this.specialPagingMode) {
                 // +2A special paging: all 4 slots are RAM banks
                 const slot = addr >> 14;
-                val = this.ram[this.specialBanks[slot]][addr & 0x3FFF];
+                val = this.ram[this.specialBanks[slot]][addr & BANK_MASK];
             } else {
                 if (addr < 0x4000) {
-                    if (this.trdosActive && this.trdosRom) {
-                        val = this.trdosRom[addr];
-                    } else if (this.ramInRomMode) {
-                        // Pentagon 1024: RAM page 0 mapped over ROM
+                    if (this.trdosActive) {
+                        // TR-DOS ROM paged in: Scorpion uses ROM bank, others use separate chip
+                        val = this.profile.trdosInRom
+                            ? this.rom[this.profile.trdosRomBank][addr]
+                            : this.trdosRom[addr];
+                    } else if (this.ramInRomMode || this.scorpionRamInRomMode) {
+                        // Pentagon 1024 / Scorpion: RAM page 0 mapped over ROM
                         val = this.ram[0][addr];
                     } else {
                         val = this.rom[this.currentRomBank][addr];
@@ -157,13 +175,13 @@
             if (this.specialPagingMode) {
                 // +2A special paging: all 4 slots are writable RAM
                 const slot = addr >> 14;
-                this.ram[this.specialBanks[slot]][addr & 0x3FFF] = val;
+                this.ram[this.specialBanks[slot]][addr & BANK_MASK] = val;
                 return;
             }
 
             if (addr < 0x4000) {
-                // Pentagon 1024: RAM page 0 mapped over ROM is writable
-                if (this.ramInRomMode) {
+                // Pentagon 1024 / Scorpion: RAM page 0 mapped over ROM is writable
+                if (this.ramInRomMode || this.scorpionRamInRomMode) {
                     this.ram[0][addr] = val;
                 }
                 return;
@@ -198,32 +216,48 @@
         writePaging(val) {
             if (this.profile.pagingModel === 'none' || this.pagingDisabled) return;
 
+            if (this.profile.pagingModel === 'scorpion') {
+                // Scorpion ZS 256: RAM page = ((1FFD bit 4) >> 1) | (7FFD bits 0-2)
+                let page = val & P7FFD_RAM_MASK;
+                page |= (this.scorpionPort1FFD & 0x10) >> 1;
+                this.currentRamBank = page % this.profile.ramPages;
+                this.screenBank = (val & P7FFD_SCREEN_BIT) ? 7 : 5;
+                // ROM bank selection (per FUSE): 1FFD bit 1 set → ROM 2; else 7FFD bit 4 → ROM 0/1
+                if (this.scorpionPort1FFD & 0x02) {
+                    this.currentRomBank = 2;
+                } else {
+                    this.currentRomBank = (val & P7FFD_ROM_BIT) ? 1 : 0;
+                }
+                if (val & P7FFD_LOCK_BIT) this.pagingDisabled = true;
+                return;
+            }
+
             if (this.profile.pagingModel === 'pentagon1024') {
                 // Pentagon 1024: extended bank selection using bits 0-2, 5, 6, 7
-                let page = val & 0x07;              // bits 0-2
-                page |= (val & 0xC0) >> 3;          // bits 6,7 → bank bits 3,4
+                let page = val & P7FFD_RAM_MASK;              // bits 0-2
+                page |= (val & P7FFD_P1024_EXT) >> 3;         // bits 6,7 → bank bits 3,4
                 if (this.pentagon1024Mode) {
-                    page |= (val & 0x20);            // bit 5 → bank bit 5 (value 32)
+                    page |= (val & P7FFD_LOCK_BIT);            // bit 5 → bank bit 5 (value 32)
                 }
                 this.currentRamBank = page % this.profile.ramPages;
-                this.screenBank = (val & 0x08) ? 7 : 5;
-                this.currentRomBank = (val & 0x10) ? 1 : 0;
+                this.screenBank = (val & P7FFD_SCREEN_BIT) ? 7 : 5;
+                this.currentRomBank = (val & P7FFD_ROM_BIT) ? 1 : 0;
                 // Bit 5 only locks paging in 128K mode (not in 1MB mode)
-                if (!this.pentagon1024Mode && (val & 0x20)) {
+                if (!this.pentagon1024Mode && (val & P7FFD_LOCK_BIT)) {
                     this.pagingDisabled = true;
                 }
                 return;
             }
 
-            this.currentRamBank = val & 0x07;
-            this.screenBank = (val & 0x08) ? 7 : 5;
+            this.currentRamBank = val & P7FFD_RAM_MASK;
+            this.screenBank = (val & P7FFD_SCREEN_BIT) ? 7 : 5;
             if (this.profile.pagingModel === '+2a') {
                 // +2A: ROM bank = ((port1FFD >> 2) & 1) << 1 | ((port7FFD >> 4) & 1)
                 this.currentRomBank = ((this.port1FFD >> 2) & 1) << 1 | ((val >> 4) & 1);
             } else {
-                this.currentRomBank = (val & 0x10) ? 1 : 0;
+                this.currentRomBank = (val & P7FFD_ROM_BIT) ? 1 : 0;
             }
-            if (val & 0x20) this.pagingDisabled = true;
+            if (val & P7FFD_LOCK_BIT) this.pagingDisabled = true;
         }
         
         getPagingState() {
@@ -243,6 +277,10 @@
                 state.pentagon1024Mode = this.pentagon1024Mode;
                 state.ramInRomMode = this.ramInRomMode;
             }
+            if (this.profile.pagingModel === 'scorpion') {
+                state.scorpionPort1FFD = this.scorpionPort1FFD;
+                state.scorpionRamInRomMode = this.scorpionRamInRomMode;
+            }
             return state;
         }
 
@@ -261,6 +299,10 @@
                 this.pentagon1024Mode = state.pentagon1024Mode || false;
                 this.ramInRomMode = state.ramInRomMode || false;
             }
+            if (this.profile.pagingModel === 'scorpion') {
+                this.scorpionPort1FFD = state.scorpionPort1FFD || 0;
+                this.scorpionRamInRomMode = state.scorpionRamInRomMode || false;
+            }
         }
 
         // Port 0xEFF7 handler for Pentagon 1024
@@ -270,6 +312,25 @@
             this.portEFF7 = val;
             this.pentagon1024Mode = !(val & 0x04);  // bit 2 = 0 means 1MB mode
             this.ramInRomMode = !!(val & 0x08);     // bit 3 = 1 means RAM replaces ROM
+        }
+
+        // Port 0x1FFD handler for Scorpion ZS 256
+        // Bit 0: RAM page 0 over ROM at 0x0000-0x3FFF
+        // Bit 1: ROM select → ROM 2 (when set); else ROM 0/1 via 7FFD bit 4
+        // Bit 4: RAM page high bit (+8)
+        writeScorpion1FFD(val) {
+            if (this.pagingDisabled) return;
+            this.scorpionPort1FFD = val;
+            this.scorpionRamInRomMode = !!(val & 0x01);  // bit 0
+            // Recalculate ROM bank (per FUSE): bit 1 set → ROM 2; else keep current 0/1
+            if (val & 0x02) {
+                this.currentRomBank = 2;
+            } else {
+                // Preserve ROM 0/1 selection from 7FFD bit 4
+                this.currentRomBank = this.currentRomBank & 1;
+            }
+            // Recalculate RAM page: ((1FFD bit 4) >> 1) | (current 7FFD bits 0-2)
+            this.currentRamBank = (((val & 0x10) >> 1) | (this.currentRamBank & P7FFD_RAM_MASK)) % this.profile.ramPages;
         }
 
         // Port 0x1FFD handler for +2A
@@ -326,13 +387,17 @@
         // Port I/O for 128K/+2A paging
         writePort(port, val) {
             // 128K paging port - responds to any port with A1=0 and A15=0
-            if ((port & 0x8002) === 0) {
+            if ((port & DECODE_128K_MASK) === 0) {
                 this.writePaging(val);
             }
             // +2A port 0x1FFD - responds to any port with A1=0, A12=1, A13=0, A14=0, A15=0
-            // Decoding: bits 15,14,13 = 0, bit 12 = 1, bit 1 = 0 → (port & 0xF002) === 0x1000
-            if (this.profile.pagingModel === '+2a' && (port & 0xF002) === 0x1000) {
+            // Decoding: bits 15,14,13 = 0, bit 12 = 1, bit 1 = 0
+            if (this.profile.pagingModel === '+2a' && (port & DECODE_PLUS2A_MASK2) === DECODE_1FFD_PLUS2A) {
                 this.write1FFD(val);
+            }
+            // Scorpion port 0x1FFD - exact match (per FUSE)
+            if (this.profile.pagingModel === 'scorpion' && port === PORT_1FFD) {
+                this.writeScorpion1FFD(val);
             }
         }
         
@@ -406,6 +471,19 @@
                 specialPagingMode: this.specialPagingMode,
                 specialBanks: this.specialBanks.slice()
             };
+
+            // Pentagon 1024 state
+            if (this.profile.pagingModel === 'pentagon1024') {
+                state.portEFF7 = this.portEFF7;
+                state.pentagon1024Mode = this.pentagon1024Mode;
+                state.ramInRomMode = this.ramInRomMode;
+            }
+
+            // Scorpion state
+            if (this.profile.pagingModel === 'scorpion') {
+                state.scorpionPort1FFD = this.scorpionPort1FFD;
+                state.scorpionRamInRomMode = this.scorpionRamInRomMode;
+            }
 
             // Copy ROM banks
             state.rom = this.rom.map(bank => new Uint8Array(bank));

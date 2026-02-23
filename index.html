@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZX-M8XXX v0.9.24</title>
+    <title>ZX-M8XXX v0.9.26</title>
     <style>
         * { box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -5331,6 +5331,9 @@
                 <button id="btnSelectPentagonRom">pentagon.rom</button>
                 <div class="rom-status" id="statusPentagonRom">Not loaded</div>
 
+                <button id="btnSelectScorpionRom">scorpion.rom</button>
+                <div class="rom-status" id="statusScorpionRom">Not loaded</div>
+
                 <button id="btnSelectTrdosRom">trdos.rom</button>
                 <div class="rom-status" id="statusTrdosRom">Not loaded (for TRD/SCL disks)</div>
             </div>
@@ -5413,7 +5416,7 @@
                 <option value="project">Project</option>
                 <option value="quick">Quick (F2)</option>
             </select>
-            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.24 — Help">Help</button>
+            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.26 — Help">Help</button>
             <button id="themeToggle" class="theme-btn" title="Toggle light/dark theme">☀️</button>
             <input type="file" id="projectFileInput" class="file-input" accept=".zxproj,.json">
         </div>
@@ -5476,6 +5479,7 @@
         <input type="file" id="romPlus2aInput" class="file-input" accept=".rom,.bin">
         <input type="file" id="romPlus3Input" class="file-input" accept=".rom,.bin">
         <input type="file" id="romPentagonInput" class="file-input" accept=".rom,.bin">
+        <input type="file" id="romScorpionInput" class="file-input" accept=".rom,.bin">
         <input type="file" id="romTrdosInput" class="file-input" accept=".rom,.bin">
         <input type="file" id="fileInput" class="file-input" accept=".sna,.tap,.tzx,.z80,.szx,.zip,.rzx,.trd,.scl,.dsk">
         </div><!-- emulator-section -->
@@ -6341,7 +6345,7 @@ start:
                         <h4>Frame Timing</h4>
                         <table class="info-table">
                             <thead>
-                                <tr><th>Parameter</th><th>48K</th><th>128K/+2/+2A</th><th>Pentagon</th></tr>
+                                <tr><th>Parameter</th><th>48K</th><th>128K/+2/+2A</th><th>Pentagon/Scorpion</th></tr>
                             </thead>
                             <tbody>
                                 <tr><td>T-states per line</td><td>224</td><td>228</td><td>224</td></tr>
@@ -6359,7 +6363,7 @@ start:
                         <h4>Border Sizes (pixels)</h4>
                         <table class="info-table">
                             <thead>
-                                <tr><th>Border</th><th>48K</th><th>128K/+2/+2A</th><th>Pentagon</th></tr>
+                                <tr><th>Border</th><th>48K</th><th>128K/+2/+2A</th><th>Pentagon/Scorpion</th></tr>
                             </thead>
                             <tbody>
                                 <tr><td>Top (lines)</td><td>64</td><td>63</td><td>80</td></tr>
@@ -6373,13 +6377,13 @@ start:
                     </div>
 
                     <div class="info-section">
-                        <h4>Memory Map (128K/+2/+2A/Pentagon)</h4>
+                        <h4>Memory Map (128K/+2/+2A/Pentagon/Scorpion)</h4>
                         <table class="info-table">
                             <thead>
                                 <tr><th>Address</th><th>Content</th><th>Contention (128K/+2)</th><th>Contention (+2A)</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>0000-3FFF</td><td>ROM (128K: 0-1, +2A: 0-3)</td><td>No</td><td>No</td></tr>
+                                <tr><td>0000-3FFF</td><td>ROM (128K: 0-1, +2A/Scorpion: 0-3)</td><td>No</td><td>No</td></tr>
                                 <tr><td>4000-7FFF</td><td>RAM Bank 5 (Screen)</td><td class="contended">Yes (always)</td><td class="contended">Yes (always)</td></tr>
                                 <tr><td>8000-BFFF</td><td>RAM Bank 2</td><td>No</td><td>No</td></tr>
                                 <tr><td>C000-FFFF</td><td>RAM Bank 0-7 (paged)</td><td>Odd banks only</td><td>Banks 4-7 only</td></tr>
@@ -6433,6 +6437,19 @@ start:
                             <li>320 lines per frame (more top border)</li>
                             <li>TR-DOS ROM pages in/out via 3Dxx trigger</li>
                             <li>Beta Disk interface at ports 1F, 3F, 5F, 7F, FF</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>Scorpion ZS 256 Differences</h4>
+                        <ul>
+                            <li>256KB RAM (16 pages), Pentagon-compatible ULA timing</li>
+                            <li>4 ROM banks: ROM0=128 BASIC, ROM1=48 BASIC, ROM2=Service Monitor, ROM3=TR-DOS</li>
+                            <li>Port 0x7FFD: standard 128K paging (RAM 0-7, ROM 0/1, screen, lock)</li>
+                            <li>Port 0x1FFD: bit 0 = RAM over ROM, bit 1 = ROM 2 select, bit 4 = RAM page +8</li>
+                            <li>ROM selection (3-way): 1FFD.1 set → ROM 2; unset → 7FFD.4 selects ROM 0/1</li>
+                            <li>TR-DOS built into ROM bank 3 (no separate trdos.rom needed)</li>
+                            <li>No memory or I/O contention (same as Pentagon)</li>
                         </ul>
                     </div>
                 </div>
@@ -6732,6 +6749,7 @@ start:
                 <div class="settings-section">
                     <div style="margin-bottom: 8px; color: var(--text-secondary); font-size: 11px;">Choose which machines appear in the toolbar dropdown:</div>
                     <div id="machineCheckboxes"></div>
+                    <button id="btnSettingsLoadRoms" style="margin-top: 8px;">Load ROMs...</button>
                 </div>
             </div>
             </div><!-- settings-machines -->
@@ -7472,7 +7490,7 @@ start:
     <div class="fullhelp-dialog hidden" id="fullHelpDialog">
         <div class="fullhelp-content">
             <div class="fullhelp-header">
-                <h3>ZX-M8XXX <span class="help-version">v0.9.24</span> Help</h3>
+                <h3>ZX-M8XXX <span class="help-version">v0.9.26</span> Help</h3>
                 <button class="fullhelp-close" id="btnFullHelpClose">&times;</button>
             </div>
             <div class="fullhelp-body">
@@ -7500,8 +7518,8 @@ start:
                     <h5>Features</h5>
                     <ul>
                         <li>Full Z80 CPU emulation (all documented + undocumented opcodes)</li>
-                        <li>48K, 128K, +2, +2A, +3, and Pentagon machine support</li>
-                        <li>Memory banking (128K/+2/+2A/Pentagon)</li>
+                        <li>48K, 128K, +2, +2A, +3, Pentagon, and Scorpion machine support</li>
+                        <li>Memory banking (128K/+2/+2A/Pentagon/Scorpion)</li>
                         <li>ULA video generation with border</li>
                         <li>ULAplus extended palette (64 colors, HAM256 raster effects)</li>
                         <li>Memory contention emulation</li>
@@ -7522,7 +7540,7 @@ start:
                     </ul>
                     <h5>Quick Start</h5>
                     <ol>
-                        <li>Place ROM files in <code>roms/</code> directory (48.rom, 128.rom, plus2.rom, plus2a.rom, plus3.rom, pentagon.rom, trdos.rom)</li>
+                        <li>Place ROM files in <code>roms/</code> directory (48.rom, 128.rom, plus2.rom, plus2a.rom, plus3.rom, pentagon.rom, scorpion.rom, trdos.rom)</li>
                         <li>Open index.html in a modern browser</li>
                         <li>Use Load → Web to browse and download games online</li>
                         <li>Or Load → File to load SNA/Z80/SZX snapshots, TAP/TZX tapes, TRD/SCL/DSK disks</li>
@@ -8069,7 +8087,7 @@ start:
             "id": "unique-id",
             "name": "Display Name",
             "file": "tests/program.tap",
-            "machine": "48k",           // 48k, 128k, +2, +2a, +3, pentagon
+            "machine": "48k",           // 48k, 128k, +2, +2a, +3, pentagon, pentagon1024, scorpion
             "earlyTimings": true,       // Use early ULA timings
             "ulaplus": false,           // Enable ULAplus (default: false)
             "palette": "default",       // Color palette
@@ -8374,6 +8392,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         function is128kCompat(type) { return type === '128k' || type === '+2' || type === '+2a' || type === '+3'; }
     </script>
 
+    <script src="constants.js"></script>
     <script src="machines.js"></script>
 
     <!-- Load modules in dependency order -->
@@ -8403,7 +8422,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
     <script src="sjasmplus/assembler.js"></script>
     
     <script>
-        const APP_VERSION = '0.9.24';
+        const APP_VERSION = '0.9.26';
         console.log('ZX-M8XXX v' + APP_VERSION);
 
         // Auto Load timing constants (ms)
@@ -12674,7 +12693,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     '+2': '+2', 'plus2': '+2',
                     '+2a': '+2a', 'plus2a': '+2a',
                     '+3': '+3', 'plus3': '+3',
-                    'pentagon': 'pentagon', 'p128': 'pentagon'
+                    'pentagon': 'pentagon', 'p128': 'pentagon',
+                    'pentagon1024': 'pentagon1024',
+                    'scorpion': 'scorpion'
                 };
                 const targetMachine = machineMap[machineType.toLowerCase()] || '48k';
 
@@ -13957,11 +13978,11 @@ labelManager.importJSON(jsonStr, merge)</pre>
         // Legacy accessors for backward compatibility within ROM dialog handlers
         // These are getters/setters that map to romData entries
         function getRomByType(type) {
-            const fileMap = { '48k': '48.rom', '128k': '128.rom', 'plus2': 'plus2.rom', 'plus2a': 'plus2a.rom', 'plus3': 'plus3.rom', 'pentagon': 'pentagon.rom', 'trdos': 'trdos.rom' };
+            const fileMap = { '48k': '48.rom', '128k': '128.rom', 'plus2': 'plus2.rom', 'plus2a': 'plus2a.rom', 'plus3': 'plus3.rom', 'pentagon': 'pentagon.rom', 'scorpion': 'scorpion.rom', 'trdos': 'trdos.rom' };
             return romData[fileMap[type]] || null;
         }
         function setRomByType(type, data) {
-            const fileMap = { '48k': '48.rom', '128k': '128.rom', 'plus2': 'plus2.rom', 'plus2a': 'plus2a.rom', 'plus3': 'plus3.rom', 'pentagon': 'pentagon.rom', 'trdos': 'trdos.rom' };
+            const fileMap = { '48k': '48.rom', '128k': '128.rom', 'plus2': 'plus2.rom', 'plus2a': 'plus2a.rom', 'plus3': 'plus3.rom', 'pentagon': 'pentagon.rom', 'scorpion': 'scorpion.rom', 'trdos': 'trdos.rom' };
             if (fileMap[type]) romData[fileMap[type]] = data;
         }
 
@@ -14042,6 +14063,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const btnSelectPlus2aRom = document.getElementById('btnSelectPlus2aRom');
         const btnSelectPlus3Rom = document.getElementById('btnSelectPlus3Rom');
         const btnSelectPentagonRom = document.getElementById('btnSelectPentagonRom');
+        const btnSelectScorpionRom = document.getElementById('btnSelectScorpionRom');
         const btnSelectTrdosRom = document.getElementById('btnSelectTrdosRom');
         const btnStartEmulator = document.getElementById('btnStartEmulator');
         const status48Rom = document.getElementById('status48Rom');
@@ -14050,12 +14072,14 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const statusPlus2aRom = document.getElementById('statusPlus2aRom');
         const statusPlus3Rom = document.getElementById('statusPlus3Rom');
         const statusPentagonRom = document.getElementById('statusPentagonRom');
+        const statusScorpionRom = document.getElementById('statusScorpionRom');
         const rom48Input = document.getElementById('rom48Input');
         const rom128Input = document.getElementById('rom128Input');
         const romPlus2Input = document.getElementById('romPlus2Input');
         const romPlus2aInput = document.getElementById('romPlus2aInput');
         const romPlus3Input = document.getElementById('romPlus3Input');
         const romPentagonInput = document.getElementById('romPentagonInput');
+        const romScorpionInput = document.getElementById('romScorpionInput');
         const romTrdosInput = document.getElementById('romTrdosInput');
         
         const btnRun = document.getElementById('btnRun');
@@ -14116,6 +14140,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
         function populateMachineDropdown() {
             const visible = getVisibleMachines();
+            visible.sort((a, b) => (MACHINE_PROFILES[a]?.name || a).localeCompare(MACHINE_PROFILES[b]?.name || b));
             const currentValue = machineSelect.value;
             machineSelect.innerHTML = '';
             for (const id of visible) {
@@ -18739,6 +18764,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 case 'scl':
                     explorerParsed = explorerParseSCL(explorerData);
                     break;
+                case 'dsk':
+                    explorerParsed = explorerParseDSK(explorerData);
+                    break;
                 case 'zip':
                     explorerParsed = await explorerParseZIP(explorerData);
                     break;
@@ -19478,6 +19506,35 @@ labelManager.importJSON(jsonStr, merge)</pre>
             };
         }
 
+        // DSK file parser
+        function explorerParseDSK(data) {
+            try {
+                const dskImage = DSKLoader.parse(data);
+                const diskSpec = DSKLoader.getDiskSpec(dskImage);
+                let files = [];
+                try {
+                    files = DSKLoader.listFiles(dskImage);
+                } catch (e) {
+                    // Non-CP/M disk or corrupt directory — show geometry without files
+                }
+
+                // Store DSKImage for later file data extraction
+                explorerBlocks = files;
+                return {
+                    type: 'dsk',
+                    dskImage: dskImage,
+                    diskSpec: diskSpec,
+                    files: files,
+                    isExtended: dskImage.isExtended,
+                    numTracks: dskImage.numTracks,
+                    numSides: dskImage.numSides,
+                    size: data.length
+                };
+            } catch (err) {
+                return { type: 'dsk', error: err.message, size: data.length };
+            }
+        }
+
         // ZIP file parser
         async function explorerParseZIP(data) {
             try {
@@ -19485,7 +19542,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 explorerZipFiles = files;
 
                 // Auto-drill into ZIP if it contains exactly one supported file
-                const supportedExts = ['tap', 'tzx', 'sna', 'z80', 'trd', 'scl'];
+                const supportedExts = ['tap', 'tzx', 'sna', 'z80', 'trd', 'scl', 'dsk'];
                 const supportedFiles = files.filter(f => {
                     const ext = f.name.split('.').pop().toLowerCase();
                     return supportedExts.includes(ext);
@@ -19580,6 +19637,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                     break;
                 case 'scl':
                     html = explorerRenderSCLInfo();
+                    break;
+                case 'dsk':
+                    html = explorerRenderDSKInfo();
                     break;
                 case 'zip':
                     html = explorerRenderZIPInfo();
@@ -19773,6 +19833,24 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         const fileData = explorerData.slice(file.offset, file.offset + file.length);
                         explorerUpdatePreview(fileData);
                         return;
+                    }
+                }
+            }
+
+            // For DSK, look for previewable files (check data size after +3DOS header)
+            if (explorerParsed && explorerParsed.type === 'dsk') {
+                const previewSizes = [6912, 6144, 4096, 2048, 768, 9216, 11136, 12288, 18432];
+                for (const file of explorerParsed.files) {
+                    if (previewSizes.includes(file.size)) {
+                        const fileData = DSKLoader.readFileData(
+                            explorerParsed.dskImage, file.name, file.ext, file.user, file.rawSize || file.size
+                        );
+                        if (fileData) {
+                            // Skip +3DOS header for preview
+                            const content = file.hasPlus3Header ? fileData.slice(128) : fileData;
+                            explorerUpdatePreview(content);
+                            return;
+                        }
                     }
                 }
             }
@@ -20713,6 +20791,96 @@ labelManager.importJSON(jsonStr, merge)</pre>
             return html;
         }
 
+        function explorerRenderDSKInfo() {
+            if (explorerParsed.error) {
+                return `<div class="explorer-info-section">
+                    <div class="explorer-info-header">DSK Disk Image</div>
+                    <div style="color:#e74c3c">Error: ${explorerParsed.error}</div>
+                </div>`;
+            }
+
+            const formatType = explorerParsed.isExtended ? 'Extended CPC DSK' : 'Standard CPC DSK';
+            const geometry = `${explorerParsed.numTracks} tracks, ${explorerParsed.numSides} side${explorerParsed.numSides > 1 ? 's' : ''}`;
+            const spec = explorerParsed.diskSpec;
+
+            // Get sector info from first track
+            let sectorInfo = '';
+            if (explorerParsed.dskImage) {
+                const t0 = explorerParsed.dskImage.getTrack(0, 0);
+                if (t0 && t0.sectors.length > 0) {
+                    const sectorSize = t0.sectors[0].data.length;
+                    sectorInfo = `${t0.sectors.length} sectors/track, ${sectorSize} bytes/sector`;
+                }
+            }
+
+            let specRows = '';
+            if (spec) {
+                specRows += `<tr><th>Block size</th><td>${spec.blockSize} bytes</td></tr>`;
+                specRows += `<tr><th>Reserved</th><td>${spec.reservedTracks} track${spec.reservedTracks !== 1 ? 's' : ''}</td></tr>`;
+            }
+
+            let html = `<div class="explorer-info-section">
+                <div class="explorer-info-header">DSK Disk Image</div>
+                <table class="explorer-info-table">
+                    <tr><th>Size</th><td>${explorerData.length.toLocaleString()} bytes</td></tr>
+                    <tr><th>Format</th><td>${formatType}</td></tr>
+                    <tr><th>Geometry</th><td>${geometry}</td></tr>
+                    ${sectorInfo ? `<tr><th>Sectors</th><td>${sectorInfo}</td></tr>` : ''}
+                    ${specRows}
+                    <tr><th>Files</th><td>${explorerParsed.files.length}</td></tr>
+                </table>
+            </div>`;
+
+            if (explorerParsed.files.length > 0) {
+                html += `<div class="explorer-info-section">
+                    <div class="explorer-info-header">File List (+3DOS / CP/M)</div>
+                    <div class="explorer-file-list">`;
+
+                for (let i = 0; i < explorerParsed.files.length; i++) {
+                    const file = explorerParsed.files[i];
+                    const sizeStr = file.size.toLocaleString();
+
+                    // Full filename with CP/M extension
+                    const fullName = file.name + (file.ext ? '.' + file.ext : '');
+
+                    // +3DOS file type label
+                    let typeStr = '-';
+                    if (file.hasPlus3Header) {
+                        const typeNames = { 0: 'BASIC', 1: 'NUM', 2: 'CHR', 3: 'CODE' };
+                        typeStr = typeNames[file.plus3Type] || '-';
+                    }
+
+                    // Address info: load address for CODE, autostart for BASIC
+                    let addrStr = '';
+                    if (file.plus3Type === 3 && file.loadAddress !== undefined) {
+                        addrStr = '$' + file.loadAddress.toString(16).toUpperCase().padStart(4, '0');
+                    } else if (file.plus3Type === 0 && file.autostart !== undefined && file.autostart < 32768) {
+                        addrStr = 'LINE ' + file.autostart;
+                    }
+
+                    // Previewable check
+                    const len = file.size;
+                    const previewable = len === 6912 || len === 6144 || len === 4096 ||
+                        len === 2048 || len === 768 || len === 9216 ||
+                        len === 11136 || len === 12288 || len === 18432;
+                    const previewIcon = previewable ? '\u2B1A' : '';
+
+                    html += `<div class="explorer-file-entry" data-index="${i}">
+                        <span class="explorer-file-num">${i + 1}</span>
+                        <span class="explorer-file-type">${typeStr}</span>
+                        <span class="explorer-file-name">${fullName}</span>
+                        <span class="explorer-file-size">${sizeStr}</span>
+                        <span class="explorer-file-addr">${addrStr}</span>
+                        <span class="explorer-file-preview">${previewIcon}</span>
+                    </div>`;
+                }
+
+                html += '</div></div>';
+            }
+
+            return html;
+        }
+
         function explorerRenderZIPInfo() {
             if (explorerParsed.error) {
                 return `<div class="explorer-info-section">
@@ -20736,7 +20904,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
             for (let i = 0; i < explorerParsed.files.length; i++) {
                 const file = explorerParsed.files[i];
                 const ext = file.name.split('.').pop().toLowerCase();
-                const supported = ['tap', 'tzx', 'sna', 'z80', 'trd', 'scl', 'rzx'].includes(ext);
+                const supported = ['tap', 'tzx', 'sna', 'z80', 'trd', 'scl', 'dsk', 'rzx'].includes(ext);
 
                 // For RZX files, try to get quick info
                 let extraInfo = '';
@@ -20781,7 +20949,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 const zipFile = explorerZipFiles[idx];
                 const ext = zipFile.name.split('.').pop().toLowerCase();
 
-                if (!['tap', 'tzx', 'sna', 'z80', 'trd', 'scl', 'rzx'].includes(ext)) return;
+                if (!['tap', 'tzx', 'sna', 'z80', 'trd', 'scl', 'dsk', 'rzx'].includes(ext)) return;
 
                 // Store parent ZIP name and load inner file
                 explorerZipParentName = explorerFileName.textContent;
@@ -20898,6 +21066,59 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 // Render hex dump
                 explorerRenderHexDump();
             }
+
+            // Check for DSK file entry click
+            const dskEntry = e.target.closest('.explorer-file-entry[data-index]');
+            if (dskEntry && explorerParsed && explorerParsed.type === 'dsk') {
+                const idx = parseInt(dskEntry.dataset.index);
+                if (isNaN(idx) || !explorerParsed.files[idx]) return;
+
+                const file = explorerParsed.files[idx];
+
+                // Extract file data from DSK image (use rawSize for full CP/M data incl. header)
+                const fileData = DSKLoader.readFileData(
+                    explorerParsed.dskImage, file.name, file.ext, file.user, file.rawSize || file.size
+                );
+                if (!fileData || fileData.length === 0) return;
+
+                // Skip +3DOS header (128 bytes) for content checks
+                const hasHeader = file.hasPlus3Header;
+                const contentData = hasHeader ? fileData.slice(128) : fileData;
+                const contentLen = contentData.length;
+
+                // Check if previewable (screen or font by size)
+                if (contentLen === 6912 || contentLen === 6144 || contentLen === 4096 ||
+                    contentLen === 2048 || contentLen === 768 || contentLen === 9216 ||
+                    contentLen === 11136 || contentLen === 12288 || contentLen === 18432) {
+                    explorerUpdatePreview(contentData);
+                    return;
+                }
+
+                // BASIC files - switch to BASIC tab
+                if (file.plus3Type === 0) {
+                    document.querySelector('.explorer-subtab[data-subtab="basic"]').click();
+                    explorerBasicSource.value = idx.toString();
+                    explorerRenderBASIC();
+                    return;
+                }
+
+                // CODE files - switch to Disasm tab
+                if (file.plus3Type === 3 && file.loadAddress !== undefined) {
+                    document.querySelector('.explorer-subtab[data-subtab="disasm"]').click();
+                    explorerDisasmSource.value = idx.toString();
+                    explorerDisasmAddr.value = file.loadAddress.toString(16).toUpperCase().padStart(4, '0');
+                    explorerDisasmLen.value = Math.min(file.size, 4096);
+                    explorerRenderDisasm();
+                    return;
+                }
+
+                // Switch to Hex Dump tab
+                document.querySelector('.explorer-subtab[data-subtab="hexdump"]').click();
+                explorerHexSource.value = idx.toString();
+                explorerHexLen.value = Math.min(file.rawSize || file.size, 65536);
+                explorerHexAddr.value = '0000';
+                explorerRenderHexDump();
+            }
         });
 
         // Update source selectors based on file type
@@ -20973,6 +21194,28 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         explorerDisasmSource.innerHTML += `<option value="${i}">${file.name}.${file.ext} @ ${hex16(file.startAddress)}</option>`;
                     }
                     explorerHexSource.innerHTML += `<option value="${i}">${file.name}.${file.ext} (${file.length} bytes)</option>`;
+                }
+            } else if (explorerParsed.type === 'dsk') {
+                // Add boot sector to Disasm and Hex selectors
+                // +3 ROM loads boot sector to $FE00, code starts at offset 16 ($FE10)
+                explorerDisasmSource.innerHTML += '<option value="boot">Boot sector @ $FE10</option>';
+                explorerHexSource.innerHTML += '<option value="boot">Boot sector (512 bytes)</option>';
+
+                // Add DSK files to selectors
+                const files = explorerParsed.files;
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const displayName = file.name + (file.ext ? '.' + file.ext : '');
+                    const addrStr = file.loadAddress !== undefined ? ` @ ${hex16(file.loadAddress)}` : '';
+                    if (file.plus3Type === 0) {
+                        // BASIC program
+                        explorerBasicSource.innerHTML += `<option value="${i}">${displayName}</option>`;
+                        basicSources.push(i.toString());
+                    }
+                    if (file.plus3Type === 3 || file.plus3Type === undefined) {
+                        explorerDisasmSource.innerHTML += `<option value="${i}">${displayName}${addrStr} (${file.size} bytes)</option>`;
+                    }
+                    explorerHexSource.innerHTML += `<option value="${i}">${displayName} (${file.size} bytes)</option>`;
                 }
             } else if (explorerParsed.type === 'sna' || explorerParsed.type === 'z80') {
                 // For snapshots, offer memory as source
@@ -21051,6 +21294,18 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         explorerDisasmAddr.value = hex16(file.startAddress);
                     }
                 }
+            } else if (explorerParsed.type === 'dsk') {
+                if (source === 'boot') {
+                    explorerDisasmAddr.value = 'FE10';
+                } else {
+                    const fileIdx = parseInt(source);
+                    const file = explorerParsed.files[fileIdx];
+                    if (file && file.loadAddress !== undefined) {
+                        explorerDisasmAddr.value = hex16(file.loadAddress);
+                    } else {
+                        explorerDisasmAddr.value = '0000';
+                    }
+                }
             } else if (source === 'memory') {
                 explorerDisasmAddr.value = '4000'; // RAM start
             }
@@ -21119,6 +21374,35 @@ labelManager.importJSON(jsonStr, merge)</pre>
                         data = explorerData.slice(file.offset, file.offset + fullSize);
                         baseAddr = file.startAddress;
                         explorerDisasmAddr.value = hex16(baseAddr);
+                    }
+                }
+            } else if (source && explorerParsed.type === 'dsk') {
+                if (source === 'boot') {
+                    // Boot sector: +3 ROM loads track 0 sector 1 to $FE00
+                    // Disk spec at $FE00-$FE0F (16 bytes), code starts at $FE10
+                    const bootSector = explorerParsed.dskImage.readSector(0, 0,
+                        explorerParsed.diskSpec && explorerParsed.diskSpec.firstSectorId !== undefined
+                            ? explorerParsed.diskSpec.firstSectorId : 1);
+                    if (bootSector && bootSector.length > 16) {
+                        data = bootSector.slice(16);  // Skip disk spec
+                        baseAddr = 0xFE10;
+                        explorerDisasmAddr.value = 'FE10';
+                    }
+                } else {
+                    const fileIdx = parseInt(source);
+                    const file = explorerParsed.files[fileIdx];
+                    if (file) {
+                        const rawData = DSKLoader.readFileData(
+                            explorerParsed.dskImage, file.name, file.ext, file.user, file.rawSize || file.size
+                        );
+                        // Skip +3DOS header for disassembly
+                        if (rawData && file.hasPlus3Header && rawData.length > 128) {
+                            data = rawData.slice(128);
+                        } else {
+                            data = rawData;
+                        }
+                        baseAddr = (file.loadAddress !== undefined) ? file.loadAddress : 0;
+                        explorerDisasmAddr.value = baseAddr.toString(16).toUpperCase().padStart(4, '0');
                     }
                 }
             } else if (!source && explorerData) {
@@ -21213,6 +21497,26 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 if (file) {
                     data = explorerData.slice(file.offset, file.offset + file.length);
                     baseAddr = 0;
+                }
+            } else if (source && explorerParsed.type === 'dsk') {
+                if (source === 'boot') {
+                    // Full boot sector from track 0
+                    const bootSector = explorerParsed.dskImage.readSector(0, 0,
+                        explorerParsed.diskSpec && explorerParsed.diskSpec.firstSectorId !== undefined
+                            ? explorerParsed.diskSpec.firstSectorId : 1);
+                    if (bootSector) {
+                        data = bootSector;
+                        baseAddr = 0xFE00;
+                    }
+                } else {
+                    const fileIdx = parseInt(source);
+                    const file = explorerParsed.files[fileIdx];
+                    if (file) {
+                        data = DSKLoader.readFileData(
+                            explorerParsed.dskImage, file.name, file.ext, file.user, file.rawSize || file.size
+                        );
+                        baseAddr = 0;
+                    }
                 }
             } else if (explorerData) {
                 data = explorerData;
@@ -21581,6 +21885,22 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 if (file) {
                     // TR-DOS BASIC files - raw BASIC data, no header
                     data = explorerData.slice(file.offset, file.offset + file.length);
+                }
+            } else if (explorerParsed.type === 'dsk') {
+                const fileIdx = parseInt(source);
+                const file = explorerParsed.files[fileIdx];
+                if (file && explorerParsed.dskImage) {
+                    const rawData = DSKLoader.readFileData(
+                        explorerParsed.dskImage, file.name, file.ext, file.user, file.rawSize || file.size
+                    );
+                    if (rawData) {
+                        // Skip 128-byte +3DOS header to get raw BASIC data
+                        if (file.hasPlus3Header && rawData.length > 128) {
+                            data = rawData.slice(128);
+                        } else {
+                            data = rawData;
+                        }
+                    }
                 }
             }
 
@@ -24348,7 +24668,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 }
 
                 const deviceName = AsmMemory.getDeviceName();
-                const emulatorIs128K = is128kCompat(spectrum.memory.machineType) || spectrum.memory.machineType === 'pentagon';
+                const emulatorIs128K = is128kCompat(spectrum.memory.machineType) || spectrum.memory.profile.ramPages > 1;
 
                 // Check if we have paged assembly (DEVICE directive used)
                 if (deviceName === 'ZXSPECTRUM128' || deviceName === 'ZXSPECTRUM512' || deviceName === 'ZXSPECTRUM1024') {
@@ -26424,7 +26744,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
             blocks.push({ start: blockStart, end: blockEnd });
 
             // Check for 128K paged memory (addresses >= 0xC000)
-            const is128K = is128kCompat(spectrum.machineType) || spectrum.machineType === 'pentagon';
+            const is128K = is128kCompat(spectrum.machineType) || spectrum.profile.ramPages > 1;
             let currentBank = -1;
 
             // Generate disassembly for each block
@@ -27387,7 +27707,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         function updateRomStatus() {
             const statusTrdosRom = document.getElementById('statusTrdosRom');
             // Clear any inline error color from size validation
-            [status48Rom, status128Rom, statusPlus2Rom, statusPlus2aRom, statusPlus3Rom, statusPentagonRom, statusTrdosRom].forEach(el => { if (el) el.style.color = ''; });
+            [status48Rom, status128Rom, statusPlus2Rom, statusPlus2aRom, statusPlus3Rom, statusPentagonRom, statusScorpionRom, statusTrdosRom].forEach(el => { if (el) el.style.color = ''; });
 
             if (romData['48.rom']) {
                 status48Rom.textContent = '✓ Loaded (' + (romData['48.rom'].byteLength / 1024) + 'KB)';
@@ -27458,6 +27778,16 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 statusPentagonRom.classList.remove('loaded');
             }
 
+            if (statusScorpionRom) {
+                if (romData['scorpion.rom']) {
+                    statusScorpionRom.textContent = '✓ Loaded (' + (romData['scorpion.rom'].byteLength / 1024) + 'KB)';
+                    statusScorpionRom.classList.add('loaded');
+                } else {
+                    statusScorpionRom.textContent = 'Not loaded (Scorpion mode unavailable)';
+                    statusScorpionRom.classList.remove('loaded');
+                }
+            }
+
             if (statusTrdosRom) {
                 if (romData['trdos.rom']) {
                     statusTrdosRom.textContent = '✓ Loaded (' + (romData['trdos.rom'].byteLength / 1024) + 'KB)';
@@ -27474,12 +27804,12 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const ROM_EXPECTED_SIZES = {
             '48k': [16384], 'trdos': [16384],
             '128k': [32768], 'plus2': [32768], 'pentagon': [32768],
-            'plus2a': [65536], 'plus3': [65536]
+            'plus2a': [65536], 'plus3': [65536], 'scorpion': [65536]
         };
 
         const ROM_STATUS_IDS = {
             '48k': 'status48Rom', '128k': 'status128Rom', 'plus2': 'statusPlus2Rom',
-            'plus2a': 'statusPlus2aRom', 'plus3': 'statusPlus3Rom', 'pentagon': 'statusPentagonRom', 'trdos': 'statusTrdosRom'
+            'plus2a': 'statusPlus2aRom', 'plus3': 'statusPlus3Rom', 'pentagon': 'statusPentagonRom', 'scorpion': 'statusScorpionRom', 'trdos': 'statusTrdosRom'
         };
 
         async function loadRomFile(data, type) {
@@ -27510,10 +27840,13 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 spec.memory.loadRom(rom.slice(bank * 16384, (bank + 1) * 16384), bank);
             }
             // Load TR-DOS ROM if available (for Beta Disk interface)
-            if (romData['trdos.rom'] && (profile.betaDiskDefault || spec.betaDiskEnabled)) {
+            // Skip for machines with TR-DOS built into main ROM (e.g. Scorpion)
+            if (!profile.trdosInRom && romData['trdos.rom'] && (profile.betaDiskDefault || spec.betaDiskEnabled)) {
                 spec.memory.loadTrdosRom(romData['trdos.rom']);
-                if (spec.trdosTrap) spec.trdosTrap.updateTrdosRomFlag();
             }
+            // Update TR-DOS ROM flag for trap handler (must be called for all machines,
+            // including Scorpion where TR-DOS is in main ROM bank)
+            if (spec.trdosTrap) spec.trdosTrap.updateTrdosRomFlag();
             spec.updateBetaDiskPagingFlag();
             spec.romLoaded = true;
             return true;
@@ -27555,6 +27888,7 @@ labelManager.importJSON(jsonStr, merge)</pre>
         btnSelectPlus2aRom.addEventListener('click', () => romPlus2aInput.click());
         if (btnSelectPlus3Rom) btnSelectPlus3Rom.addEventListener('click', () => romPlus3Input.click());
         btnSelectPentagonRom.addEventListener('click', () => romPentagonInput.click());
+        if (btnSelectScorpionRom) btnSelectScorpionRom.addEventListener('click', () => romScorpionInput.click());
         if (btnSelectTrdosRom) btnSelectTrdosRom.addEventListener('click', () => romTrdosInput.click());
         
         rom48Input.addEventListener('change', async (e) => {
@@ -27617,6 +27951,16 @@ labelManager.importJSON(jsonStr, merge)</pre>
             romPentagonInput.value = '';
         });
 
+        romScorpionInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const data = await file.arrayBuffer();
+                await loadRomFile(data, 'scorpion');
+                showMessage('Scorpion ROM loaded');
+            }
+            romScorpionInput.value = '';
+        });
+
         romTrdosInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -27669,6 +28013,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
             } else if (name.includes('plus2') || name.includes('+2')) {
                 await loadRomFile(data, 'plus2');
                 showMessage('+2 ROM loaded');
+            } else if (name.includes('scorpion')) {
+                await loadRomFile(data, 'scorpion');
+                showMessage('Scorpion ROM loaded');
             } else if (name.includes('pentagon')) {
                 await loadRomFile(data, 'pentagon');
                 showMessage('Pentagon ROM loaded');
@@ -30518,8 +30865,8 @@ labelManager.importJSON(jsonStr, merge)</pre>
         const betaDiskStatus = document.getElementById('betaDiskStatus');
 
         function updateBetaDiskStatus() {
-            if (spectrum.machineType === 'pentagon') {
-                betaDiskStatus.textContent = '(always on for Pentagon)';
+            if (spectrum.profile.betaDiskDefault) {
+                betaDiskStatus.textContent = '(always on for ' + spectrum.profile.name + ')';
                 chkBetaDisk.checked = true;
                 chkBetaDisk.disabled = true;
             } else {
@@ -30549,9 +30896,9 @@ labelManager.importJSON(jsonStr, merge)</pre>
                 'Beta Disk interface disabled');
         });
 
-        // Restore Beta Disk setting from localStorage (but not for Pentagon)
+        // Restore Beta Disk setting from localStorage (but not for machines with built-in Beta Disk)
         const savedBetaDisk = localStorage.getItem('zx-beta-disk') === 'true';
-        if (spectrum.machineType !== 'pentagon') {
+        if (!spectrum.profile.betaDiskDefault) {
             chkBetaDisk.checked = savedBetaDisk;
             spectrum.betaDiskEnabled = savedBetaDisk;
             // Load TR-DOS ROM if Beta Disk enabled and ROM available
@@ -31010,6 +31357,12 @@ labelManager.importJSON(jsonStr, merge)</pre>
 
         // Open ROM dialog
         document.getElementById('btnOpenRomDialog').addEventListener('click', () => {
+            updateRomStatus();
+            btnCloseRomModal.classList.remove('hidden');
+            romModal.classList.remove('hidden');
+        });
+
+        document.getElementById('btnSettingsLoadRoms').addEventListener('click', () => {
             updateRomStatus();
             btnCloseRomModal.classList.remove('hidden');
             romModal.classList.remove('hidden');
@@ -33819,7 +34172,7 @@ PSG_DATA:
                 if (!romData['trdos.rom']) {
                     showMessage('TR-DOS ROM required for disk images. Load trdos.rom first.', 'error');
                 } else {
-                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon mode for disk images.', 'error');
+                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon/Scorpion mode for disk images.', 'error');
                 }
                 return;
             }
@@ -33893,7 +34246,7 @@ PSG_DATA:
             } else if (result.diskInserted) {
                 // TRD/SCL disk inserted into Beta Disk interface
                 // Auto-load only if Beta Disk is actually available on this machine
-                const canBootTrdos = spectrum.machineType === 'pentagon' ||
+                const canBootTrdos = spectrum.profile.betaDiskDefault ||
                     (spectrum.betaDiskEnabled && spectrum.memory.hasTrdosRom());
                 if (chkAutoLoad.checked && canBootTrdos) {
                     const typeStr = result.diskType.toUpperCase();
@@ -33997,7 +34350,7 @@ PSG_DATA:
                 if (!romData['trdos.rom']) {
                     showMessage('TR-DOS ROM required for disk images. Load trdos.rom first.', 'error');
                 } else {
-                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon mode for disk images.', 'error');
+                    showMessage('Enable Beta Disk in Settings, or switch to Pentagon/Scorpion mode for disk images.', 'error');
                 }
                 return;
             } else if (isDisk && romData['trdos.rom'] && !spectrum.memory.hasTrdosRom()) {
@@ -34011,7 +34364,7 @@ PSG_DATA:
                 modalDesc.textContent = 'Select file to load, or boot TR-DOS for command prompt:';
                 // Show Boot TR-DOS button if Beta Disk available (Pentagon OR enabled with TR-DOS ROM)
                 const hasTrdosRom = spectrum.memory.hasTrdosRom && spectrum.memory.hasTrdosRom();
-                const betaDiskAvailable = spectrum.machineType === 'pentagon' || spectrum.betaDiskEnabled;
+                const betaDiskAvailable = spectrum.profile.betaDiskDefault || spectrum.betaDiskEnabled;
                 btnBootTrdos.style.display = (betaDiskAvailable && hasTrdosRom) ? 'inline-block' : 'none';
             } else {
                 modalTitle.textContent = 'Select File to Load';
@@ -34129,7 +34482,7 @@ PSG_DATA:
                 // Determine what's missing
                 if (!spectrum.memory.hasTrdosRom()) {
                     showMessage('Cannot boot TR-DOS: trdos.rom not loaded', 'error');
-                } else if (spectrum.machineType !== 'pentagon' && !spectrum.betaDiskEnabled) {
+                } else if (!spectrum.profile.betaDiskDefault && !spectrum.betaDiskEnabled) {
                     showMessage('Cannot boot TR-DOS: Enable Beta Disk in Settings', 'error');
                 } else {
                     showMessage('Cannot boot TR-DOS', 'error');
@@ -34771,7 +35124,7 @@ PSG_DATA:
         
         console.log('');
         console.log('Usage:');
-        console.log('1. Place ROMs in roms/ directory (48.rom, 128.rom, plus2.rom, plus2a.rom, pentagon.rom, trdos.rom)');
+        console.log('1. Place ROMs in roms/ directory (48.rom, 128.rom, plus2.rom, plus2a.rom, pentagon.rom, scorpion.rom, trdos.rom)');
         console.log('2. Or select ROM files in dialog if not found');
         console.log('3. Load SNA/Z80/SZX snapshots, TAP/TZX tapes, or TRD/SCL disk images');
     </script>
