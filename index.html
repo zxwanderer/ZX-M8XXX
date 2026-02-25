@@ -18846,6 +18846,10 @@ labelManager.importJSON(jsonStr, merge)</pre>
             }
 
             const stack = spectrum._debugCallStack;
+            if (!stack) {
+                callStackView.innerHTML = '';
+                return;
+            }
             let html = '';
 
             // Show call stack from deepest (most recent) to shallowest
