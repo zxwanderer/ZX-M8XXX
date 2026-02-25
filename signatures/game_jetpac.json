@@ -1,0 +1,4759 @@
+{
+    "id": "jetpac",
+    "name": "Jetpac",
+    "type": "game",
+    "source": "mrcook/jetpac-disassembly \u2014 Ultimate Play the Game",
+    "baseAddress": 23755,
+    "machineType": "48k",
+    "anchors": [],
+    "labels": {
+        "5ccb": "stack_memory",
+        "5cf0": "hi_score",
+        "5cf3": "game_options",
+        "5cf4": "p1_score",
+        "5cf7": "p2_score",
+        "5d00": "jetman_direction",
+        "5d01": "jetman_pos_x",
+        "5d02": "jetman_pos_y",
+        "5d03": "jetman_colour",
+        "5d04": "jetman_moving",
+        "5d05": "jetman_speed_x",
+        "5d06": "jetman_speed_y",
+        "5d07": "jetman_height",
+        "5d08": "laser_beam_params",
+        "5d28": "explosion_sfx_params",
+        "5d30": "rocket_state",
+        "5d38": "rocket_module_state",
+        "5d40": "item_state",
+        "5d48": "jetman_thruster_anim_state",
+        "5d50": "alien_states",
+        "5d80": "jetman_exploding_anim_state",
+        "5d88": "inactive_jetman_state",
+        "5d90": "unused_padding",
+        "5d98": "inactive_rocket_state",
+        "5db0": "unused_padding",
+        "5db8": "unused_padding",
+        "5dc0": "actor",
+        "5dc8": "jetman_fly_counter",
+        "5dc9": "alien_new_dir_flag",
+        "5dca": "jetman_speed_modifier",
+        "5dcb": "current_alien_number",
+        "5dcc": "game_timer",
+        "5dce": "random_number",
+        "5dcf": "actor_coords",
+        "5dd1": "current_player_number",
+        "5dd2": "jetman_rocket_mod_connected",
+        "5dd3": "rocket_mod_attached",
+        "5dd4": "last_frame",
+        "5dd5": "frame_ticked",
+        "5dd6": "current_colour_attr",
+        "5dd7": "begin_play_delay_counter",
+        "5dd8": "unused_padding",
+        "5df0": "player_level",
+        "5df1": "player_lives",
+        "5df8": "inactive_player_level",
+        "5df9": "inactive_player_lives",
+        "5e00": "buffers_aliens_R1",
+        "5e33": "buffers_aliens_R2",
+        "5e66": "buffers_aliens_L1",
+        "5e99": "buffers_aliens_L2",
+        "5ecc": "buffers_item_1",
+        "5eff": "buffers_item_2",
+        "5f32": "buffers_item_3",
+        "5f65": "buffers_item_4",
+        "5f98": "unused_padding",
+        "6000": "EntryPoint",
+        "6003": "gfx_params_platforms",
+        "6013": "default_player_state",
+        "601b": "default_rocket_state",
+        "6033": "default_rocket_module_state",
+        "603b": "default_item_state",
+        "6043": "menu_copyright",
+        "6064": "ResetScreen",
+        "6083": "LevelNew",
+        "6094": "LevelInit",
+        "60a7": "RocketReset",
+        "60b7": "PlayerTurnEnds",
+        "6123": "handle_message_for_player_2",
+        "6144": "PlayersSwap",
+        "6161": "game_over_text",
+        "6174": "PlayerInit",
+        "6197": "ScoreLabelFlash",
+        "61a0": "FlashText",
+        "61a5": "inputhl_screen_coordinate",
+        "61ad": "ScoreLabelUnflash",
+        "61b2": "inputhl_screen_coordinate",
+        "61ba": "FlashScoreLabel2UP",
+        "61bf": "StartGame",
+        "61c9": "ResetGame",
+        "61d5": "MenuScreen",
+        "6234": "MenuDrawEntries",
+        "6261": "menu_colour_table",
+        "6267": "menu_position_table",
+        "626d": "menu_text",
+        "62ca": "MenuWriteText",
+        "62da": "ResetPlayerData",
+        "62dc": "used_by_the_routine_at_r62fe",
+        "62fe": "NewGame",
+        "6310": "MainLoopResetStack",
+        "631c": "MainLoop",
+        "6334": "PerformJump",
+        "633d": "main_jump_table",
+        "6361": "UpdateHiScore",
+        "639e": "player_1_has_the_highest_score",
+        "63a3": "JetFighterUpdate",
+        "63d7": "update_speed",
+        "63ec": "move_jet_fighter_horizontally",
+        "6456": "AlienCollisionAnimSfx",
+        "6461": "ItemCheckCollect",
+        "648b": "ItemDropNew",
+        "6496": "item_drop_jump_table",
+        "64a0": "ItemDropGoldBar",
+        "64a4": "ItemDisplaySprite",
+        "64ae": "ItemGetSpriteAddressAttrOffset",
+        "64b1": "ItemGetSpriteAddress",
+        "64bc": "ItemDropPlutonium",
+        "64c2": "ItemDropChemical",
+        "64d1": "flashing_items_visible",
+        "64d7": "ItemDropRandomColour",
+        "64e8": "CollisionDetection",
+        "6508": "IncYRedrawSprite",
+        "650e": "RedrawSprite",
+        "6514": "GetCollectibleID",
+        "6523": "CollectRocketItem",
+        "6541": "CarryRocketItem",
+        "6565": "PickupRocketItem",
+        "65a8": "ItemNewCollectible",
+        "65db": "ItemCalcDropColumn",
+        "65e9": "item_drop_positions_table",
+        "65f9": "ItemNewFuelPod",
+        "6624": "RocketModulesReset",
+        "6629": "SetObjectInactive",
+        "6632": "RocketAnimateFlames",
+        "6654": "draw_the_flame_sprites",
+        "6690": "RocketTakeoff",
+        "66b4": "RocketLanding",
+        "66d0": "RocketUpdate",
+        "66fc": "UpdateRocketColour",
+        "678c": "collectible_sprite_table",
+        "67b6": "SfxThrusters",
+        "67c6": "SfxRocketBuild",
+        "67cc": "SfxPickupFuel",
+        "67d2": "SfxPickupItem",
+        "67d6": "PlaySquareWave1",
+        "67db": "PlaySquareWav2",
+        "67e7": "SfxLaserFire",
+        "67e9": "used_by_the_routine_at_r6f86",
+        "67ea": "used_by_the_routine_at_r6f86",
+        "67fd": "SfxSetExplodeParams",
+        "6810": "explosion_sfx_defaults",
+        "6814": "SfxJetmanDeath",
+        "681d": "SfxEnemyDeath",
+        "6828": "SfxPlayExplosion",
+        "682d": "inputc_note_frequency",
+        "6839": "SfxFinishReturn",
+        "683e": "ExplosionAfterKill",
+        "685d": "AnimationStateReset",
+        "6868": "EnableAnimationState",
+        "6874": "AnimationStateSet",
+        "687a": "AnimateExplosion",
+        "68d8": "explosion_sprite_table",
+        "68e4": "FrameRateLimiter",
+        "68f2": "AlienBufferInit",
+        "690e": "alien_sprite_table",
+        "692e": "FrameUpdate",
+        "6954": "ResetModifiedCode",
+        "6966": "ResetModifiedInFrame",
+        "6971": "NewActor",
+        "69c9": "find_first_unused_alien_slot",
+        "69d1": "find_first_unused_alien_slot",
+        "6a2d": "item_level_object_types",
+        "6a35": "SquidgyAlienUpdate",
+        "6a6a": "update_the_alien_x_position",
+        "6a75": "update_the_alien_x_position",
+        "6a83": "of_the_screen",
+        "6aa3": "screen",
+        "6ab8": "UFOUpdate",
+        "6b12": "calculate_new_x_position",
+        "6b1c": "update_the_x_position_and_speed",
+        "6beb": "UFOKillAddPoints",
+        "6bf1": "AlienKillAnimSfx1",
+        "6bf8": "SphereAlienUpdate",
+        "6c6c": "of_the_screen",
+        "6c78": "update_the_alien_x_position",
+        "6c83": "update_the_alien_x_position",
+        "6ca0": "screen",
+        "6cb0": "ActorUpdateDir",
+        "6cbe": "CrossedShipUpdate",
+        "6cd7": "CrossedShipPlatformCollision",
+        "6cf7": "CrossedShipMoveShip",
+        "6d03": "update_the_alien_yx_position",
+        "6d37": "check_again",
+        "6d43": "DrawAlien",
+        "6d59": "CrossedShipKillPoints",
+        "6d5c": "AlienKillAnimSfx2",
+        "6d67": "CrossedShipDirUp",
+        "6d7d": "subtract_2_from_x_position",
+        "6d82": "CrossedShipDirDown",
+        "6d94": "default_alien_state",
+        "6d9c": "MeteorUpdate",
+        "6daf": "update_the_alien_x_position",
+        "6dd7": "add_score_for_meteor_kill",
+        "6de9": "AlienCollision",
+        "6e1b": "LaserBeamFire",
+        "6e66": "SpriteReadTwoBytes",
+        "6e71": "rotating_the_bits",
+        "6e7c": "ReverseAccBits",
+        "6e87": "BufferFlipSprite",
+        "6ea5": "BufferWritePixel",
+        "6ec2": "BufferCopyRocket",
+        "6eef": "RocketBuildStateReset",
+        "6f0b": "BufferCopyRocketSpriteData",
+        "6f16": "JetmanRocketStateUpdate",
+        "6f20": "SetDroppedModuleState",
+        "6f23": "BufferCopySprite",
+        "6f2a": "BufferCopySpriteData",
+        "6f5a": "LaserNewIfFreeSlot",
+        "6f70": "LaserBeamInit",
+        "6f86": "LaserBeamDraw",
+        "6fb2": "laser_beam_colours",
+        "6fb6": "LaserBeamShootRight",
+        "6fc5": "LaserBeamAnimate",
+        "706d": "DisplayPlayerLives",
+        "70a4": "tile_life_icon",
+        "70ac": "P1GetLifeCount",
+        "70b2": "CurrentPlayerLifeCount",
+        "70b6": "InactivePlayerLifeCount",
+        "70ba": "P2GetLifeCount",
+        "70c2": "AddPointsToScore",
+        "70e5": "ShowScoreP1",
+        "70ed": "ShowScoreP2",
+        "70f5": "ShowScoreHI",
+        "70fb": "DisplayScore",
+        "7115": "DrawFontChar",
+        "7124": "DrawCharPixels8Rows",
+        "7126": "DrawCharPixels",
+        "7134": "DisplayString",
+        "7140": "WriteAsciiChars",
+        "7151": "WriteEOLChar",
+        "715a": "DrawStatusBarLabels",
+        "7175": "ScoreLabel1UP",
+        "7179": "ScoreLabel2UP",
+        "717d": "ScoreLabelHI",
+        "7180": "ClearScreen",
+        "7185": "ClearMemoryBlock",
+        "7187": "MemoryFill",
+        "718e": "ClearAttrFile",
+        "7197": "ColourizeSprite",
+        "71d6": "Coord2AttrFile",
+        "71ec": "JumpActorFindPosDir",
+        "71ef": "GetActorLocation",
+        "71f2": "GetSpritePosition",
+        "7200": "NextSprite",
+        "7204": "FindActorSpriteAndUpdate",
+        "7207": "ActorUpdate",
+        "7226": "ActorUpdatePosition",
+        "7232": "UpdateAndEraseActor",
+        "7239": "ActorEraseMovedSprite",
+        "7263": "ActorEraseAnimSprite",
+        "7268": "ActorDestroy",
+        "726d": "ActorFindDestroy",
+        "7270": "ActorEraseDestroyed",
+        "727d": "unused",
+        "7280": "EraseAnimationSprite",
+        "7289": "ActorFindPosDir",
+        "7292": "ActorGetSpriteAddress",
+        "7298": "outputde_address_for_sprite",
+        "72ab": "ActorMoveSprite",
+        "72b6": "ScreenPosOnePixelAbove",
+        "72d0": "Coord2Scr",
+        "72ef": "ActorUpdatePosDir",
+        "7302": "ReadInterface2Joystick",
+        "7309": "ReadInputLR",
+        "7324": "read_bottomright_row_of_keys",
+        "733f": "ReadInputFire",
+        "735e": "ReadInputThrust",
+        "737d": "GamePlayStarts",
+        "739e": "JetmanFlyThrust",
+        "73c3": "JetmanFlyIncSpdX",
+        "73d1": "JetmanFlySetSpdX",
+        "73d6": "JetmanFlySetMaxSpdX",
+        "73da": "JetmanFlyHorizontal",
+        "73f1": "JetmanApplyGravity",
+        "7412": "JetmanFlyCheckFalling",
+        "7425": "JetmanSpeedIncY",
+        "7433": "JetmanSetSpdY",
+        "7438": "JetmanSetZeroSpdY",
+        "743e": "JetmanFlyCheckThrusting",
+        "7448": "JetmanSetMaxSpdY",
+        "744c": "JetmanFlyVertical",
+        "7463": "JetmanFlyCheckPosY",
+        "7473": "JetmanCollision",
+        "7492": "JetmanRedraw",
+        "74a1": "JetmanBumpsHead",
+        "74a7": "JetmanLands",
+        "74bf": "JetmanSetMoveUp",
+        "74c5": "JetmanHitScreenTop",
+        "74d5": "JetmanSetMoveDown",
+        "74e0": "JetmanDirFlipY",
+        "74fa": "JetmanFlyDecreasePosX",
+        "7501": "JetmanFlyThrustLeft",
+        "750c": "JetmanDirFlipX",
+        "7526": "JetmanFlyMoveUp",
+        "752d": "JetmanFlyCalcSpeedX",
+        "753c": "JetmanWalk",
+        "757f": "JetmanWalkOffPlatform",
+        "75ad": "jetman_walks_right",
+        "75bf": "jetman_walks_left",
+        "75d1": "ix_jetman_or_alien",
+        "75e8": "JetmanPlatformCollision",
+        "75ed": "JetmanPlatformCollisionX",
+        "75fc": "JetmanPlatformCollisionY",
+        "7638": "DrawPlatforms",
+        "763d": "used_by_the_routine_at_r6094",
+        "769e": "would_a_platform_colour_be_black",
+        "76a6": "DrawPlatformTile",
+        "76ad": "tile_platform_left",
+        "76b5": "tile_platfor_mmiddle",
+        "76bd": "tile_platform_right",
+        "76c5": "jetman_sprite_table",
+        "76e5": "buffers_aliens_lookup_table",
+        "76f5": "buffers_items_lookup_table",
+        "7705": "MaskSprite",
+        "7747": "ActorUpdateSizeFlipReg",
+        "7748": "ActorUpdateSize",
+        "775b": "ActorUpdateHeightAndMask",
+        "7761": "gfx_jetman_fly_right1",
+        "7794": "gfx_jetman_fly_right2",
+        "77df": "gfx_jetman_fly_right3",
+        "782a": "gfx_jetman_fly_right4",
+        "7875": "gfx_jetman_fly_left1",
+        "78a8": "gfx_jetman_fly_left2",
+        "78db": "gfx_jetman_fly_left3",
+        "7926": "gfx_jetman_fly_left4",
+        "7971": "gfx_jetman_walk_left1",
+        "79a4": "gfx_jetman_walk_left2",
+        "79d7": "gfx_jetman_walk_left3",
+        "7a22": "gfx_jetman_walk_left4",
+        "7a6d": "gfx_jetman_walk_right1",
+        "7aa0": "gfx_jetman_walk_right2",
+        "7ad3": "gfx_jetman_walk_right3",
+        "7b1e": "gfx_jetman_walk_right4",
+        "7b69": "gfx_meteor1",
+        "7b80": "gfx_meteor2",
+        "7b97": "gfx_explosion_big",
+        "7bca": "gfx_explosion_medium",
+        "7bfd": "gfx_explosion_small",
+        "7c30": "gfx_rocket_u3_bottom",
+        "7c53": "gfx_rocket_u3_middle",
+        "7c76": "gfx_rocket_u3_top",
+        "7c99": "gfx_rocket_u1_bottom",
+        "7cbc": "gfx_rocket_u1_middle",
+        "7cdf": "gfx_rocket_u1_top",
+        "7d02": "gfx_rocket_u5_bottom",
+        "7d25": "gfx_rocket_u5_middle",
+        "7d48": "gfx_rocket_u5_top",
+        "7d6b": "gfx_rocket_u4_bottom",
+        "7d8e": "gfx_rocket_u4_middle",
+        "7db1": "gfx_rocket_u4_top",
+        "7dd4": "gfx_gold_bar",
+        "7de7": "gfx_fuel_pod",
+        "7e00": "gfx_radiation",
+        "7e19": "gfx_chemical_weapon",
+        "7e36": "gfx_plutonium",
+        "7e4b": "gfx_diamond",
+        "7e66": "gfx_squidgy_alien1",
+        "7e83": "gfx_squidgy_alien2",
+        "7ea0": "gfx_jet_fighter",
+        "7eaf": "gfx_ufo",
+        "7ec0": "gfx_sphere_alien1",
+        "7ee1": "gfx_sphere_alien2",
+        "7efe": "gfx_cross_ship",
+        "7f1d": "gfx_space_craft",
+        "7f3a": "gfx_frog_alien",
+        "7f57": "gfx_rocket_flames1",
+        "7f7a": "gfx_rocket_flames2",
+        "7fb3": "loading_screen",
+        "9ab3": "system_font"
+    },
+    "regions": [
+        {
+            "start": 23755,
+            "end": 23755,
+            "type": "db"
+        },
+        {
+            "start": 23792,
+            "end": 23792,
+            "type": "db"
+        },
+        {
+            "start": 23795,
+            "end": 23795,
+            "type": "db"
+        },
+        {
+            "start": 23796,
+            "end": 23796,
+            "type": "db"
+        },
+        {
+            "start": 23799,
+            "end": 23799,
+            "type": "db"
+        },
+        {
+            "start": 23802,
+            "end": 23802,
+            "type": "db"
+        },
+        {
+            "start": 23808,
+            "end": 23808,
+            "type": "db"
+        },
+        {
+            "start": 23809,
+            "end": 23809,
+            "type": "db"
+        },
+        {
+            "start": 23810,
+            "end": 23810,
+            "type": "db"
+        },
+        {
+            "start": 23811,
+            "end": 23811,
+            "type": "db"
+        },
+        {
+            "start": 23812,
+            "end": 23812,
+            "type": "db"
+        },
+        {
+            "start": 23813,
+            "end": 23813,
+            "type": "db"
+        },
+        {
+            "start": 23814,
+            "end": 23814,
+            "type": "db"
+        },
+        {
+            "start": 23815,
+            "end": 23815,
+            "type": "db"
+        },
+        {
+            "start": 23816,
+            "end": 23840,
+            "type": "db"
+        },
+        {
+            "start": 23848,
+            "end": 23849,
+            "type": "db"
+        },
+        {
+            "start": 23850,
+            "end": 23850,
+            "type": "db"
+        },
+        {
+            "start": 23856,
+            "end": 23856,
+            "type": "db"
+        },
+        {
+            "start": 23864,
+            "end": 23864,
+            "type": "db"
+        },
+        {
+            "start": 23872,
+            "end": 23872,
+            "type": "db"
+        },
+        {
+            "start": 23880,
+            "end": 23880,
+            "type": "db"
+        },
+        {
+            "start": 23888,
+            "end": 23928,
+            "type": "db"
+        },
+        {
+            "start": 23936,
+            "end": 23936,
+            "type": "db"
+        },
+        {
+            "start": 23944,
+            "end": 23944,
+            "type": "db"
+        },
+        {
+            "start": 23952,
+            "end": 23952,
+            "type": "db"
+        },
+        {
+            "start": 23960,
+            "end": 23976,
+            "type": "db"
+        },
+        {
+            "start": 23984,
+            "end": 23984,
+            "type": "db"
+        },
+        {
+            "start": 23992,
+            "end": 23992,
+            "type": "db"
+        },
+        {
+            "start": 24000,
+            "end": 24000,
+            "type": "db"
+        },
+        {
+            "start": 24008,
+            "end": 24008,
+            "type": "db"
+        },
+        {
+            "start": 24009,
+            "end": 24009,
+            "type": "db"
+        },
+        {
+            "start": 24010,
+            "end": 24010,
+            "type": "db"
+        },
+        {
+            "start": 24011,
+            "end": 24011,
+            "type": "db"
+        },
+        {
+            "start": 24012,
+            "end": 24012,
+            "type": "dw"
+        },
+        {
+            "start": 24014,
+            "end": 24014,
+            "type": "db"
+        },
+        {
+            "start": 24015,
+            "end": 24016,
+            "type": "db"
+        },
+        {
+            "start": 24017,
+            "end": 24017,
+            "type": "db"
+        },
+        {
+            "start": 24018,
+            "end": 24018,
+            "type": "db"
+        },
+        {
+            "start": 24019,
+            "end": 24019,
+            "type": "db"
+        },
+        {
+            "start": 24020,
+            "end": 24020,
+            "type": "db"
+        },
+        {
+            "start": 24021,
+            "end": 24021,
+            "type": "db"
+        },
+        {
+            "start": 24022,
+            "end": 24022,
+            "type": "db"
+        },
+        {
+            "start": 24023,
+            "end": 24023,
+            "type": "db"
+        },
+        {
+            "start": 24024,
+            "end": 24024,
+            "type": "db"
+        },
+        {
+            "start": 24048,
+            "end": 24048,
+            "type": "db"
+        },
+        {
+            "start": 24049,
+            "end": 24049,
+            "type": "db"
+        },
+        {
+            "start": 24050,
+            "end": 24050,
+            "type": "db"
+        },
+        {
+            "start": 24056,
+            "end": 24056,
+            "type": "db"
+        },
+        {
+            "start": 24057,
+            "end": 24057,
+            "type": "db"
+        },
+        {
+            "start": 24058,
+            "end": 24058,
+            "type": "db"
+        },
+        {
+            "start": 24064,
+            "end": 24217,
+            "type": "db"
+        },
+        {
+            "start": 24268,
+            "end": 24421,
+            "type": "db"
+        },
+        {
+            "start": 24472,
+            "end": 24472,
+            "type": "db"
+        },
+        {
+            "start": 24576,
+            "end": 24576,
+            "type": "code"
+        },
+        {
+            "start": 24579,
+            "end": 24591,
+            "type": "db"
+        },
+        {
+            "start": 24595,
+            "end": 24595,
+            "type": "db"
+        },
+        {
+            "start": 24603,
+            "end": 24619,
+            "type": "db"
+        },
+        {
+            "start": 24627,
+            "end": 24627,
+            "type": "db"
+        },
+        {
+            "start": 24635,
+            "end": 24635,
+            "type": "db"
+        },
+        {
+            "start": 24643,
+            "end": 24675,
+            "type": "db"
+        },
+        {
+            "start": 24676,
+            "end": 24693,
+            "type": "code"
+        },
+        {
+            "start": 24694,
+            "end": 24704,
+            "type": "code"
+        },
+        {
+            "start": 24707,
+            "end": 24721,
+            "type": "code"
+        },
+        {
+            "start": 24724,
+            "end": 24742,
+            "type": "code"
+        },
+        {
+            "start": 24743,
+            "end": 24756,
+            "type": "code"
+        },
+        {
+            "start": 24759,
+            "end": 24783,
+            "type": "code"
+        },
+        {
+            "start": 24784,
+            "end": 24796,
+            "type": "code"
+        },
+        {
+            "start": 24797,
+            "end": 24836,
+            "type": "code"
+        },
+        {
+            "start": 24837,
+            "end": 24838,
+            "type": "code"
+        },
+        {
+            "start": 24839,
+            "end": 24858,
+            "type": "code"
+        },
+        {
+            "start": 24859,
+            "end": 24866,
+            "type": "code"
+        },
+        {
+            "start": 24867,
+            "end": 24870,
+            "type": "code"
+        },
+        {
+            "start": 24871,
+            "end": 24878,
+            "type": "code"
+        },
+        {
+            "start": 24879,
+            "end": 24893,
+            "type": "code"
+        },
+        {
+            "start": 24894,
+            "end": 24897,
+            "type": "code"
+        },
+        {
+            "start": 24900,
+            "end": 24918,
+            "type": "code"
+        },
+        {
+            "start": 24919,
+            "end": 24928,
+            "type": "code"
+        },
+        {
+            "start": 24929,
+            "end": 24947,
+            "type": "db"
+        },
+        {
+            "start": 24948,
+            "end": 24969,
+            "type": "code"
+        },
+        {
+            "start": 24970,
+            "end": 24980,
+            "type": "code"
+        },
+        {
+            "start": 24983,
+            "end": 24989,
+            "type": "code"
+        },
+        {
+            "start": 24992,
+            "end": 24996,
+            "type": "code"
+        },
+        {
+            "start": 24997,
+            "end": 25004,
+            "type": "code"
+        },
+        {
+            "start": 25005,
+            "end": 25009,
+            "type": "code"
+        },
+        {
+            "start": 25010,
+            "end": 25017,
+            "type": "code"
+        },
+        {
+            "start": 25018,
+            "end": 25021,
+            "type": "code"
+        },
+        {
+            "start": 25023,
+            "end": 25028,
+            "type": "code"
+        },
+        {
+            "start": 25029,
+            "end": 25031,
+            "type": "code"
+        },
+        {
+            "start": 25033,
+            "end": 25042,
+            "type": "code"
+        },
+        {
+            "start": 25045,
+            "end": 25064,
+            "type": "code"
+        },
+        {
+            "start": 25065,
+            "end": 25070,
+            "type": "code"
+        },
+        {
+            "start": 25071,
+            "end": 25076,
+            "type": "code"
+        },
+        {
+            "start": 25077,
+            "end": 25082,
+            "type": "code"
+        },
+        {
+            "start": 25083,
+            "end": 25105,
+            "type": "code"
+        },
+        {
+            "start": 25106,
+            "end": 25112,
+            "type": "code"
+        },
+        {
+            "start": 25113,
+            "end": 25115,
+            "type": "code"
+        },
+        {
+            "start": 25116,
+            "end": 25120,
+            "type": "code"
+        },
+        {
+            "start": 25121,
+            "end": 25125,
+            "type": "code"
+        },
+        {
+            "start": 25126,
+            "end": 25132,
+            "type": "code"
+        },
+        {
+            "start": 25133,
+            "end": 25139,
+            "type": "code"
+        },
+        {
+            "start": 25140,
+            "end": 25151,
+            "type": "code"
+        },
+        {
+            "start": 25152,
+            "end": 25184,
+            "type": "code"
+        },
+        {
+            "start": 25185,
+            "end": 25185,
+            "type": "db"
+        },
+        {
+            "start": 25191,
+            "end": 25191,
+            "type": "db"
+        },
+        {
+            "start": 25197,
+            "end": 25289,
+            "type": "text"
+        },
+        {
+            "start": 25290,
+            "end": 25303,
+            "type": "code"
+        },
+        {
+            "start": 25306,
+            "end": 25307,
+            "type": "code"
+        },
+        {
+            "start": 25308,
+            "end": 25341,
+            "type": "code"
+        },
+        {
+            "start": 25342,
+            "end": 25357,
+            "type": "code"
+        },
+        {
+            "start": 25360,
+            "end": 25369,
+            "type": "code"
+        },
+        {
+            "start": 25372,
+            "end": 25394,
+            "type": "code"
+        },
+        {
+            "start": 25396,
+            "end": 25404,
+            "type": "code"
+        },
+        {
+            "start": 25405,
+            "end": 25439,
+            "type": "dw"
+        },
+        {
+            "start": 25441,
+            "end": 25470,
+            "type": "code"
+        },
+        {
+            "start": 25471,
+            "end": 25473,
+            "type": "code"
+        },
+        {
+            "start": 25474,
+            "end": 25479,
+            "type": "code"
+        },
+        {
+            "start": 25480,
+            "end": 25489,
+            "type": "code"
+        },
+        {
+            "start": 25490,
+            "end": 25491,
+            "type": "code"
+        },
+        {
+            "start": 25492,
+            "end": 25501,
+            "type": "code"
+        },
+        {
+            "start": 25502,
+            "end": 25505,
+            "type": "code"
+        },
+        {
+            "start": 25507,
+            "end": 25544,
+            "type": "code"
+        },
+        {
+            "start": 25545,
+            "end": 25548,
+            "type": "code"
+        },
+        {
+            "start": 25549,
+            "end": 25552,
+            "type": "code"
+        },
+        {
+            "start": 25553,
+            "end": 25558,
+            "type": "code"
+        },
+        {
+            "start": 25559,
+            "end": 25579,
+            "type": "code"
+        },
+        {
+            "start": 25580,
+            "end": 25594,
+            "type": "code"
+        },
+        {
+            "start": 25595,
+            "end": 25605,
+            "type": "code"
+        },
+        {
+            "start": 25606,
+            "end": 25673,
+            "type": "code"
+        },
+        {
+            "start": 25674,
+            "end": 25683,
+            "type": "code"
+        },
+        {
+            "start": 25686,
+            "end": 25694,
+            "type": "code"
+        },
+        {
+            "start": 25697,
+            "end": 25712,
+            "type": "code"
+        },
+        {
+            "start": 25713,
+            "end": 25736,
+            "type": "code"
+        },
+        {
+            "start": 25739,
+            "end": 25747,
+            "type": "code"
+        },
+        {
+            "start": 25750,
+            "end": 25758,
+            "type": "dw"
+        },
+        {
+            "start": 25760,
+            "end": 25760,
+            "type": "code"
+        },
+        {
+            "start": 25764,
+            "end": 25771,
+            "type": "code"
+        },
+        {
+            "start": 25774,
+            "end": 25774,
+            "type": "code"
+        },
+        {
+            "start": 25777,
+            "end": 25787,
+            "type": "code"
+        },
+        {
+            "start": 25788,
+            "end": 25792,
+            "type": "code"
+        },
+        {
+            "start": 25794,
+            "end": 25808,
+            "type": "code"
+        },
+        {
+            "start": 25809,
+            "end": 25813,
+            "type": "code"
+        },
+        {
+            "start": 25815,
+            "end": 25824,
+            "type": "code"
+        },
+        {
+            "start": 25825,
+            "end": 25830,
+            "type": "code"
+        },
+        {
+            "start": 25832,
+            "end": 25862,
+            "type": "code"
+        },
+        {
+            "start": 25864,
+            "end": 25867,
+            "type": "code"
+        },
+        {
+            "start": 25870,
+            "end": 25873,
+            "type": "code"
+        },
+        {
+            "start": 25876,
+            "end": 25888,
+            "type": "code"
+        },
+        {
+            "start": 25891,
+            "end": 25919,
+            "type": "code"
+        },
+        {
+            "start": 25921,
+            "end": 25940,
+            "type": "code"
+        },
+        {
+            "start": 25941,
+            "end": 25955,
+            "type": "code"
+        },
+        {
+            "start": 25957,
+            "end": 25996,
+            "type": "code"
+        },
+        {
+            "start": 25997,
+            "end": 26006,
+            "type": "code"
+        },
+        {
+            "start": 26007,
+            "end": 26022,
+            "type": "code"
+        },
+        {
+            "start": 26024,
+            "end": 26068,
+            "type": "code"
+        },
+        {
+            "start": 26069,
+            "end": 26074,
+            "type": "code"
+        },
+        {
+            "start": 26075,
+            "end": 26088,
+            "type": "code"
+        },
+        {
+            "start": 26089,
+            "end": 26097,
+            "type": "db"
+        },
+        {
+            "start": 26105,
+            "end": 26147,
+            "type": "code"
+        },
+        {
+            "start": 26148,
+            "end": 26151,
+            "type": "code"
+        },
+        {
+            "start": 26153,
+            "end": 26155,
+            "type": "code"
+        },
+        {
+            "start": 26156,
+            "end": 26161,
+            "type": "code"
+        },
+        {
+            "start": 26162,
+            "end": 26195,
+            "type": "code"
+        },
+        {
+            "start": 26196,
+            "end": 26219,
+            "type": "code"
+        },
+        {
+            "start": 26220,
+            "end": 26235,
+            "type": "code"
+        },
+        {
+            "start": 26236,
+            "end": 26240,
+            "type": "code"
+        },
+        {
+            "start": 26241,
+            "end": 26253,
+            "type": "code"
+        },
+        {
+            "start": 26256,
+            "end": 26289,
+            "type": "code"
+        },
+        {
+            "start": 26292,
+            "end": 26318,
+            "type": "code"
+        },
+        {
+            "start": 26320,
+            "end": 26361,
+            "type": "code"
+        },
+        {
+            "start": 26364,
+            "end": 26376,
+            "type": "code"
+        },
+        {
+            "start": 26377,
+            "end": 26481,
+            "type": "code"
+        },
+        {
+            "start": 26482,
+            "end": 26483,
+            "type": "code"
+        },
+        {
+            "start": 26484,
+            "end": 26489,
+            "type": "code"
+        },
+        {
+            "start": 26490,
+            "end": 26507,
+            "type": "code"
+        },
+        {
+            "start": 26508,
+            "end": 26548,
+            "type": "dw"
+        },
+        {
+            "start": 26550,
+            "end": 26564,
+            "type": "code"
+        },
+        {
+            "start": 26566,
+            "end": 26570,
+            "type": "code"
+        },
+        {
+            "start": 26572,
+            "end": 26576,
+            "type": "code"
+        },
+        {
+            "start": 26578,
+            "end": 26580,
+            "type": "code"
+        },
+        {
+            "start": 26582,
+            "end": 26586,
+            "type": "code"
+        },
+        {
+            "start": 26587,
+            "end": 26592,
+            "type": "code"
+        },
+        {
+            "start": 26593,
+            "end": 26598,
+            "type": "code"
+        },
+        {
+            "start": 26599,
+            "end": 26600,
+            "type": "code"
+        },
+        {
+            "start": 26601,
+            "end": 26601,
+            "type": "code"
+        },
+        {
+            "start": 26602,
+            "end": 26608,
+            "type": "code"
+        },
+        {
+            "start": 26609,
+            "end": 26620,
+            "type": "code"
+        },
+        {
+            "start": 26621,
+            "end": 26639,
+            "type": "code"
+        },
+        {
+            "start": 26640,
+            "end": 26640,
+            "type": "db"
+        },
+        {
+            "start": 26644,
+            "end": 26651,
+            "type": "code"
+        },
+        {
+            "start": 26653,
+            "end": 26663,
+            "type": "code"
+        },
+        {
+            "start": 26664,
+            "end": 26668,
+            "type": "code"
+        },
+        {
+            "start": 26669,
+            "end": 26674,
+            "type": "code"
+        },
+        {
+            "start": 26675,
+            "end": 26680,
+            "type": "code"
+        },
+        {
+            "start": 26681,
+            "end": 26685,
+            "type": "code"
+        },
+        {
+            "start": 26686,
+            "end": 26716,
+            "type": "code"
+        },
+        {
+            "start": 26717,
+            "end": 26724,
+            "type": "code"
+        },
+        {
+            "start": 26728,
+            "end": 26739,
+            "type": "code"
+        },
+        {
+            "start": 26740,
+            "end": 26744,
+            "type": "code"
+        },
+        {
+            "start": 26746,
+            "end": 26764,
+            "type": "code"
+        },
+        {
+            "start": 26765,
+            "end": 26806,
+            "type": "code"
+        },
+        {
+            "start": 26807,
+            "end": 26833,
+            "type": "code"
+        },
+        {
+            "start": 26834,
+            "end": 26837,
+            "type": "code"
+        },
+        {
+            "start": 26840,
+            "end": 26850,
+            "type": "dw"
+        },
+        {
+            "start": 26852,
+            "end": 26859,
+            "type": "code"
+        },
+        {
+            "start": 26860,
+            "end": 26865,
+            "type": "code"
+        },
+        {
+            "start": 26866,
+            "end": 26891,
+            "type": "code"
+        },
+        {
+            "start": 26894,
+            "end": 26924,
+            "type": "dw"
+        },
+        {
+            "start": 26926,
+            "end": 26961,
+            "type": "code"
+        },
+        {
+            "start": 26964,
+            "end": 26981,
+            "type": "code"
+        },
+        {
+            "start": 26982,
+            "end": 26992,
+            "type": "code"
+        },
+        {
+            "start": 26993,
+            "end": 27013,
+            "type": "code"
+        },
+        {
+            "start": 27014,
+            "end": 27063,
+            "type": "code"
+        },
+        {
+            "start": 27064,
+            "end": 27080,
+            "type": "code"
+        },
+        {
+            "start": 27081,
+            "end": 27088,
+            "type": "code"
+        },
+        {
+            "start": 27089,
+            "end": 27096,
+            "type": "code"
+        },
+        {
+            "start": 27097,
+            "end": 27105,
+            "type": "code"
+        },
+        {
+            "start": 27106,
+            "end": 27178,
+            "type": "code"
+        },
+        {
+            "start": 27181,
+            "end": 27181,
+            "type": "db"
+        },
+        {
+            "start": 27189,
+            "end": 27213,
+            "type": "code"
+        },
+        {
+            "start": 27214,
+            "end": 27241,
+            "type": "code"
+        },
+        {
+            "start": 27242,
+            "end": 27252,
+            "type": "code"
+        },
+        {
+            "start": 27253,
+            "end": 27266,
+            "type": "code"
+        },
+        {
+            "start": 27267,
+            "end": 27282,
+            "type": "code"
+        },
+        {
+            "start": 27283,
+            "end": 27288,
+            "type": "code"
+        },
+        {
+            "start": 27289,
+            "end": 27294,
+            "type": "code"
+        },
+        {
+            "start": 27295,
+            "end": 27298,
+            "type": "code"
+        },
+        {
+            "start": 27299,
+            "end": 27310,
+            "type": "code"
+        },
+        {
+            "start": 27311,
+            "end": 27317,
+            "type": "code"
+        },
+        {
+            "start": 27320,
+            "end": 27344,
+            "type": "code"
+        },
+        {
+            "start": 27345,
+            "end": 27376,
+            "type": "code"
+        },
+        {
+            "start": 27377,
+            "end": 27409,
+            "type": "code"
+        },
+        {
+            "start": 27410,
+            "end": 27419,
+            "type": "code"
+        },
+        {
+            "start": 27420,
+            "end": 27464,
+            "type": "code"
+        },
+        {
+            "start": 27465,
+            "end": 27474,
+            "type": "code"
+        },
+        {
+            "start": 27475,
+            "end": 27483,
+            "type": "code"
+        },
+        {
+            "start": 27484,
+            "end": 27507,
+            "type": "code"
+        },
+        {
+            "start": 27508,
+            "end": 27522,
+            "type": "code"
+        },
+        {
+            "start": 27523,
+            "end": 27533,
+            "type": "code"
+        },
+        {
+            "start": 27534,
+            "end": 27541,
+            "type": "code"
+        },
+        {
+            "start": 27542,
+            "end": 27553,
+            "type": "code"
+        },
+        {
+            "start": 27554,
+            "end": 27565,
+            "type": "code"
+        },
+        {
+            "start": 27566,
+            "end": 27576,
+            "type": "code"
+        },
+        {
+            "start": 27577,
+            "end": 27586,
+            "type": "code"
+        },
+        {
+            "start": 27587,
+            "end": 27596,
+            "type": "code"
+        },
+        {
+            "start": 27597,
+            "end": 27603,
+            "type": "code"
+        },
+        {
+            "start": 27604,
+            "end": 27610,
+            "type": "code"
+        },
+        {
+            "start": 27611,
+            "end": 27626,
+            "type": "code"
+        },
+        {
+            "start": 27627,
+            "end": 27630,
+            "type": "code"
+        },
+        {
+            "start": 27633,
+            "end": 27637,
+            "type": "code"
+        },
+        {
+            "start": 27640,
+            "end": 27667,
+            "type": "code"
+        },
+        {
+            "start": 27668,
+            "end": 27695,
+            "type": "code"
+        },
+        {
+            "start": 27696,
+            "end": 27738,
+            "type": "code"
+        },
+        {
+            "start": 27739,
+            "end": 27755,
+            "type": "code"
+        },
+        {
+            "start": 27756,
+            "end": 27767,
+            "type": "code"
+        },
+        {
+            "start": 27768,
+            "end": 27778,
+            "type": "code"
+        },
+        {
+            "start": 27779,
+            "end": 27795,
+            "type": "code"
+        },
+        {
+            "start": 27796,
+            "end": 27801,
+            "type": "code"
+        },
+        {
+            "start": 27802,
+            "end": 27807,
+            "type": "code"
+        },
+        {
+            "start": 27808,
+            "end": 27819,
+            "type": "code"
+        },
+        {
+            "start": 27820,
+            "end": 27822,
+            "type": "code"
+        },
+        {
+            "start": 27824,
+            "end": 27837,
+            "type": "code"
+        },
+        {
+            "start": 27838,
+            "end": 27862,
+            "type": "code"
+        },
+        {
+            "start": 27863,
+            "end": 27894,
+            "type": "code"
+        },
+        {
+            "start": 27895,
+            "end": 27906,
+            "type": "code"
+        },
+        {
+            "start": 27907,
+            "end": 27928,
+            "type": "code"
+        },
+        {
+            "start": 27929,
+            "end": 27943,
+            "type": "code"
+        },
+        {
+            "start": 27944,
+            "end": 27958,
+            "type": "code"
+        },
+        {
+            "start": 27959,
+            "end": 27969,
+            "type": "code"
+        },
+        {
+            "start": 27971,
+            "end": 27992,
+            "type": "code"
+        },
+        {
+            "start": 27993,
+            "end": 27993,
+            "type": "code"
+        },
+        {
+            "start": 27996,
+            "end": 28004,
+            "type": "code"
+        },
+        {
+            "start": 28007,
+            "end": 28021,
+            "type": "code"
+        },
+        {
+            "start": 28022,
+            "end": 28028,
+            "type": "code"
+        },
+        {
+            "start": 28029,
+            "end": 28033,
+            "type": "code"
+        },
+        {
+            "start": 28034,
+            "end": 28044,
+            "type": "code"
+        },
+        {
+            "start": 28045,
+            "end": 28049,
+            "type": "code"
+        },
+        {
+            "start": 28052,
+            "end": 28052,
+            "type": "db"
+        },
+        {
+            "start": 28060,
+            "end": 28078,
+            "type": "code"
+        },
+        {
+            "start": 28079,
+            "end": 28118,
+            "type": "code"
+        },
+        {
+            "start": 28119,
+            "end": 28124,
+            "type": "code"
+        },
+        {
+            "start": 28125,
+            "end": 28131,
+            "type": "code"
+        },
+        {
+            "start": 28132,
+            "end": 28135,
+            "type": "code"
+        },
+        {
+            "start": 28137,
+            "end": 28149,
+            "type": "code"
+        },
+        {
+            "start": 28150,
+            "end": 28159,
+            "type": "code"
+        },
+        {
+            "start": 28160,
+            "end": 28179,
+            "type": "code"
+        },
+        {
+            "start": 28180,
+            "end": 28181,
+            "type": "code"
+        },
+        {
+            "start": 28182,
+            "end": 28186,
+            "type": "code"
+        },
+        {
+            "start": 28187,
+            "end": 28194,
+            "type": "code"
+        },
+        {
+            "start": 28195,
+            "end": 28222,
+            "type": "code"
+        },
+        {
+            "start": 28223,
+            "end": 28224,
+            "type": "code"
+        },
+        {
+            "start": 28225,
+            "end": 28254,
+            "type": "code"
+        },
+        {
+            "start": 28255,
+            "end": 28261,
+            "type": "code"
+        },
+        {
+            "start": 28262,
+            "end": 28272,
+            "type": "code"
+        },
+        {
+            "start": 28273,
+            "end": 28283,
+            "type": "code"
+        },
+        {
+            "start": 28284,
+            "end": 28286,
+            "type": "code"
+        },
+        {
+            "start": 28287,
+            "end": 28294,
+            "type": "code"
+        },
+        {
+            "start": 28295,
+            "end": 28313,
+            "type": "code"
+        },
+        {
+            "start": 28314,
+            "end": 28324,
+            "type": "code"
+        },
+        {
+            "start": 28325,
+            "end": 28334,
+            "type": "code"
+        },
+        {
+            "start": 28335,
+            "end": 28348,
+            "type": "code"
+        },
+        {
+            "start": 28349,
+            "end": 28352,
+            "type": "code"
+        },
+        {
+            "start": 28354,
+            "end": 28383,
+            "type": "code"
+        },
+        {
+            "start": 28384,
+            "end": 28398,
+            "type": "code"
+        },
+        {
+            "start": 28399,
+            "end": 28408,
+            "type": "code"
+        },
+        {
+            "start": 28427,
+            "end": 28436,
+            "type": "code"
+        },
+        {
+            "start": 28438,
+            "end": 28446,
+            "type": "code"
+        },
+        {
+            "start": 28448,
+            "end": 28448,
+            "type": "code"
+        },
+        {
+            "start": 28451,
+            "end": 28457,
+            "type": "code"
+        },
+        {
+            "start": 28458,
+            "end": 28480,
+            "type": "code"
+        },
+        {
+            "start": 28481,
+            "end": 28505,
+            "type": "code"
+        },
+        {
+            "start": 28506,
+            "end": 28519,
+            "type": "code"
+        },
+        {
+            "start": 28520,
+            "end": 28527,
+            "type": "code"
+        },
+        {
+            "start": 28528,
+            "end": 28549,
+            "type": "code"
+        },
+        {
+            "start": 28550,
+            "end": 28561,
+            "type": "code"
+        },
+        {
+            "start": 28562,
+            "end": 28591,
+            "type": "code"
+        },
+        {
+            "start": 28594,
+            "end": 28594,
+            "type": "db"
+        },
+        {
+            "start": 28598,
+            "end": 28605,
+            "type": "code"
+        },
+        {
+            "start": 28606,
+            "end": 28611,
+            "type": "code"
+        },
+        {
+            "start": 28613,
+            "end": 28631,
+            "type": "code"
+        },
+        {
+            "start": 28632,
+            "end": 28649,
+            "type": "code"
+        },
+        {
+            "start": 28650,
+            "end": 28674,
+            "type": "code"
+        },
+        {
+            "start": 28675,
+            "end": 28678,
+            "type": "code"
+        },
+        {
+            "start": 28679,
+            "end": 28693,
+            "type": "code"
+        },
+        {
+            "start": 28694,
+            "end": 28715,
+            "type": "code"
+        },
+        {
+            "start": 28716,
+            "end": 28718,
+            "type": "code"
+        },
+        {
+            "start": 28719,
+            "end": 28750,
+            "type": "code"
+        },
+        {
+            "start": 28751,
+            "end": 28760,
+            "type": "code"
+        },
+        {
+            "start": 28761,
+            "end": 28780,
+            "type": "code"
+        },
+        {
+            "start": 28781,
+            "end": 28795,
+            "type": "code"
+        },
+        {
+            "start": 28796,
+            "end": 28807,
+            "type": "code"
+        },
+        {
+            "start": 28808,
+            "end": 28820,
+            "type": "code"
+        },
+        {
+            "start": 28821,
+            "end": 28825,
+            "type": "code"
+        },
+        {
+            "start": 28826,
+            "end": 28833,
+            "type": "code"
+        },
+        {
+            "start": 28836,
+            "end": 28836,
+            "type": "db"
+        },
+        {
+            "start": 28844,
+            "end": 28848,
+            "type": "code"
+        },
+        {
+            "start": 28850,
+            "end": 28853,
+            "type": "code"
+        },
+        {
+            "start": 28854,
+            "end": 28857,
+            "type": "code"
+        },
+        {
+            "start": 28858,
+            "end": 28864,
+            "type": "code"
+        },
+        {
+            "start": 28866,
+            "end": 28876,
+            "type": "code"
+        },
+        {
+            "start": 28877,
+            "end": 28879,
+            "type": "code"
+        },
+        {
+            "start": 28880,
+            "end": 28899,
+            "type": "code"
+        },
+        {
+            "start": 28901,
+            "end": 28907,
+            "type": "code"
+        },
+        {
+            "start": 28909,
+            "end": 28915,
+            "type": "code"
+        },
+        {
+            "start": 28917,
+            "end": 28920,
+            "type": "code"
+        },
+        {
+            "start": 28923,
+            "end": 28924,
+            "type": "code"
+        },
+        {
+            "start": 28925,
+            "end": 28948,
+            "type": "code"
+        },
+        {
+            "start": 28949,
+            "end": 28963,
+            "type": "code"
+        },
+        {
+            "start": 28964,
+            "end": 28964,
+            "type": "code"
+        },
+        {
+            "start": 28966,
+            "end": 28979,
+            "type": "code"
+        },
+        {
+            "start": 28980,
+            "end": 28989,
+            "type": "code"
+        },
+        {
+            "start": 28992,
+            "end": 29007,
+            "type": "code"
+        },
+        {
+            "start": 29009,
+            "end": 29017,
+            "type": "code"
+        },
+        {
+            "start": 29018,
+            "end": 29042,
+            "type": "code"
+        },
+        {
+            "start": 29045,
+            "end": 29045,
+            "type": "db"
+        },
+        {
+            "start": 29049,
+            "end": 29049,
+            "type": "db"
+        },
+        {
+            "start": 29053,
+            "end": 29053,
+            "type": "db"
+        },
+        {
+            "start": 29056,
+            "end": 29059,
+            "type": "code"
+        },
+        {
+            "start": 29061,
+            "end": 29061,
+            "type": "code"
+        },
+        {
+            "start": 29063,
+            "end": 29069,
+            "type": "code"
+        },
+        {
+            "start": 29070,
+            "end": 29077,
+            "type": "code"
+        },
+        {
+            "start": 29079,
+            "end": 29104,
+            "type": "code"
+        },
+        {
+            "start": 29105,
+            "end": 29105,
+            "type": "code"
+        },
+        {
+            "start": 29106,
+            "end": 29125,
+            "type": "code"
+        },
+        {
+            "start": 29126,
+            "end": 29127,
+            "type": "code"
+        },
+        {
+            "start": 29128,
+            "end": 29141,
+            "type": "code"
+        },
+        {
+            "start": 29142,
+            "end": 29163,
+            "type": "code"
+        },
+        {
+            "start": 29164,
+            "end": 29164,
+            "type": "code"
+        },
+        {
+            "start": 29167,
+            "end": 29167,
+            "type": "code"
+        },
+        {
+            "start": 29170,
+            "end": 29181,
+            "type": "code"
+        },
+        {
+            "start": 29184,
+            "end": 29187,
+            "type": "code"
+        },
+        {
+            "start": 29188,
+            "end": 29188,
+            "type": "code"
+        },
+        {
+            "start": 29191,
+            "end": 29220,
+            "type": "code"
+        },
+        {
+            "start": 29222,
+            "end": 29232,
+            "type": "code"
+        },
+        {
+            "start": 29234,
+            "end": 29238,
+            "type": "code"
+        },
+        {
+            "start": 29241,
+            "end": 29267,
+            "type": "code"
+        },
+        {
+            "start": 29268,
+            "end": 29280,
+            "type": "code"
+        },
+        {
+            "start": 29283,
+            "end": 29286,
+            "type": "code"
+        },
+        {
+            "start": 29288,
+            "end": 29291,
+            "type": "code"
+        },
+        {
+            "start": 29293,
+            "end": 29293,
+            "type": "code"
+        },
+        {
+            "start": 29296,
+            "end": 29306,
+            "type": "code"
+        },
+        {
+            "start": 29309,
+            "end": 29309,
+            "type": "code"
+        },
+        {
+            "start": 29312,
+            "end": 29318,
+            "type": "code"
+        },
+        {
+            "start": 29321,
+            "end": 29327,
+            "type": "code"
+        },
+        {
+            "start": 29330,
+            "end": 29335,
+            "type": "code"
+        },
+        {
+            "start": 29336,
+            "end": 29354,
+            "type": "code"
+        },
+        {
+            "start": 29355,
+            "end": 29364,
+            "type": "code"
+        },
+        {
+            "start": 29366,
+            "end": 29386,
+            "type": "code"
+        },
+        {
+            "start": 29392,
+            "end": 29422,
+            "type": "code"
+        },
+        {
+            "start": 29423,
+            "end": 29441,
+            "type": "code"
+        },
+        {
+            "start": 29442,
+            "end": 29448,
+            "type": "code"
+        },
+        {
+            "start": 29449,
+            "end": 29475,
+            "type": "code"
+        },
+        {
+            "start": 29476,
+            "end": 29493,
+            "type": "code"
+        },
+        {
+            "start": 29494,
+            "end": 29496,
+            "type": "code"
+        },
+        {
+            "start": 29497,
+            "end": 29499,
+            "type": "code"
+        },
+        {
+            "start": 29500,
+            "end": 29502,
+            "type": "code"
+        },
+        {
+            "start": 29503,
+            "end": 29513,
+            "type": "code"
+        },
+        {
+            "start": 29514,
+            "end": 29530,
+            "type": "code"
+        },
+        {
+            "start": 29531,
+            "end": 29533,
+            "type": "code"
+        },
+        {
+            "start": 29534,
+            "end": 29544,
+            "type": "code"
+        },
+        {
+            "start": 29545,
+            "end": 29561,
+            "type": "code"
+        },
+        {
+            "start": 29562,
+            "end": 29564,
+            "type": "code"
+        },
+        {
+            "start": 29565,
+            "end": 29587,
+            "type": "code"
+        },
+        {
+            "start": 29588,
+            "end": 29592,
+            "type": "code"
+        },
+        {
+            "start": 29593,
+            "end": 29596,
+            "type": "code"
+        },
+        {
+            "start": 29598,
+            "end": 29623,
+            "type": "code"
+        },
+        {
+            "start": 29624,
+            "end": 29632,
+            "type": "code"
+        },
+        {
+            "start": 29635,
+            "end": 29647,
+            "type": "code"
+        },
+        {
+            "start": 29649,
+            "end": 29652,
+            "type": "code"
+        },
+        {
+            "start": 29654,
+            "end": 29654,
+            "type": "code"
+        },
+        {
+            "start": 29658,
+            "end": 29680,
+            "type": "code"
+        },
+        {
+            "start": 29681,
+            "end": 29699,
+            "type": "code"
+        },
+        {
+            "start": 29700,
+            "end": 29712,
+            "type": "code"
+        },
+        {
+            "start": 29714,
+            "end": 29730,
+            "type": "code"
+        },
+        {
+            "start": 29733,
+            "end": 29745,
+            "type": "code"
+        },
+        {
+            "start": 29747,
+            "end": 29750,
+            "type": "code"
+        },
+        {
+            "start": 29752,
+            "end": 29756,
+            "type": "code"
+        },
+        {
+            "start": 29758,
+            "end": 29766,
+            "type": "code"
+        },
+        {
+            "start": 29768,
+            "end": 29768,
+            "type": "code"
+        },
+        {
+            "start": 29772,
+            "end": 29794,
+            "type": "code"
+        },
+        {
+            "start": 29795,
+            "end": 29809,
+            "type": "code"
+        },
+        {
+            "start": 29811,
+            "end": 29839,
+            "type": "code"
+        },
+        {
+            "start": 29842,
+            "end": 29856,
+            "type": "code"
+        },
+        {
+            "start": 29857,
+            "end": 29861,
+            "type": "code"
+        },
+        {
+            "start": 29863,
+            "end": 29885,
+            "type": "code"
+        },
+        {
+            "start": 29887,
+            "end": 29891,
+            "type": "code"
+        },
+        {
+            "start": 29893,
+            "end": 29907,
+            "type": "code"
+        },
+        {
+            "start": 29909,
+            "end": 29917,
+            "type": "code"
+        },
+        {
+            "start": 29920,
+            "end": 29943,
+            "type": "code"
+        },
+        {
+            "start": 29946,
+            "end": 29950,
+            "type": "code"
+        },
+        {
+            "start": 29953,
+            "end": 29961,
+            "type": "code"
+        },
+        {
+            "start": 29964,
+            "end": 29987,
+            "type": "code"
+        },
+        {
+            "start": 29990,
+            "end": 29994,
+            "type": "code"
+        },
+        {
+            "start": 29997,
+            "end": 30009,
+            "type": "code"
+        },
+        {
+            "start": 30012,
+            "end": 30030,
+            "type": "code"
+        },
+        {
+            "start": 30031,
+            "end": 30068,
+            "type": "code"
+        },
+        {
+            "start": 30069,
+            "end": 30078,
+            "type": "code"
+        },
+        {
+            "start": 30079,
+            "end": 30113,
+            "type": "code"
+        },
+        {
+            "start": 30114,
+            "end": 30124,
+            "type": "code"
+        },
+        {
+            "start": 30125,
+            "end": 30142,
+            "type": "code"
+        },
+        {
+            "start": 30143,
+            "end": 30158,
+            "type": "code"
+        },
+        {
+            "start": 30161,
+            "end": 30173,
+            "type": "code"
+        },
+        {
+            "start": 30174,
+            "end": 30182,
+            "type": "code"
+        },
+        {
+            "start": 30184,
+            "end": 30186,
+            "type": "code"
+        },
+        {
+            "start": 30189,
+            "end": 30202,
+            "type": "code"
+        },
+        {
+            "start": 30204,
+            "end": 30217,
+            "type": "code"
+        },
+        {
+            "start": 30218,
+            "end": 30247,
+            "type": "code"
+        },
+        {
+            "start": 30248,
+            "end": 30251,
+            "type": "code"
+        },
+        {
+            "start": 30252,
+            "end": 30255,
+            "type": "code"
+        },
+        {
+            "start": 30256,
+            "end": 30263,
+            "type": "code"
+        },
+        {
+            "start": 30264,
+            "end": 30268,
+            "type": "code"
+        },
+        {
+            "start": 30269,
+            "end": 30312,
+            "type": "code"
+        },
+        {
+            "start": 30313,
+            "end": 30356,
+            "type": "code"
+        },
+        {
+            "start": 30357,
+            "end": 30365,
+            "type": "code"
+        },
+        {
+            "start": 30366,
+            "end": 30370,
+            "type": "code"
+        },
+        {
+            "start": 30371,
+            "end": 30373,
+            "type": "code"
+        },
+        {
+            "start": 30374,
+            "end": 30378,
+            "type": "code"
+        },
+        {
+            "start": 30381,
+            "end": 30381,
+            "type": "db"
+        },
+        {
+            "start": 30389,
+            "end": 30389,
+            "type": "db"
+        },
+        {
+            "start": 30397,
+            "end": 30397,
+            "type": "db"
+        },
+        {
+            "start": 30405,
+            "end": 30435,
+            "type": "dw"
+        },
+        {
+            "start": 30437,
+            "end": 30467,
+            "type": "dw"
+        },
+        {
+            "start": 30469,
+            "end": 30475,
+            "type": "code"
+        },
+        {
+            "start": 30476,
+            "end": 30490,
+            "type": "code"
+        },
+        {
+            "start": 30491,
+            "end": 30502,
+            "type": "code"
+        },
+        {
+            "start": 30503,
+            "end": 30505,
+            "type": "code"
+        },
+        {
+            "start": 30506,
+            "end": 30519,
+            "type": "code"
+        },
+        {
+            "start": 30520,
+            "end": 30526,
+            "type": "code"
+        },
+        {
+            "start": 30527,
+            "end": 30529,
+            "type": "code"
+        },
+        {
+            "start": 30530,
+            "end": 30533,
+            "type": "code"
+        },
+        {
+            "start": 30535,
+            "end": 30535,
+            "type": "code"
+        },
+        {
+            "start": 30536,
+            "end": 30554,
+            "type": "code"
+        },
+        {
+            "start": 30555,
+            "end": 30559,
+            "type": "code"
+        },
+        {
+            "start": 30561,
+            "end": 30604,
+            "type": "db"
+        },
+        {
+            "start": 30612,
+            "end": 30679,
+            "type": "db"
+        },
+        {
+            "start": 30687,
+            "end": 30754,
+            "type": "db"
+        },
+        {
+            "start": 30762,
+            "end": 30829,
+            "type": "db"
+        },
+        {
+            "start": 30837,
+            "end": 30880,
+            "type": "db"
+        },
+        {
+            "start": 30888,
+            "end": 30931,
+            "type": "db"
+        },
+        {
+            "start": 30939,
+            "end": 31006,
+            "type": "db"
+        },
+        {
+            "start": 31014,
+            "end": 31081,
+            "type": "db"
+        },
+        {
+            "start": 31089,
+            "end": 31132,
+            "type": "db"
+        },
+        {
+            "start": 31140,
+            "end": 31183,
+            "type": "db"
+        },
+        {
+            "start": 31191,
+            "end": 31258,
+            "type": "db"
+        },
+        {
+            "start": 31266,
+            "end": 31333,
+            "type": "db"
+        },
+        {
+            "start": 31341,
+            "end": 31384,
+            "type": "db"
+        },
+        {
+            "start": 31392,
+            "end": 31435,
+            "type": "db"
+        },
+        {
+            "start": 31443,
+            "end": 31510,
+            "type": "db"
+        },
+        {
+            "start": 31518,
+            "end": 31585,
+            "type": "db"
+        },
+        {
+            "start": 31593,
+            "end": 31610,
+            "type": "db"
+        },
+        {
+            "start": 31616,
+            "end": 31633,
+            "type": "db"
+        },
+        {
+            "start": 31639,
+            "end": 31682,
+            "type": "db"
+        },
+        {
+            "start": 31690,
+            "end": 31733,
+            "type": "db"
+        },
+        {
+            "start": 31741,
+            "end": 31784,
+            "type": "db"
+        },
+        {
+            "start": 31792,
+            "end": 31819,
+            "type": "db"
+        },
+        {
+            "start": 31827,
+            "end": 31854,
+            "type": "db"
+        },
+        {
+            "start": 31862,
+            "end": 31889,
+            "type": "db"
+        },
+        {
+            "start": 31897,
+            "end": 31924,
+            "type": "db"
+        },
+        {
+            "start": 31932,
+            "end": 31959,
+            "type": "db"
+        },
+        {
+            "start": 31967,
+            "end": 31994,
+            "type": "db"
+        },
+        {
+            "start": 32002,
+            "end": 32029,
+            "type": "db"
+        },
+        {
+            "start": 32037,
+            "end": 32064,
+            "type": "db"
+        },
+        {
+            "start": 32072,
+            "end": 32099,
+            "type": "db"
+        },
+        {
+            "start": 32107,
+            "end": 32134,
+            "type": "db"
+        },
+        {
+            "start": 32142,
+            "end": 32169,
+            "type": "db"
+        },
+        {
+            "start": 32177,
+            "end": 32204,
+            "type": "db"
+        },
+        {
+            "start": 32212,
+            "end": 32223,
+            "type": "db"
+        },
+        {
+            "start": 32231,
+            "end": 32250,
+            "type": "db"
+        },
+        {
+            "start": 32256,
+            "end": 32275,
+            "type": "db"
+        },
+        {
+            "start": 32281,
+            "end": 32308,
+            "type": "db"
+        },
+        {
+            "start": 32310,
+            "end": 32329,
+            "type": "db"
+        },
+        {
+            "start": 32331,
+            "end": 32350,
+            "type": "db"
+        },
+        {
+            "start": 32358,
+            "end": 32383,
+            "type": "db"
+        },
+        {
+            "start": 32387,
+            "end": 32412,
+            "type": "db"
+        },
+        {
+            "start": 32416,
+            "end": 32425,
+            "type": "db"
+        },
+        {
+            "start": 32431,
+            "end": 32440,
+            "type": "db"
+        },
+        {
+            "start": 32448,
+            "end": 32473,
+            "type": "db"
+        },
+        {
+            "start": 32481,
+            "end": 32506,
+            "type": "db"
+        },
+        {
+            "start": 32510,
+            "end": 32535,
+            "type": "db"
+        },
+        {
+            "start": 32541,
+            "end": 32566,
+            "type": "db"
+        },
+        {
+            "start": 32570,
+            "end": 32595,
+            "type": "db"
+        },
+        {
+            "start": 32599,
+            "end": 32626,
+            "type": "db"
+        },
+        {
+            "start": 32634,
+            "end": 32661,
+            "type": "db"
+        },
+        {
+            "start": 32691,
+            "end": 39587,
+            "type": "db"
+        },
+        {
+            "start": 39603,
+            "end": 40075,
+            "type": "db"
+        }
+    ],
+    "comments": {
+        "5d08": "laser beam #1",
+        "5d10": "laser beam #2",
+        "5d18": "laser beam #3",
+        "5d20": "laser beam #4",
+        "5d28": "Frequency is $0C or $0D",
+        "5d29": "Length is always set to $04",
+        "5d50": "slot #1",
+        "5d58": "slot #2",
+        "5d60": "slot #3",
+        "5d68": "slot #4",
+        "5d70": "slot #5",
+        "5d78": "slot #6",
+        "5d98": "Rocket object",
+        "5da0": "Rocket module (fuel/part)",
+        "5da8": "Collectible/Rocket middle",
+        "5dcf": "Y location (pixels)",
+        "5dd0": "X location (pixels)",
+        "5e00": "right facing, anim frame 1",
+        "5e33": "right facing, anim frame 2",
+        "5e66": "left facing, anim frame 1",
+        "5e99": "left facing, anim frame 2",
+        "5ecc": "sprite 1",
+        "5eff": "sprite 2",
+        "5f32": "sprite 3",
+        "5f65": "sprite 4",
+        "6003": "Middle",
+        "6007": "Bottom",
+        "600b": "Left",
+        "600f": "Right",
+        "601b": "Rocket state",
+        "6023": "Top module state",
+        "602b": "Middle module state",
+        "6043": "Text colour attribute",
+        "6044": "Font code for \u00a9 symbol",
+        "6063": "ASCII \"D\" & $80 (EOL)",
+        "6065": "Set screen border to black",
+        "6067": "Clear the screen",
+        "606a": "Reset the screen colours",
+        "606d": "Display score labels",
+        "6070": "#REGhl=attribute file location",
+        "6073": "#REGb=tile count, and #REGc=yellow colour",
+        "6076": "Now set the tile colours",
+        "607a": "Update display with player 1 score",
+        "607d": "Update display with player 2 score",
+        "6080": "Update display with high score",
+        "6083": "Check if player level is a MOD of 4?",
+        "6088": "If not, initialise the level normally",
+        "608a": "Reset all rocket modules with defaults",
+        "608d": "Jetman has boarded the rocket; increment lives count.",
+        "6090": "Used for display purposes only",
+        "6091": "Initialise the player for the next level",
+        "6094": "Initialise alien buffers",
+        "6097": "Initialise the screen",
+        "609a": "Draw the platforms",
+        "609d": "Display all player lives",
+        "60a0": "Set last_frame to current SYSVAR_FRAMES",
+        "60a7": "#REGhl=default rocket data",
+        "60aa": "#REGde=start of rocket structs",
+        "60ad": "24 bytes of rocket data to copy",
+        "60b4": "Copy sprite data to the buffers.",
+        "60b7": "#REGhl=Jetman thruster animation object",
+        "60ba": "Reset all object states to be inactive",
+        "60c2": "Set to unused state",
+        "60c7": "Set to unused state",
+        "60c9": "Game Options",
+        "60ce": "Jump if two player",
+        "60d0": "Current player lives",
+        "60d4": "Game over if no lives remaining",
+        "60d7": "Initialise a new level",
+        "60da": "Initialise next player",
+        "60dd": "Inactive player lives",
+        "60e1": "Game over if no lives remaining",
+        "60e3": "Current player lives",
+        "60e7": "Game over if no lives remaining",
+        "60ea": "Switch players",
+        "60ed": "Change current player (flip bits between $00 and $FF)",
+        "60f7": "Calculate the offset",
+        "60fc": "Copy rocket sprite to buffer",
+        "60ff": "Initialise level",
+        "6102": "Initialise player",
+        "6105": "ASCII character for the number \"1\" + EOL bit",
+        "610a": "Initialise level screen",
+        "610d": "Game Over message",
+        "6110": "Y,X coords in the display file",
+        "6113": "Draw text to the screen",
+        "6123": "ASCII character for the number \"2\" + EOL bit",
+        "6125": "Append the number to the text, the display it",
+        "6127": "Jump if current player is #1",
+        "612d": "else, player is #2.",
+        "612f": "Update the high score",
+        "6132": "Jump if current player is #2",
+        "6138": "Display game over for player #1",
+        "613b": "Reset the game",
+        "613e": "Display game over for player #2",
+        "6141": "Reset the game",
+        "6144": "Current player level/lives",
+        "6147": "Inactive player level/lives",
+        "614c": "Swap 2 bytes",
+        "614f": "Current player rocker state",
+        "6152": "Inactive player rocker state",
+        "6155": "We will be swapping 24 bytes",
+        "6161": "Colour attribute",
+        "6173": "Player # (ASCII $31/$32) + $80 (EOL)",
+        "6174": "Default Jetman values",
+        "6177": "Jetman object",
+        "617f": "1 player delay",
+        "6181": "Game options",
+        "6186": "Jump if one player game",
+        "6188": "else, double delay for 2 player game",
+        "618a": "Update delay: 1 Player=$80, 2 Player=$FF",
+        "618d": "Current player lives",
+        "6194": "Display player lives",
+        "6197": "Current player number",
+        "619b": "If player #2, flash 2UP text",
+        "619d": "else #REGhl=1UP column position in attr file",
+        "61a0": "#REGhl=coord to attribute file address (using #REGhl)",
+        "61a3": "Loop counter for 3 characters",
+        "61a5": "Set FLASH on for each attribute",
+        "61ad": "#REGhl=coord to attribute file address (using #REGhl)",
+        "61b0": "Loop counter for 3 characters",
+        "61b2": "Set FLASH=off on for each attribute",
+        "61ba": "2UP column position in attribute file",
+        "61bf": "Reset all scores",
+        "61c9": "Interrupts are disabled for the core engine code",
+        "61cd": "Reset the screen",
+        "61d2": "Reset Speed modifier to its default",
+        "61d5": "Draw the menu entries",
+        "61d8": "#REGd=Game options",
+        "61dc": "Row: 1,2,3,4,5",
+        "61de": "Set port for reading keyboard",
+        "61e0": "...and read that row of keys",
+        "61e2": "Flip bits so a `1` means a key is pressed.",
+        "61e3": "Key #1 pressed? (\"1 PLAYER GAME\")",
+        "61e5": "No key pressed? Jump",
+        "61e7": "else, Player count = 1",
+        "61e9": "Key #2 pressed? (\"2 PLAYER GAME\")",
+        "61eb": "No key pressed? Jump",
+        "61ed": "else, Player count = 2",
+        "61ef": "Key #3 pressed? (\"KEYBOARD\")",
+        "61f1": "No key pressed? Jump",
+        "61f3": "else, Input type = keyboard",
+        "61f5": "Key #4 pressed? (\"JOYSTICK\")",
+        "61f7": "No key pressed? Jump",
+        "61f9": "else, Input type = joystick",
+        "61fb": "Key #5 pressed? (\"START GAME\")",
+        "6200": "Update the Game options",
+        "6204": "Point #REGhl to main menu colour attributes list.",
+        "6207": "#REGc=Game options",
+        "620b": "Jump if player count = 2",
+        "620f": "Set flashing state for a one player game",
+        "6212": "Jump if input type = joystick",
+        "6216": "Set flashing state for keyboard input",
+        "6219": "Loop and process again main menu input",
+        "621c": "Set flashing state for a two player game",
+        "621f": "Check input type",
+        "6221": "Set flashing state for joystick input",
+        "6224": "Loop and process again menu selection",
+        "6234": "Point #REGde to main menu colour attributes",
+        "6238": "#REGhl'=Y (y-position of the menu item)",
+        "623b": "#REGde'=to the beginning of the menu strings",
+        "623e": "#REGb'=loop counter for the 6 colour attribute bytes",
+        "6241": "#REGa=current colour attribute",
+        "6242": "Store menu colour attribute",
+        "624c": "#REGl'=indentation",
+        "624e": "Write line of text to screen",
+        "6255": "Duel purpose loop: both colour attrs and menu items",
+        "6257": "Note: address is past 7FFF limit of 16K ZX Spectrum",
+        "625a": "Point #REGde to the copyright string",
+        "625d": "Now display the copyright message",
+        "6281": "ASCII \"N\" & $80 (EOL)",
+        "6292": "ASCII \"E\" & $80 (EOL)",
+        "62a3": "ASCII \"E\" & $80 (EOL)",
+        "62af": "ASCII \"D\" & $80 (EOL)",
+        "62bb": "ASCII \"K\" & $80 (EOL)",
+        "62c9": "ASCII \"E\" & $80 (EOL)",
+        "62ca": "Backup coordinate",
+        "62cb": "#REGhl=coord to screen address (using #REGhl)",
+        "62ce": "Current colour attribute",
+        "62d3": "Restore coordinate",
+        "62d4": "#REGhl=coord to attribute file address (using #REGhl)",
+        "62d7": "Display text string at #REGhl, using #REGa' colour",
+        "62da": "Loop counter: current then inactive player",
+        "62de": "Reset player level",
+        "62e3": "First player has 4 \"remaining\" lives",
+        "62e6": "Reset the rocket modules",
+        "62e9": "Swap player game states",
+        "62ed": "Repeat again for inactive player",
+        "62ef": "But now update inactive player to have 5 \"remaining\"",
+        "62f1": "lives, not 4",
+        "62f4": "Game options",
+        "62f9": "Return if two player game",
+        "62fa": "else one player game, so inactive player has no lives",
+        "62fe": "Starting at the Player 1 score",
+        "6301": "#REGb = counter, #REGc = fill byte",
+        "6304": "Clear memory, with null byte",
+        "6307": "Reset the player data",
+        "630a": "Reset the self-modifying code",
+        "630d": "Initialise a new level",
+        "6314": "#REGix=Rocket object",
+        "6319": "Reset current alien number",
+        "631c": "Compare SYSVAR_FRAMES and last_frame",
+        "6324": "If they're not equal, do frame update",
+        "6327": "#REGhl=generate new actor routine",
+        "632a": "...and push `ret` address to the stack.",
+        "632b": "#REGhl=main jump table",
+        "632e": "Calculate the jump table offset",
+        "6335": "#REGbc=offset: 34 max (size of jump table)",
+        "6337": "Set #REGhl to jump table address using offset",
+        "6338": "Assign the jump address back to #REGhl",
+        "633c": "Use `jp` so `ret` calls the new actor/timer routine",
+        "633d": "Frame rate limiter",
+        "633f": "Jetman Fly",
+        "6341": "Jetman Walk",
+        "6343": "Meteor Update",
+        "6345": "Collision Detection",
+        "6347": "Crossed Space Ship Update",
+        "6349": "Sphere Alien Update",
+        "634b": "Jet Fighter Update",
+        "634d": "Animate Explosion",
+        "634f": "Rocket Update",
+        "6351": "Rocket Take off",
+        "6353": "Rocket Landing",
+        "6355": "SFX Death: Enemy",
+        "6357": "SFX Death: Player",
+        "6359": "Check Item Collected",
+        "635b": "UFO Update",
+        "635d": "Animate Laser Beam",
+        "635f": "Squidgy Alien Update",
+        "6361": "#REGhl=player 1 score",
+        "6364": "#REGde=player 2 score",
+        "6368": "Swap the P1 LSB/MSB values so we can perform",
+        "6369": "calculations on them.",
+        "636b": "Swap the P2 LSB/MSB values so we can perform",
+        "636c": "calculations on them",
+        "636e": "Reset the Carry flag",
+        "6371": "Jump if score P2 > P1, else",
+        "6373": "Jump if score P1 > P2, else P1==P2, so no jump",
+        "6375": "#REGe=3rd byte of the P1 score",
+        "6379": "#REGa=3rd byte of the P2 score",
+        "637d": "Jump if score of P2 < P1 (set's #REGhl to P1 score)",
+        "637f": "#REGhl=P2 score",
+        "6383": "#REGde=high score",
+        "6386": "Loop counter (all 3 score bytes)",
+        "6388": "#REGa = hi-score byte",
+        "6389": "Compare with player",
+        "638a": "If hi-score < player, update highscore score",
+        "638c": "If hi-score != player (not equal), then RET",
+        "638e": "else hi-score == player: next player byte",
+        "638f": "next high score byte",
+        "6390": "Repeat",
+        "6392": "Restores #REGhl to the highest player score",
+        "6395": "High Score",
+        "639e": "#REGhl=P1 score",
+        "63a1": "Update HI score",
+        "63a3": "Increment current alien number",
+        "63a7": "Update Alien direction",
+        "63aa": "Alien \"moving\" field",
+        "63b0": "Move if bit-1 is set",
+        "63b4": "Check and update speed",
+        "63b7": "#REGa=Jetman Y position",
+        "63bc": "Update Alien speed if Jetman Y position-12 equals",
+        "63bf": "Alien Y position",
+        "63c2": "#REGa=LSB of game timer",
+        "63c7": "Move vertically if bit-6 is reset",
+        "63cf": "Move vertically +2 or -2",
+        "63d1": "#REGa=random number",
+        "63d6": "Return if not zero",
+        "63d7": "Alien \"moving\" field",
+        "63db": "#REGc=Jetman Y position-12 ?",
+        "63dc": "#REGa=LSB of game timer",
+        "63e4": "Set new X speed value",
+        "63e7": "Set \"colour\" to White",
+        "63ec": "Decrement alien X speed",
+        "63ef": "Jet Fighter killed if X speed is zero",
+        "63f1": "#REGa=default speed",
+        "63f3": "Check bit-6 of Alien \"direction\"",
+        "63fb": "#REGl=$FC or $04?",
+        "63fc": "Move upwards if Jetman Y position higher than Alien Y",
+        "63ff": "position",
+        "6404": "else, move down",
+        "6406": "Alien \"direction\"",
+        "6409": "Reset FLY and WALK bits",
+        "640d": "Update \"direction\" value",
+        "6410": "Update Alien X position (#REGl is probably 3 or 4)",
+        "6417": "Update Alien Y position",
+        "641e": "Update Actor Position X and draw",
+        "6421": "Colourize the sprite",
+        "6424": "Kill Fighter if Y position < $28",
+        "642b": "Fire laser beam - returns #REGc",
+        "642e": "Kill if a laser hit the Alien",
+        "6432": "Platform collision - returns #REGe",
+        "6435": "Kill if Alien hit a platform",
+        "6439": "Alien collision - returns #REGde",
+        "643d": "Alien killed by collision",
+        "643f": "Update Alien \"direction\"",
+        "644a": "55 points for a dead jet fighter (decimal value)",
+        "644d": "Add points to score",
+        "6450": "Exploding jet fighter SFX - actually Thruster SFX!",
+        "6453": "Update current alien state",
+        "6456": "Update actor state",
+        "6459": "Play explosion sound with SFX type #2",
+        "645e": "Animate explosion",
+        "6461": "Update Actor position direction",
+        "6464": "Platform collision - returns #REGe",
+        "6467": "Increment item Y position if bit-2 is set",
+        "6471": "Alien collision - returns #REGe",
+        "6475": "Drop new collectible item if #REGe > 0",
+        "6477": "Reset #REGa",
+        "6478": "#REGhl=sprite address",
+        "647b": "Destroy the collected item",
+        "647e": "Set type as unused",
+        "6482": "250 points to add to score (decimal value)",
+        "6485": "Add points to score",
+        "6488": "SFX for item collect (and return)",
+        "648b": "Jump table offset",
+        "648e": "Values: 0, 2, 4, 6, or 8",
+        "6490": "#REGhl=item drop jump table",
+        "6493": "Execute the jump using #REGhl address",
+        "6496": "Drop Gold bar collectible",
+        "6498": "Drop chemical based collectible",
+        "649a": "Drop chemical based collectible",
+        "649c": "Drop green coloured collectible",
+        "649e": "Drop collectible with random colour",
+        "64a0": "Set colour to GOLD",
+        "64a5": "#REGde=item sprite address",
+        "64a8": "Update the item sprite",
+        "64ab": "Colourize the sprite",
+        "64b1": "Sprite lookup table",
+        "64b4": "Add offset to base address",
+        "64b8": "Assign sprite address to #REGde",
+        "64bc": "Set the colour to green",
+        "64c0": "Display item sprite",
+        "64c2": "Game timer",
+        "64c9": "Use cyan colour and display sprite",
+        "64cb": "Set the colour to black",
+        "64cf": "Display the item sprite",
+        "64d1": "Set the colour to cyan",
+        "64d5": "Display the item sprite",
+        "64d7": "Game timer",
+        "64de": "Jump if #REGa is now 1-7",
+        "64e1": "Make sure colour value is > $40",
+        "64e3": "Set the colour to between $41 and $47",
+        "64e6": "Display the item sprite",
+        "64e8": "Update Actor position direction",
+        "64eb": "#REGa=item \"state\"",
+        "64ee": "Pick up rocket module if bit-2 set",
+        "64f3": "Carrying rocket module/fuel if bit-1 set",
+        "64f7": "Draw sprite if bit-0 reset",
+        "64fb": "Check for alien collision - returns #REGe",
+        "64fe": "Collect rocket module if #REGe == 0",
+        "6501": "Platform collision - returns #REGe",
+        "6504": "Draw sprite if bit-2 set",
+        "650e": "Update actor and draw sprite",
+        "6511": "Colourize the sprite",
+        "6514": "Current player level",
+        "6518": "There are only 6 collectibles?",
+        "651a": "#REGde=collectible item sprite address",
+        "651d": "Erase an item sprite",
+        "6520": "Colourize the sprite",
+        "6523": "Module \"state\"",
+        "6527": "Find and destroy the sprite (returns #REGde)",
+        "652a": "100 points to add to score (decimal value)",
+        "652d": "Add points to score",
+        "6530": "SFX for collecting fuel",
+        "6533": "Update module position so it becomes attached to the",
+        "6536": "player via the Jetman Y,X positions",
+        "653c": "Update sprite X position",
+        "653f": "Colourize the sprite",
+        "6541": "Update module position so it becomes attached to the",
+        "6544": "player via the Jetman Y,X positions",
+        "654d": "Subtract module X position",
+        "6550": "If already negative, jump",
+        "6553": "else make a negative value",
+        "6555": "Draw sprite if #REGa >= 6",
+        "6559": "Set module \"state\" to collected",
+        "6560": "Update module X position to be same as Rocket position",
+        "6563": "Update module and draw sprite",
+        "6565": "Item sprite jump table offset",
+        "656a": "Jump to delivery check if a fuel pod?",
+        "656e": "Add item Y position",
+        "6573": "Increment item Y position and draw sprite if < 183",
+        "6585": "Item sprite jump table offset",
+        "658a": "Copy rocket sprite to buffers",
+        "658d": "Find and destroy current sprite",
+        "6590": "Set item type to unused",
+        "6594": "SFX for rocket building",
+        "6597": "Item Y position of fuel pod",
+        "659a": "Has it reached the rocket yet?",
+        "659c": "Move the fuel cell down one pixel if not",
+        "65a6": "Loop back and repeat",
+        "65a8": "Jetman direction",
+        "65ad": "Return if not one of the 6 directions",
+        "65b0": "Return if >= 3 (all movement except up right?)",
+        "65b1": "#REGhl=default item state",
+        "65b4": "#REGde=collectible object",
+        "65ba": "#REGa=item type",
+        "65bc": "Return if currently in use",
+        "65bd": "Game timer",
+        "65c2": "Return if between 1-127",
+        "65c5": "#REGa=column to drop item",
+        "65cb": "Get random number",
+        "65cd": "#REGa=2, 4, 6, 8, 10, 12, or 14",
+        "65cf": "Jump if bit-3 is already reset",
+        "65d3": "else set bit-3",
+        "65d5": "Make sure bit-5 (32) is set",
+        "65db": "#REGhl=item drop position table",
+        "65de": "#REGa=random number",
+        "65e3": "#REGbc = byte offset (0-15)",
+        "65e6": "Add offset",
+        "65e7": "Set #REGa to position",
+        "65f9": "Jetman direction",
+        "65fe": "Return if not one of the 6 directions",
+        "6601": "Return if >= 3 (all movement except up right?)",
+        "6602": "#REGhl=default rocket module state",
+        "6605": "#REGde=rocket module object",
+        "660b": "Return if currently in use",
+        "6613": "Return if fuel collected >= 6",
+        "6614": "Game timer",
+        "661a": "Return if #REGa is between 1-15",
+        "661d": "#REGa=column to drop item",
+        "6624": "#REGhl=rocket module",
+        "6627": "Loop counter",
+        "6629": "Increment value",
+        "662c": "Reset first byte of object",
+        "662e": "Set #REGhl to beginning of next object",
+        "6632": "Add 21 to rocket Y position",
+        "663d": "Add 21 to actor Y position",
+        "6641": "If near ground, turn off flame sprites",
+        "6648": "If >= 184, just update flame sprite vars",
+        "664a": "Game timer",
+        "664f": "#REGde=flame sprite #1 if bit-3 is set",
+        "6651": "else #REGde=flame sprite #2",
+        "6655": "Destroy flame sprite #1",
+        "665b": "Destroy flame sprite #2",
+        "6662": "Erase and animate actor sprite",
+        "6665": "Set flame sprite colour to Red",
+        "6669": "Colourize the sprite",
+        "666c": "Subtract $15 from rocket Y position",
+        "6677": "Subtract 21 from actor Y position",
+        "667c": "Rocket flame sprite #1",
+        "667f": "Draw flame sprite",
+        "6681": "Destroy flame sprite #1",
+        "6687": "Destroy flame sprite #2",
+        "668d": "Update sprite variables",
+        "6690": "Update Actor position direction",
+        "6693": "Decrement Y position",
+        "6696": "Thruster SFX",
+        "6699": "Animate rocket flame sprites",
+        "669c": "Check if rocket has reached top of screen",
+        "66a1": "Update rocket colour if not",
+        "66a3": "Increment current player level",
+        "66a7": "Reset rocket ready for next level",
+        "66aa": "Set Rocket \"move\" state to down",
+        "66ad": "Reset fuel pod counter",
+        "66b1": "New level",
+        "66b4": "Update Actor position direction",
+        "66b7": "Increment Y position",
+        "66ba": "Thruster SFX",
+        "66bd": "Animate rocket flame sprites",
+        "66c0": "Check if rocket has landed",
+        "66c5": "Update rocket colour if not (and RET)",
+        "66c7": "Set Rocket \"move\" state to default (on pad)",
+        "66cb": "Initialise the player state",
+        "66ce": "Update rocket colour (and RET)",
+        "66d0": "Update Actor position direction",
+        "66d3": "#REGe=Alien collision result: $00 or $01",
+        "66d6": "Update rocket colour if not zero (and RET)",
+        "66d9": "Update rocket colour if fuel pod counter < 6 (and",
+        "66dc": "RET)",
+        "66e0": "Set Rocket \"move\" state to up",
+        "66e5": "#REGix=Jetman object",
+        "66e9": "Update Jetman position direction",
+        "66ec": "Jetman, find and destroy",
+        "66ef": "Reset Jetman direction",
+        "66f3": "Restore #REGix to be the rocket object",
+        "66f5": "Increment current player lives",
+        "66f9": "Display player lives (and RET)",
+        "66fc": "Rocket X position",
+        "66ff": "Rocket Y position",
+        "6703": "#REGa=colour attribute",
+        "6706": "Set loop counter",
+        "670a": "#REGa=player level",
+        "670d": "Calculate which sprite to use for the current level",
+        "6714": "#REGde=item address from lookup table using #REGa",
+        "6717": "Update actor position using #REGde",
+        "671a": "Restore loop counter",
+        "671b": "Subtract 16 from a rocket Y position",
+        "6726": "Subtract 16 from Actor Y position",
+        "672f": "Loop and update rocket/actor again",
+        "673b": "Update rocket Y position: only Y changed in loop above",
+        "673e": "Update current Actor Y,X coords",
+        "6741": "Rocket \"state\"",
+        "6747": "if value < 6, or the fuel pod counter is zero, then",
+        "6749": "set rocket colour to white and redraw",
+        "6751": "Check if all fuel collected (is checked at 6760)",
+        "6753": "Preserve Carry (no care for #REGa)",
+        "6754": "Game timer",
+        "675e": "Restore Carry value (from 6751 check above)",
+        "6760": "Colour all sprites if all fuel has been collected",
+        "6762": "else use fuel pod count as loop counter",
+        "6765": "Set colour to Magenta",
+        "6769": "Update sprite colour",
+        "676c": "#REGa=max possible fuel pods",
+        "676e": "Subtract remaining fuel pod count",
+        "6771": "Set loop counter",
+        "6772": "Set Rocket colour to white",
+        "6777": "Redundant JP!",
+        "677b": "Colourize the sprite",
+        "677f": "#REGhl=current rocket sprite coords",
+        "6782": "Update Y position",
+        "6786": "Update current rocket sprite coords",
+        "6789": "Loop and continue colouring",
+        "678c": "Offset: $00 - Rocket #1: Bottom",
+        "678e": "Offset: $02 - Rocket #5: Bottom",
+        "6790": "Offset: $04 - Rocket #3: Bottom",
+        "6792": "Offset: $06 - Rocket #4: Bottom",
+        "6794": "Offset: $08 - Rocket #1: Middle",
+        "6796": "Offset: $0A - Rocket #5: Middle",
+        "6798": "Offset: $0C - Rocket #3: Middle",
+        "679a": "Offset: $0E - Rocket #4: Middle",
+        "679c": "Offset: $10 - Rocket #1: Top",
+        "679e": "Offset: $12 - Rocket #5: Top",
+        "67a0": "Offset: $14 - Rocket #3: Top",
+        "67a2": "Offset: $16 - Rocket #4: Top",
+        "67a4": "Offset: $18 - Fuel Cell",
+        "67a6": "Offset: $1A - Fuel Cell",
+        "67a8": "Offset: $1C - Fuel Cell",
+        "67aa": "Offset: $1E - Fuel Cell",
+        "67ac": "Offset: $20 - Gold Bar",
+        "67ae": "Offset: $22 - Radiation",
+        "67b0": "Offset: $24 - Chemical Weapon",
+        "67b2": "Offset: $26 - Plutonium",
+        "67b4": "Offset: $28 - Diamond",
+        "67b6": "Y position",
+        "67b9": "Change pitch based on vertical position",
+        "67c1": "Pitch",
+        "67c2": "Duration",
+        "67c4": "Play square wave sound",
+        "67c6": "Pitch",
+        "67c8": "Duration",
+        "67ca": "Play square wave sound",
+        "67cc": "Pitch",
+        "67ce": "Duration",
+        "67d0": "Play square wave sound",
+        "67d2": "Pitch",
+        "67d4": "Duration",
+        "67db": "Play sound/silence for desired length",
+        "67dd": "Turn speaker OFF for desired duration",
+        "67e3": "Decrement duration",
+        "67e4": "Repeat until duration is zero",
+        "67e7": "Pitch/duration",
+        "67ec": "Play sound for desire duration",
+        "67f4": "Turn speaker OFF",
+        "67f6": "Increment pitch",
+        "67fa": "Repeat until pitch is $38",
+        "67fe": "#REGc=0 or 2",
+        "6802": "#REGde=explosion SFX params",
+        "6805": "#REGhl=explosion SFX param defaults",
+        "6808": "Set offset: first or second pair of bytes",
+        "6809": "Copy defaults to the params",
+        "6814": "Decrement the SFX duration",
+        "6817": "Stop playing SFX if duration is zero",
+        "6819": "Frequency = 16",
+        "681b": "Play explosion SFX",
+        "681d": "Decrement the SFX duration",
+        "6820": "Stop playing SFX if duration is zero",
+        "6827": "Frequency = Duration + 24",
+        "682a": "Turn speaker ON",
+        "682c": "Set duration",
+        "682d": "Note continues for the frequency duration",
+        "6830": "Turn speaker OFF",
+        "6833": "Silence for the frequency duration",
+        "6835": "Decrement frequency (higher pitch)",
+        "6836": "Repeat until frequency is zero",
+        "6839": "Set frequency to zero",
+        "6840": "Jetman explosion animation object",
+        "6844": "Jetman object",
+        "6847": "Assign direction to temp variable",
+        "6848": "Animation X position",
+        "6849": "Set explosion X position to match Jetman X position",
+        "684d": "Set explosion Y position to match Jetman",
+        "6852": "#REGa=Jetman direction",
+        "6853": "Reset actor, which also sets anim object \"state\" to $01",
+        "6859": "Reset Jetman direction to not moving",
+        "685d": "Animating state",
+        "6864": "Set \"state\" to un-animated",
+        "6868": "Update direction",
+        "686b": "Set animating to \"yes\"",
+        "686f": "Reset frame count",
+        "6874": "Set \"state\" to animating",
+        "687a": "Increment current alien number",
+        "687e": "#REGc=explosion animation frame",
+        "6881": "#REGb=explosion animation state",
+        "6884": "Game timer",
+        "6888": "Increment frame if timer&state is zero",
+        "688d": "#REGa=original frame count",
+        "688e": "Multiply by 2 (addresses are two-bytes)",
+        "6892": "#REGhl=explosion sprite lookup table",
+        "6895": "Set offset",
+        "6896": "#REGde=address of the desired sprite",
+        "6899": "Set #REGhl to Y,X coords of sprite",
+        "689f": "Comparing with original frame count from 687e",
+        "68a1": "If original frame >= 6 then animation has finished",
+        "68a5": "If original frame >= 3 then half animated",
+        "68a7": "Erase animation sprite",
+        "68aa": "#REGa=random number",
+        "68b1": "Update colour attribute to a random colour",
+        "68b4": "Colourize the sprite",
+        "68b7": "Update anim object so \"animating\" = \"direction\"?",
+        "68bd": "Update Actor position direction",
+        "68c0": "Find and destroy actor",
+        "68c3": "Reset \"animating\"",
+        "68c7": "Animation object \"direction\"",
+        "68ce": "Player was killed if < 3 (end of turn)",
+        "68d2": "Get sprite screen position",
+        "68d5": "Erase a destroyed actor",
+        "68d8": "Small explosion",
+        "68da": "Medium explosion",
+        "68dc": "Large explosion",
+        "68de": "Small explosion",
+        "68e0": "Medium explosion",
+        "68e2": "Large explosion",
+        "68e4": "#REGa=frame ticked?",
+        "68e8": "We have a new frame, so no pause",
+        "68e9": "#REGhl=pause counter (192)",
+        "68f2": "#REGhl=alien sprite lookup table",
+        "68f5": "Current player level",
+        "68fc": "#REGde=offset address for lookup table",
+        "68ff": "Add offset",
+        "6901": "#REGde=right facing alien sprite buffer",
+        "6904": "Reset rocket and copy sprite to buffer",
+        "6908": "#REGde=left facing alien sprite buffer",
+        "690b": "Jetman rocket state update",
+        "690e": "Level #1: Meteor        (frame 1)",
+        "6910": "-                     - (frame 2)",
+        "6912": "Level #2: Squidgy Alien (frame 1)",
+        "6914": "-                     - (frame 2)",
+        "6916": "Level #3: Sphere Alien  (frame 1)",
+        "6918": "-                     - (frame 2)",
+        "691a": "Level #4: Jet Fighter",
+        "691e": "Level #5: UFO",
+        "6922": "Level #6: Crossed Space Ship",
+        "6926": "Level #7: Spacecraft",
+        "692a": "Level #8: Frog Alien",
+        "692e": "This routine only called if EI, so we must now disable",
+        "692f": "Update last_frame to current SYSVAR_FRAMES",
+        "6935": "Frame has ticked over, set to true",
+        "693a": "Backup main jump table address",
+        "693c": "#REGhl=points to the rocket object",
+        "6942": "Value is a `JP` opcode",
+        "6947": "#REGhl=address to be modified",
+        "694d": "#REGix=Jetman object",
+        "6951": "Execute main loop",
+        "6954": "#REGhl=inactive Jetman object",
+        "695a": "Value is a `LD A (nnnn)` opcode",
+        "6966": "First, reset the self-modifying code",
+        "6969": "Restore jump table address, saved during frame update",
+        "696b": "frame ticked=false - not a new frame",
+        "696f": "Needed to tick over SYSVAR_FRAMES, main loop will",
+        "6970": "disable interrupts with the frame update call",
+        "6971": "Increment random number",
+        "6975": "Set offset",
+        "6978": "Set IX to next group of bytes",
+        "697a": "Copy IX to HL",
+        "697d": "#REGbc=inactive player or rocket object",
+        "6980": "Clear the Carry flag",
+        "6981": "If object pointed to by #REGix is before #REGbc object,",
+        "6983": "then jump back to the main loop",
+        "6986": "Row: Shift,Z,X,C,V",
+        "6988": "Set port for reading keyboard",
+        "698a": "...and read that row of keys",
+        "698c": "Check if SHIFT key pressed",
+        "698e": "Jump if pressed",
+        "6990": "Increment the game timer",
+        "6997": "Make sure #REGhl remains <= $00FF",
+        "6999": "Get a RANDOM number?",
+        "699c": "#REGa=$C1, from 0244, because 5DCE is never used!",
+        "699f": "#REGa=byte from address $0000 - $00FF",
+        "69a0": "Add #REGr to the number",
+        "69a1": "Update random number",
+        "69a4": "Jump if current alien number < 3",
+        "69af": "Drop fuel/collectible if RND is < 32",
+        "69b1": "Drop fuel/collectible if current alien number >= 6",
+        "69b8": "Drop fuel/collectible if begin play delay counter >",
+        "69bb": "zero",
+        "69be": "Get jetman direction",
+        "69c4": "If direction is zero, then find unused alien slot",
+        "69c7": "Drop fuel/collectible if direction is still > zero",
+        "69c9": "Alien state objects",
+        "69cc": "Loop counter (6 aliens)",
+        "69d1": "Generate new alien if the slot is unused",
+        "69d6": "else increment to the next alien object",
+        "69d7": "...and try again",
+        "69d9": "New fuel pod item",
+        "69dc": "New collectible item",
+        "69df": "Run main loop after resetting SP and EI",
+        "69e2": "Push current alien to stack (will be copied to #REGix)",
+        "69e4": "Copy default alien state to current alien slot",
+        "69ec": "Restore #REGix to point to current item object",
+        "69ee": "Game timer",
+        "69f1": "Backup to #REGe",
+        "69f2": "#REGa=either 0 or 64",
+        "69f4": "Set item \"direction\"",
+        "69f7": "Set item \"movement\"",
+        "69fa": "Restore #REGa to original game timer value",
+        "69ff": "Update item Y position",
+        "6a02": "Copy current item object address to #REGbc",
+        "6a05": "Example: if BC = 5D78, C = $78 = 01111000",
+        "6a06": "00111100",
+        "6a07": "00011110",
+        "6a08": "00001111",
+        "6a09": "00000011 <- result of AND $03",
+        "6a0b": "00000100",
+        "6a0c": "00000101 = $05",
+        "6a0d": "Update colour with value: $02, $03, $04, or $05",
+        "6a12": "Update jump table offset to either 0 or 1",
+        "6a15": "#REGhl=item level object types",
+        "6a18": "Using the current player level, pull a value from the",
+        "6a1b": "item level params table",
+        "6a27": "Update item type to this value",
+        "6a2a": "Drop fuel/collectible then execute the main loop",
+        "6a35": "Increment current alien number",
+        "6a39": "Update actor direction",
+        "6a3c": "Fire laser beam (returns #REGc)",
+        "6a40": "Add the points for a kill if alien is dead",
+        "6a43": "Alien collision check (returns #REGe)",
+        "6a47": "Alien killed by collision if #REGe is zero",
+        "6a4b": "Reset alien new direction flag",
+        "6a4e": "Platform collision (returns #REGe)",
+        "6a51": "Update alien X position if bit-2 is reset",
+        "6a55": "Set alien direction to up if bit-7 set",
+        "6a59": "Set alien direction to down if bit-4 set",
+        "6a5d": "Update alien \"moving\" value",
+        "6a6a": "Check alien moving left/right bit",
+        "6a6e": "#REGa=alien X position (fetch before the jump)",
+        "6a71": "If moving left, subtract 2 from direction (via jump)",
+        "6a73": "otherwise, we add 2 to move right",
+        "6a75": "Set new X position +/- 2",
+        "6a78": "Check alien moving up/down bit",
+        "6a7c": "#REGa=alien Y position (fetch before the jump)",
+        "6a7f": "If moving up, subtract 2 from direction (via jump)",
+        "6a81": "otherwise, we add 2 to move down",
+        "6a83": "Set new alien Y position +/- 2",
+        "6a86": "Draw the alien if the new direction flag is set,",
+        "6a89": "otherwise, increment the value",
+        "6a91": "Jump back and repeat collision check",
+        "6aa7": "Return if not at top of screen",
+        "6aa9": "Otherwise, set alien to moving down.",
+        "6aaf": "80 points (decimal value)",
+        "6ab2": "Add points to score",
+        "6ab5": "Kill Alien SFX #1",
+        "6ab8": "Increment current alien number",
+        "6abc": "Update actor direction",
+        "6abf": "Fire laser beam (returns #REGc)",
+        "6ac3": "Add the points for a kill if alien is dead",
+        "6ac6": "Alien collision check (returns #REGe)",
+        "6aca": "Alien killed by collision if #REGe is zero",
+        "6ace": "Reset alien new direction flag",
+        "6ad1": "Platform collision (returns #REGe)",
+        "6ad4": "Update alien X position if bit-2 is reset",
+        "6ad8": "Set alien direction to up if bit-7 set",
+        "6add": "Set alien direction to down if bit-4 set",
+        "6ae2": "Update alien \"moving\" value",
+        "6af1": "Alien X speed",
+        "6af4": "Calculate new speed?",
+        "6afc": "Jetman X position",
+        "6aff": "Subtract alien X position",
+        "6b02": "If Jetman X > alien X, then jump",
+        "6b05": "If alien is moving left, then jump",
+        "6b0c": "If current speed is less than max, then increment",
+        "6b12": "#REGc=current speed",
+        "6b13": "#REGh=X position",
+        "6b16": "Calculates and returns #REGde, new position offset",
+        "6b19": "Clear the carry flag",
+        "6b1c": "Update X position",
+        "6b1f": "Calculate and update X speed",
+        "6b26": "Alien Y speed",
+        "6b31": "Jetman Y position",
+        "6b34": "Subtract alien Y position",
+        "6b37": "If Jetman Y > alien Y, then jump",
+        "6b3a": "If alien is moving up then increment Y position (if",
+        "6b3e": "not at top of screen) and jump to 6b49",
+        "6b41": "Calculate new down Y position if #REGc > 0 (presumably",
+        "6b42": "above the ground)",
+        "6b45": "else moving direction must be set to up...",
+        "6b49": "..and #REGc will have been decremented here",
+        "6b4a": "#REGh=Y position",
+        "6b4d": "Calculates and returns #REGde, new position offset",
+        "6b50": "Clear the carry flag",
+        "6b53": "Set moving direction as down if at top of screen",
+        "6b5c": "Update Y position",
+        "6b5f": "Update Y speed",
+        "6b66": "Draw the alien if the new direction flag is set,",
+        "6b69": "otherwise, increment it",
+        "6b71": "Jump back and repeat collision check",
+        "6b74": "Check moving left/right bit",
+        "6b78": "If moving left, increment speed (via jump)",
+        "6b7c": "If not zero, calculate X direction/speed",
+        "6b7f": "else set X moving to \"right\"",
+        "6b83": "#REGa (speed) was decremented from 0, so will now be FF",
+        "6b84": "#REGh=X position",
+        "6b87": "Calculates and returns #REGde, new position offset",
+        "6b8b": "Update the X position and speed",
+        "6b8e": "If current speed is less than max, then increment",
+        "6b94": "Update position",
+        "6b96": "#REGa=speed",
+        "6b98": "Update X position and speed unless zero",
+        "6b9b": "Set moving direction to \"right\"",
+        "6b9f": "Update X direction/speed",
+        "6ba2": "Check Jetman moving direction",
+        "6ba6": "Jump if top bit not set",
+        "6ba8": "Jump if #REGc >= 15",
+        "6bad": "else increment it",
+        "6bae": "(will be #REGc = #REGc - 1)",
+        "6bb2": "Calculates and returns #REGde, new position offset",
+        "6bb6": "Update Y position and speed",
+        "6bb9": "#REGa=speed",
+        "6bbb": "If speed > 0 move upwards",
+        "6bbd": "else set moving direction to \"down\"",
+        "6bc1": "...and update Y position and speed",
+        "6bc3": "If current speed is less than max, then increment it,",
+        "6bc4": "and update position",
+        "6bdc": "#REGc should be <= 15. Example, if value is $0F:",
+        "6bdd": "0 00011110",
+        "6bde": "0 00111100",
+        "6bdf": "0 01111000",
+        "6be0": "0 11110000",
+        "6be1": "Clear lower 4 bits...just in case!",
+        "6be6": "1 11100000",
+        "6be8": "If E >= 8, then bit-0 of D is set",
+        "6beb": "50 points (decimal value)",
+        "6bee": "Add points to score",
+        "6bf1": "Update actor state",
+        "6bf4": "#REGa should be 0 for the Alien SFX",
+        "6bf5": "Plays explosion SFX for an Alien",
+        "6bf8": "Increment current alien number",
+        "6bfc": "Update actor direction",
+        "6c00": "Reset alien new direction flag",
+        "6c03": "Fire laser beam (returns #REGc)",
+        "6c07": "40 points (decimal value)",
+        "6c0a": "Kill Alien SFX #2 if alien is dead",
+        "6c0d": "Alien collision check (returns #REGe)",
+        "6c11": "Alien killed by collision if #REGe is zero",
+        "6c14": "Platform collision (returns #REGe)",
+        "6c17": "Update alien Y position if bit-2 is reset",
+        "6c1b": "Set alien direction to up if bit-7 set",
+        "6c1f": "Set alien direction to down if bit-4 set",
+        "6c23": "Update alien \"moving\" value",
+        "6c30": "Check alien moving direction",
+        "6c34": "Update Y position if vertical movement",
+        "6c36": "#REGe=random number",
+        "6c3c": "Jump if != 0",
+        "6c3e": "else set \"moving\" bit-0",
+        "6c42": "Use Game timer to Y speed",
+        "6c4c": "#REGa=original random number",
+        "6c4f": "#REGe = 0 or 128",
+        "6c50": "Update alien \"moving\" to either 127 or 255",
+        "6c59": "Jump back and repeat collision check",
+        "6c5b": "Check alien \"moving\"",
+        "6c5f": "Update X position if horizontal movement",
+        "6c61": "else update Y position",
+        "6c64": "Check moving up/down bit",
+        "6c68": "If moving up, subtract 2 from direction (via jump)",
+        "6c6a": "otherwise, we add 2 to move down",
+        "6c6c": "Set new Y position +/- 2",
+        "6c6f": "Decrement Y speed",
+        "6c74": "Reset bit-0 of alien \"moving\" if speed is zero",
+        "6c78": "#REGa=X position (fetch before the jump)",
+        "6c7b": "Check moving left/right bit",
+        "6c7f": "If moving left, subtract 2 from direction (via jump)",
+        "6c81": "otherwise, we add 2 to move right",
+        "6c83": "Set new X position +/- 2",
+        "6c86": "Draw the alien if the new direction flag is set,",
+        "6c89": "otherwise, increment the value",
+        "6c91": "Jump back and repeat collision check",
+        "6ca4": "Return if not at top of screen",
+        "6ca6": "Otherwise, set to moving down",
+        "6cb0": "Update Actor position direction",
+        "6cb3": "Actor direction",
+        "6cbe": "Update actor direction",
+        "6cc1": "Increment alien number",
+        "6cc5": "Fire laser beam (returns #REGc)",
+        "6cc9": "Add points and kill alien (type #3) if dead",
+        "6ccc": "Alien collision (returns #REGe)",
+        "6cd0": "Alien killed by collision",
+        "6cd4": "Reset alien new direction",
+        "6cd7": "Platform collision (returns #REGe)",
+        "6cda": "Update alien X position if bit-2 is reset",
+        "6cde": "Set alien direction to up if bit-7 set",
+        "6ce3": "Set alien direction to down if bit-4 set",
+        "6ce8": "Update alien \"moving\" value",
+        "6cf7": "Check moving left/right bit",
+        "6cfb": "#REGa=X position (fetch before the jump)",
+        "6cfe": "If moving left, subtract 2 from direction (via jump)",
+        "6d01": "otherwise, we add 2 to move right",
+        "6d03": "Set new X position +/- 2",
+        "6d06": "#REGhl=Y speed x 2",
+        "6d0c": "#REGd=alien X position",
+        "6d0f": "#REGe=alien X speed",
+        "6d12": "If alien moving is \"up\" subtract hl/de",
+        "6d18": "else add them",
+        "6d19": "Set alien X speed",
+        "6d1c": "Alien Y position = #REGh",
+        "6d1f": "If alien is at top of screen, set to moving down",
+        "6d28": "Check if moving up",
+        "6d2c": "Change alien direction to down if it is",
+        "6d2e": "else increment Y speed",
+        "6d31": "Jump if it wasn't $FF before the increment",
+        "6d33": "else set Y speed to $FF",
+        "6d37": "Draw the alien if the new direction flag is set,",
+        "6d3a": "otherwise, increment the value",
+        "6d41": "Jump back and repeat collision check",
+        "6d43": "Backup alien direction",
+        "6d47": "Temporarily change alien direction",
+        "6d4e": "Update actor X position (using temp direction)",
+        "6d51": "Colourize the sprite",
+        "6d55": "Restore original direction",
+        "6d59": "60 points (decimal value)",
+        "6d5c": "Add points to score",
+        "6d5f": "Update actor state",
+        "6d62": "Set SFX to type #2",
+        "6d64": "Play explosion sound with SFX type #2",
+        "6d67": "Set alien to moving up",
+        "6d6b": "Update Y speed using random number",
+        "6d73": "Update alien position",
+        "6d7a": "Update alien position",
+        "6d7f": "Update alien YX position",
+        "6d82": "Decrement Y speed",
+        "6d85": "If speed is zero, set to moving down",
+        "6d8b": "Draw alien and perform platform collision",
+        "6d8d": "Reset Carry flag",
+        "6d8e": "Swap registers",
+        "6d8f": "Subtract #REGde and Carry flag from #REGhl",
+        "6d91": "Update vertical position, direction, and speed",
+        "6d9c": "Update Actor position direction",
+        "6d9f": "Increment alien number",
+        "6da3": "#REGa=X position",
+        "6da6": "Check moving left/right bit",
+        "6daa": "If moving left, subtract 2 from direction (via jump)",
+        "6dac": "otherwise, we add alien X speed to value",
+        "6daf": "Set new X position +/- 2",
+        "6db2": "Add Y speed to current Y position",
+        "6dbb": "Update actor X position (using temp direction)",
+        "6dbe": "Colourize the sprite",
+        "6dc1": "Platform collision (returns #REGe)",
+        "6dc4": "Kill alien it collided with a platform",
+        "6dc8": "Fire laser beam (returns #REGc)",
+        "6dcb": "Kill alien if it is dead",
+        "6dcf": "Alien collision check (returns #REGe)",
+        "6dd2": "Alien killed by collision if #REGe is zero. Player",
+        "6dd3": "gets no points!",
+        "6dd7": "25 points (decimal value)",
+        "6dda": "Add points to score",
+        "6ddd": "Update actor state",
+        "6de0": "#REGa should be 0 for the Alien SFX",
+        "6de1": "Plays explosion SFX for an Alien",
+        "6de4": "Subtract X speed",
+        "6de9": "#REGhl=Jetman object",
+        "6dec": "Default value for #REGe",
+        "6dee": "Jetman direction",
+        "6df1": "Jump if #REGa - 1 == 0",
+        "6df5": "Return if #REGa is not zero",
+        "6df6": "#REGhl=Jetman X position",
+        "6df8": "Jetman X position - Alien X position",
+        "6dfb": "Make sure we have a positive byte",
+        "6e00": "Return if #REGa >= 12",
+        "6e03": "#REGhl=Jetman Y position",
+        "6e05": "Jetman Y position - Alien Y position",
+        "6e08": "Set #REGd to 15 if it's still a positive number",
+        "6e0b": "else: negate it",
+        "6e0d": "#REGd=alien sprite height",
+        "6e12": "Compare and return",
+        "6e14": "default #REGd to 21",
+        "6e16": "Return $00 if #REGd >= #REGa",
+        "6e1a": "else return $01",
+        "6e1b": "offset",
+        "6e1e": "Laser beam objects",
+        "6e21": "Loop counter (4 laser beams)",
+        "6e23": "#REGhl: += 8 after first iteration",
+        "6e24": "If current laser beam is in use, try next one",
+        "6e28": "#REGhl=Y position",
+        "6e29": "#REGhl=X position: pulse #1",
+        "6e2a": "#REGhl=X position: pulse #2",
+        "6e2b": "#REGa=pulse #2",
+        "6e2c": "#REGhl=X position: pulse #1",
+        "6e2d": "Next iteration is bit-2 of pulse #2 is reset",
+        "6e33": "Subtract alien X position from laser beam X position",
+        "6e36": "If positive number, check position and next iteration",
+        "6e41": "Next iteration if pulse X position is now >= 8/32",
+        "6e44": "#REGhl=Y position",
+        "6e46": "Subtract alien Y position from laser beam Y position",
+        "6e4b": "If subtraction was negative number, next iteration",
+        "6e4e": "else, add 12",
+        "6e50": "Next iteration if >= sprite height",
+        "6e56": "else set return value to $01",
+        "6e58": "Update X position: pulse #1",
+        "6e5d": "Set #REGhl to first byte of current group",
+        "6e5e": "We're done here",
+        "6e5f": "Try next laser beam object",
+        "6e63": "Return $00",
+        "6e66": "Backup #REGb value",
+        "6e68": "#REGe=third byte - NULL on read",
+        "6e6a": "#REGc=first pixel byte",
+        "6e6c": "#REGd=second pixel byte",
+        "6e6d": "Set #REGhl to next byte (used later)",
+        "6e6e": "Return if #REGb == 0",
+        "6e71": "Executes #REGb times",
+        "6e79": "Restore #REGb to the entry value",
+        "6e7c": "Backup #REGbc",
+        "6e7d": "Counter of 8-bits",
+        "6e7f": "Do the bit reversal",
+        "6e84": "Set return value",
+        "6e85": "Restore #REGbc",
+        "6e87": "Backup #REGb value",
+        "6e8b": "Get byte from sprite",
+        "6e8c": "#REGa=reversed byte",
+        "6e90": "Get next byte from sprite",
+        "6e92": "#REGa=reversed byte",
+        "6e96": "Point #REGhl to next byte",
+        "6e97": "Return if all bytes have been processed",
+        "6e9a": "Shift sprite 4-pixels to the right?",
+        "6ea2": "Restore #REGb to the original value",
+        "6ea5": "#REGhl=sprite, #REGhl'=buffer, #REGb'=counter",
+        "6ea6": "Get next two bytes if Jetman rocket module status is",
+        "6ea9": "zero",
+        "6eac": "#REGde=flipped byte pair",
+        "6eb1": "#REGhl=buffer, #REGb=counter",
+        "6eb3": "Write first byte",
+        "6eb6": "Write the second byte",
+        "6eb8": "Write third byte",
+        "6eb9": "#REGhl=next buffer address",
+        "6eba": "Loop back, writing reversed sprite data to buffer",
+        "6ebc": "We're done.",
+        "6ebd": "#REGde=two new bytes of sprite pixel data",
+        "6ec0": "Loop back, writing non-reversed sprite data to buffer",
+        "6ec3": "#REGa=player level. Example, if level 3:",
+        "6ec6": "A=10000001, C=1",
+        "6ec7": "A=00000000",
+        "6ec9": "A=00001000 (e.g. if #REGc=$08)",
+        "6eca": "#REGbc=sprite offset value",
+        "6ecd": "Collectible sprite lookup table",
+        "6ed0": "Offset address",
+        "6ed1": "#REGde=start of buffers for all item sprites",
+        "6ed6": "Set default for rocket module attached value",
+        "6eda": "Set default for Jetman rocket module connected value",
+        "6edd": "Loop counter - all 4 sprites?",
+        "6ee0": "Backup loop counter",
+        "6ee1": "#REGa starts at $00, then returns value from #R$6f0b",
+        "6ee2": "#REGc=sprite count",
+        "6ee4": "#REGhl=pointer to sprite pixel data",
+        "6ee8": "Restore loop counter",
+        "6ee9": "#REGhl=previous lookup table offset",
+        "6eeb": "Decrement loop counter",
+        "6eec": "Repeat until counter is zero",
+        "6eef": "#REGbc=sprite count",
+        "6ef2": "Start of new level rocket state",
+        "6ef7": "Used to reset Jetman module connect status",
+        "6f0e": "#REGhl=sprite address, from lookup table",
+        "6f12": "#REGhl=sprite \"height\"",
+        "6f13": "#REGhl=sprite data block",
+        "6f14": "Perform the copy",
+        "6f16": "#REGbc=sprite count",
+        "6f19": "Redundant opcode",
+        "6f1b": "Redundant entry point for old code at 6F31",
+        "6f1e": "Will set Jetman module connect status",
+        "6f26": "#REGhl=sprite address from lookup table",
+        "6f2b": "Swap Sprite<->Buffer addresses",
+        "6f2d": "#REGhl=sprite address",
+        "6f2e": "#REGc (sprite count) is the important value",
+        "6f2f": "Copy the counter back on the stack",
+        "6f30": "#REGa=sprite height value",
+        "6f31": "Backup \"height\" to #REGa'",
+        "6f32": "#REGhl=start of sprite pixel data",
+        "6f33": "#REGhl=buffer, #REGde=sprite",
+        "6f34": "Buffer: set first byte",
+        "6f37": "Buffer: set sprite width",
+        "6f39": "Point Buffer to height variable",
+        "6f3a": "Restore #REGa with height value",
+        "6f3b": "Jump if height < 17 pixels",
+        "6f3f": "else height=16 pixels",
+        "6f41": "Buffer: height will be <= 16",
+        "6f42": "Point Buffer to start of pixel data",
+        "6f43": "#REGb=height variable",
+        "6f44": "Write pixel to a buffer",
+        "6f47": "Reset #REGbc to be only the sprite counter?",
+        "6f48": "#REGhl=start of buffer",
+        "6f49": "#REGhl=start of next buffer",
+        "6f4d": "#REGde=lookup table address",
+        "6f4e": "#REGhl=sprite, #REGde=buffer",
+        "6f4f": "#REGhl=sprite width value",
+        "6f50": "#REGhl=sprite height value",
+        "6f51": "#REGa=Rocket build state - only $00 or $04?",
+        "6f56": "Decrement the sprite counter",
+        "6f57": "Fetch next sprite address",
+        "6f5a": "Return unless one of first two bits of SYSVAR_FRAMES",
+        "6f5d": "are set",
+        "6f60": "#REGhl=laser beam objects",
+        "6f66": "Loop counter for all 4 laser beams",
+        "6f68": "Get first byte of object",
+        "6f6a": "Initialise and draw laser beam, if unused",
+        "6f6d": "Repeat until an unused beam is found",
+        "6f6f": "Return if no free slots are available",
+        "6f70": "Set first byte to 16: \"used\"",
+        "6f72": "Laser Y position",
+        "6f73": "#REGde=Jetman object",
+        "6f76": "#REGb=direction in which to draw laser beam, based on",
+        "6f77": "Jetman movement action",
+        "6f79": "#REGa=Jetman X position",
+        "6f7e": "#REGc=laser beam X position",
+        "6f7f": "Shoot laser right if Jetman is facing right",
+        "6f83": "else shoot laser beam left",
+        "6f85": "#REGc=Jetman X position - 8",
+        "6f86": "Jetman Y position",
+        "6f87": "Update the laser beam Y position to align with the",
+        "6f88": "middle of the Jetman sprite",
+        "6f8b": "Laser X position: pulse #1",
+        "6f8c": "Loop counter",
+        "6f8e": "Update pulse #1",
+        "6f92": "Update the rest of the pulses: #2, #3 and #4",
+        "6f96": "Update the laser beam \"length\" value, using the",
+        "6f97": "random_number as a base value",
+        "6f9f": "#REGde points to laser beam \"colour attribute\"",
+        "6fa1": "#REGhl=Laser beam colour table",
+        "6fa4": "Use random_number to point #REGhl to one of the values",
+        "6fa7": "in the colour table",
+        "6fae": "Assign laser beam \"colour attribute\" a new colour",
+        "6faf": "Laser fire SFX",
+        "6fb6": "Jetman X position",
+        "6fb7": "Checking for any laser beam pixels?",
+        "6fba": "Increment X position if some laser pixels are set",
+        "6fbe": "Add 16 and reset bit-0",
+        "6fc2": "Set return value",
+        "6fc3": "Draw laser beam",
+        "6fc5": "Laser Y position",
+        "6fc8": "Laser X position: pulse #1",
+        "6fcb": "Jump if bit-2 is reset",
+        "6fcf": "#REGl=X position: pules #1",
+        "6fd2": "Negate (#REGa=$F8) if bit-0 of pulse #1 is reset",
+        "6fd8": "#REGh=laser Y position, #REGl=updated X position",
+        "6fdb": "Preserve #REGhl - pulse Y,X position",
+        "6fdc": "#REGhl=coord to screen address (using #REGhl)",
+        "6fdf": "Laser Y position",
+        "6fe2": "Jump if Y position >= 128",
+        "6fe6": "#REGa=byte at Y,X position of laser pulse #1",
+        "6fe8": "Jump if byte is empty",
+        "6fea": "Update X position: pulse #1",
+        "6fed": "Add a \"full length\" pulse to Y,X position",
+        "6fef": "Restores the pulse Y,X positions",
+        "6ff0": "#REGhl=coord to attribute file address (using #REGhl)",
+        "6ff3": "Set screen colour attribute to the laser pulse colour",
+        "6ff7": "Subtract 8 from laser pulse \"length\"",
+        "7001": "Jump if pulse length has bit 3-7 set",
+        "7003": "Reset bit-2 of X position: pulse #1",
+        "700b": "Loop counter (14)",
+        "700e": "Loop counter (to process pulses #2, #3, #4)",
+        "7010": "#REGbc is now the laser beam object",
+        "7013": "Laser beam Y position",
+        "7014": "Laser beam X position: pulse #1",
+        "7015": "Laser beam X position: pulse #2",
+        "7016": "#REGa=X position (loops on pulse #2, #3, #4)",
+        "7017": "XOR with X position: pulse #1",
+        "701c": "Jump if #REGa has any of these bits set",
+        "7023": "Repeat for next X position pulse",
+        "7027": "Set laser beam to \"unused\"",
+        "702f": "Laser beam X position",
+        "7030": "Jump if bit-2 is set",
+        "7034": "Decrement pulse length",
+        "703a": "Return if pulse has any pixels set?",
+        "703d": "Random number",
+        "7040": "Calculate the length of the laser pulse",
+        "704a": "Current X position += 4",
+        "7050": "#REGl=current X position pulse",
+        "7053": "Negate (#REGa=$F8) if bit-0 of pulse is reset",
+        "705a": "Update current X position",
+        "705b": "#REGh=laser Y position, #REGl=updated X position",
+        "705c": "#REGhl=coord to screen address (using #REGhl)",
+        "7064": "Create the pixel byte. E.g. $FC=11111100",
+        "7065": "Merge with current screen pixel",
+        "7066": "Update display file",
+        "7067": "Next X position byte",
+        "7069": "Repeat if counter > 0",
+        "706d": "Screen column for Player 1",
+        "7070": "#REGhl=coord to screen address (using #REGhl)",
+        "7073": "#REGa=Get player 1 lives count",
+        "7077": "Display empty space if no lives remaining",
+        "7079": "Display lives counter and icon sprite",
+        "707c": "Screen column for Player 2",
+        "707f": "#REGhl=coord to screen address (using #REGhl)",
+        "7082": "#REGa=Get player 2 lives count",
+        "7086": "Display empty space if no lives remaining",
+        "7088": "ASCII character starting at `0` character",
+        "708a": "Display font character",
+        "708d": "Sprite for the lives icon",
+        "7092": "Now display the number of lives",
+        "7095": "Display \" \" for no lives",
+        "7098": "Display inactive player lives count",
+        "709c": "Display \" \" font character",
+        "70a1": "Display \" \" font character",
+        "70ac": "Current player number",
+        "70b0": "If not current player, use inactive player",
+        "70b2": "Current player lives remaining",
+        "70b6": "Inactive player lives remaining",
+        "70ba": "Current player number",
+        "70be": "If not current player, use inactive player",
+        "70c0": "else get current player lives",
+        "70c2": "Use player 2 score if current player is 2",
+        "70d0": "Update score byte #3, with BCD conversion",
+        "70d5": "Update score byte #2, with BCD conversion",
+        "70da": "Update score byte #1, with BCD conversion",
+        "70df": "Jump and show player 2 score if current player is 2,",
+        "70e2": "else show player 1",
+        "70e5": "Screen address for score text",
+        "70e8": "3-byte score value",
+        "70eb": "Display a score",
+        "70ed": "Screen address for score text",
+        "70f0": "3-byte score value",
+        "70f3": "Display a score",
+        "70f5": "Screen address for score text",
+        "70f8": "3-byte hi score value",
+        "70fb": "Loop counter for the 3 bytes",
+        "70fd": "Score value. Example, if 85 points:",
+        "70fe": "A=11000010, C=1",
+        "70ff": "A=01100001, C=0",
+        "7100": "A=10110000, C=1",
+        "7101": "A=01011000, C=0",
+        "7102": "A=00001000",
+        "7104": "A=00111000 - $30 + $08 = ASCII char `8`",
+        "7106": "Display font character",
+        "7109": "And again with the same byte:",
+        "710a": "A=00000101",
+        "710c": "A=00110101 - $30 + $05 = ASCII char `5`",
+        "710e": "Display font character",
+        "7111": "Process next score byte",
+        "7118": "#REGl=ASCII value",
+        "711b": "Calculate correct offset for ASCII character",
+        "7121": "#REGhl += base address",
+        "7122": "Store the character address in #REGde",
+        "7123": "Restore #REGhl",
+        "7124": "Loop counter",
+        "7126": "Current byte from the font character",
+        "7127": "Write byte to screen",
+        "7128": "Next row of font pixels",
+        "7129": "Next pixel line",
+        "712a": "Repeat until 8x8 char displayed",
+        "712e": "Reset display line",
+        "7132": "Increment column",
+        "7134": "Preserve display file address",
+        "7135": "#REGhl=coord to screen address (using #REGhl)",
+        "7138": "#REGa'=colour attribute",
+        "713a": "#REGde=next colour attribute",
+        "713c": "Set #REGhl back to screen address",
+        "713d": "#REGhl=coord to attribute file address (using #REGhl)",
+        "7141": "#REGa=ASCII character value",
+        "7142": "If EOL byte then extract and display character",
+        "7146": "Display font character",
+        "7149": "Get next character",
+        "714c": "Write the colour attribute",
+        "714d": "Next column",
+        "714e": "Put colour attribute back in #REGa'",
+        "714f": "Loop back and display next character",
+        "7151": "Turn off the EOL flag: bit-7",
+        "7153": "Display font character",
+        "7158": "Write the colour byte",
+        "715a": "Display \"1UP\" text at column 24",
+        "7163": "Display \"HI\" text at column 120",
+        "716c": "Display \"2UP\" text at column 216",
+        "7175": "WHITE \"1UP\" score label",
+        "7179": "WHITE \"2UP\" score label",
+        "717d": "CYAN  \"HI\" score label",
+        "7180": "Beginning of display file",
+        "7183": "MSB to stop at (end of display file)",
+        "7185": "Byte to use for the fill",
+        "7187": "Write the fill byte",
+        "718b": "Repeat until #REGh matches #REGb",
+        "718e": "Attribute file",
+        "7191": "MSB to stop at (end of attribute file)",
+        "7193": "Colour byte: PAPER=black, INK=white, BRIGHT",
+        "7195": "Fill memory",
+        "7198": "#REGhl=actor coords",
+        "719b": "#REGhl=coord to attribute file address (using #REGhl)",
+        "71a1": "#REGb=width loop counter (in pixels)",
+        "71ac": "#REGc=height loop counter (in pixels)",
+        "71ad": "#REGd=object colour attribute",
+        "71b0": "#REGe=width loop counter (in pixels)",
+        "71b2": "#REGa=actor Y position",
+        "71b3": "Decrement position if address is outside of attribute",
+        "71b5": "file address range",
+        "71bb": "Otherwise, set the colour at this location",
+        "71bc": "Next tile column",
+        "71bd": "Next tile if column < screen width (32 chars)",
+        "71c2": "else, wrap-around and continue applying colour",
+        "71c5": "#REGl=start of current row",
+        "71c6": "Loop back and continue with next tile",
+        "71ca": "Clear Carry flag",
+        "71cb": "#REGhl -= 32 tiles. Places address pointer previous",
+        "71ce": "line",
+        "71d1": "#REGb=reset to original width counter",
+        "71d2": "Decrement height counter",
+        "71d3": "Repeat until all tiles have been coloured",
+        "71d6": "Horizontal coordinate. Example, if $B8:",
+        "71d7": "A=01011100, C=0",
+        "71d8": "A=00101110, C=0",
+        "71d9": "A=00010111, C=0",
+        "71da": "A=00010111 <- screen width?",
+        "71dc": "#REGl=$17",
+        "71dd": "Vertical coordinate. Example, if $68:",
+        "71de": "A=00110100, C=0",
+        "71df": "A=00011010, C=0",
+        "71e0": "Backup value to #REGc",
+        "71e1": "A=00000000",
+        "71e3": "A=00010111",
+        "71e4": "#REGl=$17 <- new LSB of attribute file",
+        "71e5": "Restore the row value",
+        "71e6": "A=00000010 <- top of screen?",
+        "71e8": "A=01011010",
+        "71ea": "#REGh=$5A <- ATTRIBUTE_FILE address (>= 5800)",
+        "71eb": "Return #REGhl=5A17",
+        "71ec": "Find sprite using Actor",
+        "71ef": "#REGhl=Actor.X/Y position",
+        "71f2": "#REGa=header value: X position offset?",
+        "71f3": "#REGde=next header value: sprite width",
+        "71f4": "#REGl=X position + offset",
+        "71f6": "#REGhl=coord to screen address (using/returning #REGhl)",
+        "71f9": "#REGb=read sprite width again",
+        "71fb": "#REGa=next header value: sprite height",
+        "7202": "#REGde=next header value: sprite data bytes",
+        "7204": "Find actor position.",
+        "7207": "#REGl=actor X location",
+        "720a": "#REGh=actor Y location",
+        "720d": "#REGa=sprite header byte",
+        "720e": "#REGde=next header value: sprite width",
+        "720f": "#REGl=X column + header byte",
+        "7211": "Set actor_coords variable with these actor coordinates",
+        "7214": "#REGhl=coord to screen address (using #REGhl)",
+        "7217": "#REGb=sprite width",
+        "721c": "#REGa=next header value: sprite height",
+        "7224": "Set return values (#REGde points to sprite pixel data)",
+        "7227": "#REGhl=Get sprite position",
+        "722c": "Update actor",
+        "7230": "Erase actor sprite",
+        "7232": "Find sprite using X position and update actor",
+        "7236": "Find sprite using actor and get address",
+        "723c": "Subtract the actor Y position",
+        "723f": "Update actor size if 0",
+        "7242": "Jump if result is negative",
+        "7245": "else #REGc=result",
+        "724a": "Update actor size if REGa < #REGc",
+        "724d": "else subtract #REGc",
+        "7251": "Mask sprite pixels",
+        "725c": "Update actor size if < #REGc",
+        "7260": "Erase sprite pixels",
+        "7263": "Update the Actor",
+        "7266": "Erase sprite pixels",
+        "7268": "Get sprite position",
+        "726b": "Erase a destroyed actor",
+        "726d": "Find sprite and sprite position",
+        "727a": "Mask sprite pixels",
+        "7285": "#REGc = $00",
+        "7286": "Mask sprite pixels",
+        "7289": "#REGa=actor X position",
+        "7294": "Jump if bit-6 of header is reset",
+        "7296": "else set bit-3 of X position",
+        "7298": "Calculate offset for sprite lookup table",
+        "72a1": "#REGbc=lookup table offset",
+        "72a3": "#REGhl=start of Jetman/Buffer sprite lookup tables",
+        "72a7": "#REGde=sprite address",
+        "72ab": "#REGa=X position",
+        "72b1": "#REGa=sprite header byte",
+        "72b4": "Get sprite address",
+        "72b6": "Decrement #REGh to move up one pixel on screen",
+        "72ba": "Has a character line been crossed?",
+        "72bc": "If not, return",
+        "72bd": "else subtract 32 from #REGl",
+        "72c3": "Has a new section of the screen been crossed?",
+        "72c5": "Return if not",
+        "72d0": "Horizontal coordinate. Example, if $B8:",
+        "72d1": "A=01011100, C=0",
+        "72d2": "A=00101110, C=0",
+        "72d3": "A=00010111, C=0",
+        "72d4": "A=00010111 <- screen width?",
+        "72d6": "#REGl=$17",
+        "72d7": "Vertical coordinate. Example, if $68:",
+        "72d8": "A=00110100, C=0",
+        "72d9": "A=00011010, C=0",
+        "72da": "A=00000000",
+        "72dc": "A=00010111",
+        "72dd": "#REGl=$17 <- new LSB of attribute file",
+        "72de": "Vertical coordinate. Example, if $68:",
+        "72df": "A=00000100",
+        "72e1": "Puts the value into the shadow register",
+        "72e2": "Vertical coordinate. Example, if $68:",
+        "72e3": "A=00110100, C=0",
+        "72e4": "A=00011010, C=0",
+        "72e5": "A=00001101, C=0",
+        "72e6": "A=00001000",
+        "72e8": "A=00101000",
+        "72ea": "#REGhl=$48",
+        "72eb": "Get the shadow register value",
+        "72ec": "A=00101100",
+        "72ed": "#REGh=$4C <- DISPLAY_FILE address (>= 4000)",
+        "72ee": "Return #REGhl=4C68",
+        "72ef": "Actor X position = Jetman X position",
+        "7302": "Interface 2 Joystick port",
+        "7306": "#REGa = bits for 000LRDUF",
+        "7309": "Game options",
+        "730c": "Use Joystick?",
+        "730e": "Jump if so",
+        "7310": "Row: Shift,Z,X,C,V",
+        "7312": "Set port for reading keyboard",
+        "7314": "...and read that row of keys",
+        "7318": "Check if any keys on the row are pressed",
+        "731a": "Jump if not - read inputs again",
+        "731c": "Reset all bits except X and V keys (RIGHT keys)",
+        "731e": "Check if neither are pressed (reset)",
+        "7320": "If so, a LEFT key was pressed: Z and C",
+        "7322": "else RIGHT key was pressed: X and V",
+        "7324": "Row: B,N,M.Sym,Sp",
+        "7326": "Set port for reading keyboard",
+        "7328": "...and read that row of keys",
+        "732c": "Check if any keys on the row are pressed",
+        "732e": "Jump if not - no input detected.",
+        "7330": "Reset all bits except B and M keys (LEFT keys)",
+        "7332": "Check if neither are pressed (reset)",
+        "7334": "If so, a RIGHT key was pressed: N and Sym",
+        "7336": "#REGa=LEFT_KEY  : 1110 1111",
+        "7339": "#REGa=RIGHT_KEY : 1111 0111",
+        "733c": "#REGa=No input detected",
+        "733f": "Game options",
+        "7342": "Use Joystick?",
+        "7344": "Jump if so",
+        "7346": "Loop count: read left and right row of keys",
+        "7348": "Row: A,S,D,F,G",
+        "734a": "Set port for reading keyboard",
+        "734c": "...and read that row of keys",
+        "7350": "Check if any keys on the row are pressed",
+        "7352": "Jump if so - key press detected",
+        "7354": "Row: H,J,K,L,Enter",
+        "7356": "Loop back and read input again",
+        "7358": "Still no input detected",
+        "735b": "#REGa=FIRE : 1111 1110",
+        "735e": "Game options",
+        "7361": "Use Joystick?",
+        "7363": "Jump if so",
+        "7365": "Loop count: read left and right row of keys",
+        "7367": "Row: Q,W,E,R,T",
+        "7369": "Set port for reading keyboard",
+        "736b": "...and read that row of keys",
+        "736f": "Check if any keys on the row are pressed",
+        "7371": "Jump if so - key press detected",
+        "7373": "Row: Y,U,I,O,P",
+        "7375": "Loop back and read input again",
+        "7377": "Still no input detected",
+        "737a": "#REGa=UP (thrust) : 1111 1101",
+        "737d": "If begin play delay timer is zero (turn started), check",
+        "7380": "to see if player is thrusting",
+        "7384": "else decrement timer",
+        "7385": "Flash Score label if still not zero",
+        "7388": "SFX to indicate play is about to start!",
+        "738b": "Stop flashing 2UP if current player number is 2",
+        "7391": "Stop flashing \"1UP\" text",
+        "7397": "Check if player is thrusting",
+        "7399": "Stop flashing \"2UP\" text",
+        "739e": "Update actor position direction",
+        "73a1": "Read Left/Right input",
+        "73a4": "Update Jetman direction for THRUST RIGHT",
+        "73a9": "Jetman thrust left",
+        "73ae": "Game timer",
+        "73b1": "If bit-0 is reset, fly horizontal",
+        "73b5": "Calculate new horizontal speed",
+        "73b8": "Set Jetman direction to be \"right\"",
+        "73bc": "Flip direction if currently moving left",
+        "73c3": "Jetman speed modifier ($00 or $04)",
+        "73ca": "#REGa += Jetman X speed",
+        "73cf": "Jump if speed >= max",
+        "73d1": "Update Jetman X speed with #REGa (will be < 64)",
+        "73d4": "Fly horizontally",
+        "73dc": "Jetman X speed (will be <= 64)",
+        "73df": "Multiply X speed by 3",
+        "73e2": "#REGd=Jetman X position",
+        "73e9": "Decrease Jetman X position if moving right",
+        "73f0": "else, increase X position",
+        "73f5": "Set new Jetman X position",
+        "73f8": "Game options",
+        "73fb": "Use Joystick? Jump if so.",
+        "7400": "Loop count: read left and right row of keys",
+        "7402": "Read top-right row of keys",
+        "7404": "Set port for reading keyboard",
+        "7406": "...and read that row of keys",
+        "740a": "Check if any keys on the row are pressed",
+        "740c": "Jump if so - hover Jetman",
+        "740e": "Read top-left row of keys",
+        "7410": "...and repeat",
+        "7412": "Check if THRUST button pressed (Joystick or Keys)",
+        "7415": "Set Jetman to down position if not thrusting",
+        "741a": "Jetman direction is DOWN or WALKing",
+        "7422": "Flip vertical direction if moving down",
+        "7425": "Jetman speed modifier ($00 or $04)",
+        "742c": "#REGa += Jetman Y speed",
+        "7431": "Set vertical speed to max if >= 63",
+        "7433": "Y speed = #REGa (is < 63)",
+        "7436": "Update vertical flying",
+        "7438": "Jetman Y speed is zero",
+        "743c": "Update vertical flying",
+        "743e": "Read Joystick",
+        "7441": "Set Y speed to zero if not thrusting",
+        "7446": "else check if falling and update movement",
+        "7448": "Set Jetman Y speed to 63",
+        "744c": "#REGl=Jetman Y speed (will be <= 63)",
+        "7451": "Multiply vertical X speed by 3",
+        "7454": "#REGd=Jetman Y position",
+        "7457": "#REGe=Jetman flying counter",
+        "745b": "Move Jetman up if moving up",
+        "7462": "else move downwards",
+        "7463": "Update Jetman flying counter",
+        "7467": "Update Jetman Y position",
+        "746d": "Move up if within screen limits: 42 to 192",
+        "7471": "Check if hit top of screen",
+        "7473": "Platform collision detection (returns #REGe)",
+        "7476": "Redraw Jetman if bit-2 has not been set",
+        "747a": "Jetman lands on top of a platform",
+        "747f": "Jetman hits bottom of a platform",
+        "7484": "Update #REGe to be either $00 or $40.",
+        "7489": "Update Jetman moving direction",
+        "7492": "Update and erase the actor",
+        "7495": "Colour the sprite",
+        "7498": "Read the input for a FIRE button",
+        "749d": "If pressed, Fire laser (if free slot is available)",
+        "74a1": "Set Jetman to be moving down",
+        "74a5": "Redraw Jetman",
+        "74a7": "Set Jetman to be standing still",
+        "74ab": "Jetman direction",
+        "74ae": "Reset FLY and WALK bits",
+        "74b0": "Now set movement to WALK",
+        "74b2": "Update Jetman direction to be walking",
+        "74b5": "Set Jetman X speed to stopped",
+        "74b9": "Set Jetman Y speed to stopped",
+        "74bd": "Redraw Jetman",
+        "74bf": "Set Jetman to be moving up",
+        "74c3": "Jetman flight collision detection",
+        "74c5": "Set Jetman to be moving down",
+        "74c9": "Jetman Y speed",
+        "74ce": "Jetman collision detection if #REGa was $00 or $01",
+        "74d0": "Update Jetman Y speed",
+        "74d3": "Jetman flight collision detection",
+        "74d5": "Set Jetman direction to WALK/DOWN",
+        "74d9": "Increment Jetman Y speed if moving down",
+        "74e0": "Jetman speed modifier ($00 or $04)",
+        "74e3": "#REGa=$F8 or $FC",
+        "74e5": "#REGa += Jetman Y speed",
+        "74e8": "Update vertical speed if new speed is positive",
+        "74eb": "else set Y speed to zero",
+        "74ef": "Flip Jetman vertical moving direction",
+        "74f7": "Fly Jetman vertically",
+        "74fa": "Reset Carry flag",
+        "74fe": "Update Jetman speed/dir if thrusting",
+        "7501": "Set Jetman direction to be LEFT",
+        "7505": "Increase Jetman X speed if moving RIGHT",
+        "750c": "Jetman speed modifier ($00 or $04)",
+        "750f": "#REGa=$F8 or $FC",
+        "7511": "#REGa += Jetman X speed",
+        "7514": "Update horizontal speed if new speed is positive",
+        "7517": "else set X speed to zero",
+        "751b": "Flip Jetman left/right moving direction",
+        "7523": "Fly Jetman vertically",
+        "7526": "Reset Carry flag",
+        "7528": "Move upwards",
+        "752a": "Check vertical position within screen limits",
+        "752d": "Jetman speed modifier ($00 or $04)",
+        "7530": "#REGa=$F8 or $FC",
+        "7532": "#REGa += Jetman X speed",
+        "7535": "Update horizontal speed if new speed is positive",
+        "7539": "Update horizontal speed to zero",
+        "753c": "Update Actor position direction",
+        "753f": "Read Left/Right input",
+        "7542": "Walk RIGHT",
+        "7546": "Walk LEFT",
+        "754b": "else set Jetman X speed to zero",
+        "754f": "Read THRUST button",
+        "7552": "Walk off platform if thrusting",
+        "7556": "Platform collision check (returns #REGe)",
+        "7559": "Leave platform if bit-2 is reset",
+        "755d": "Redraw Jetman if bit-3 is reset",
+        "7562": "Jetman X speed",
+        "7566": "Redraw Jetman if X speed > 0",
+        "7569": "Jetman leaves a platform, either left or right based",
+        "756d": "on the value of bit-6. The X position is dec/inc",
+        "756f": "appropriately, and the Redraw Jetman routine is",
+        "7572": "called. Note also that the X speed is set to max",
+        "7575": "walking speed, but this instruction might be",
+        "7578": "irrelevant as hacking the speed value has no",
+        "757c": "noticeable effect.",
+        "757f": "Jetman direction",
+        "7582": "Reset FLY and WALK bits",
+        "7584": "Now set movement to FLY",
+        "7586": "Update Jetman direction to be flying",
+        "7589": "#REGhl=Jetman Y,X position",
+        "758e": "#REGix=Jetman thruster animation object",
+        "7592": "Jump if thrusters are already being animated",
+        "7598": "else set thrusters to be animating?",
+        "759f": "Update actor movement states",
+        "75a2": "Restore #REGix to Jetman object",
+        "75a4": "Jetman Y position -= 2",
+        "75aa": "Redraw Jetman",
+        "75ad": "Jetman X position += 1",
+        "75b0": "Jetman direction is right",
+        "75b4": "Jetman moving direction to right",
+        "75b8": "Set Jetman X speed to maximum",
+        "75bc": "Loop back, checking again for THRUST input",
+        "75bf": "Jetman X position -= 1",
+        "75c2": "Jetman direction is left",
+        "75c6": "Jetman moving direction to left",
+        "75ca": "Set Jetman X speed to maximum",
+        "75ce": "Loop back, checking again for THRUST input",
+        "75d2": "Jetman/alien direction",
+        "75d5": "Value must be <= 63",
+        "75d7": "Jump if value == 3 (therefore never when Jetman)",
+        "75db": "Restore #REGa to entry value",
+        "75dc": "Vertical collision detection",
+        "75de": "Flip again",
+        "75e1": "Vertical collision detection, first incrementing by $09",
+        "75e4": "if #REGa is negative",
+        "75e8": "Loop counter (4 platforms to check)",
+        "75ea": "Platform location/size params",
+        "75f0": "#REGa=Platform X position",
+        "75f2": "Subtract Jetman/Alien X position",
+        "75f5": "If positive, Horizontal collision detection",
+        "75fa": "Set bit-6 and then vertical collision detection",
+        "75fc": "Platform Y location",
+        "75fd": "Platform width",
+        "75fe": "X position >= width (no collision) so try next platform",
+        "7604": "Set bit 3 if collision: X position >= width",
+        "760a": "Platform Y location",
+        "760b": "#REGa=platform Y position",
+        "760c": "Subtract sprite Y position",
+        "7611": "Add 2",
+        "7613": "Next platform if no collision: Y position is negative",
+        "7616": "#REGa < 2, Landed on platform",
+        "761a": "#REGa < sprite height, hits underneath of platform?",
+        "761f": "Subtract 2",
+        "7621": "Next platform if no collision: Y position >= sprite",
+        "7624": "height",
+        "7628": "Set bit-2 (4) <- Jetman is leaving a platform?",
+        "762a": "Set #REGhl back to beginning of platform object",
+        "762c": "Bit-7 indicates landing on a platform",
+        "7630": "Set #REGhl back to beginning of platform object",
+        "7631": "Increment #REGhl until is points to the start of the",
+        "7632": "next platform sprite",
+        "7635": "Loop back until all 4 platforms have been checked",
+        "7638": "Loop counter (4 platforms for draw)",
+        "763a": "Platform location/size params",
+        "763d": "Backup loop counter",
+        "763e": "Process next platform if sprite colour is black/unused",
+        "7643": "#REGc=X position",
+        "7647": "#REGa=platform width",
+        "764c": "#REGa += platform X position",
+        "764d": "#REGa += 16",
+        "7650": "#REGh=Y position byte",
+        "7652": "#REGl=new X position",
+        "7653": "#REGhl=coord to screen address (using #REGhl)",
+        "7656": "#REGde=address for LEFT platform sprite",
+        "7659": "Draw LEFT platform tile pixels",
+        "765c": "Does this fetch the platform width value?",
+        "7665": "#REGb=loop counter for # of middle platform sprites",
+        "7666": "#REGde=address for MIDDLE platform sprite",
+        "7669": "Draw (all) MIDDLE platform tiles pixels",
+        "766e": "#REGde=address for RIGHT platform sprite",
+        "7671": "Draw RIGHT platform tile pixels",
+        "7675": "#REGa=platform width",
+        "767a": "#REGa += X position",
+        "767b": "#REGa += 16",
+        "767e": "#REGb=Y position",
+        "7680": "#REGc=colour attribute",
+        "7683": "#REGhl=Y,X position",
+        "7686": "#REGhl=coord to attribute file address (using #REGhl)",
+        "768a": "Does this fetch the platform width value?",
+        "7693": "#REGb=loop counter for # of middle platform sprites",
+        "7694": "Apply platform colour to ATTRIBUTE_FILE",
+        "7696": "#REGhl=next sprite position",
+        "7697": "Repeat until all sprites are coloured",
+        "7699": "Restore #REGhl=platform object at \"width\" byte",
+        "769a": "#REGhl=beginning of next platform struct",
+        "769b": "Restore #REGbc for loop counter",
+        "769c": "Loop back and processing next platform",
+        "769e": "restore loop counter",
+        "769f": "Place #REGhl to beginning of next platform struct",
+        "76a3": "Loop back and process next platform",
+        "76a8": "Loop counter (8x8 pixel)",
+        "76aa": "Draw character pixels for tile",
+        "76c5": "fly right 1",
+        "76c7": "fly right 2",
+        "76c9": "fly right 3",
+        "76cb": "fly right 4",
+        "76cd": "fly left 4",
+        "76cf": "fly left 3",
+        "76d1": "fly left 2",
+        "76d3": "fly left 1",
+        "76d5": "walk right 1",
+        "76d7": "walk right 2",
+        "76d9": "walk right 3",
+        "76db": "walk right 4",
+        "76dd": "walk left 4",
+        "76df": "walk left 3",
+        "76e1": "walk left 2",
+        "76e3": "walk left 1",
+        "76e5": "right facing, anim frame 1",
+        "76e7": "right facing, anim frame 1",
+        "76e9": "right facing, anim frame 2",
+        "76eb": "right facing, anim frame 2",
+        "76ed": "left facing,  anim frame 2",
+        "76ef": "left facing,  anim frame 2",
+        "76f1": "left facing,  anim frame 1",
+        "76f3": "left facing,  anim frame 1",
+        "76f5": "sprite 1",
+        "76f7": "sprite 2",
+        "76f9": "sprite 3",
+        "76fb": "sprite 4",
+        "76fd": "sprite 4",
+        "76ff": "sprite 3",
+        "7701": "sprite 2",
+        "7703": "sprite 1",
+        "7705": "Jump if vertical position is zero",
+        "7709": "else decrement",
+        "770c": "#REGa=sprite byte",
+        "770d": "Create mask and write to screen",
+        "7710": "Next byte",
+        "7711": "Next column",
+        "7715": "If column is zero, subtract 32",
+        "771b": "Repeat and process for next byte",
+        "771d": "Restore #REGhl to be the display file address",
+        "771e": "Calculate new pixel position",
+        "7722": "NOTE: what is in C' register before this swap?",
+        "7723": "Jump back to the top of routine if #REGc is zero",
+        "7727": "else decrement (vertical position?)",
+        "772a": "Merge with current on-screen byte (mask?)",
+        "772d": "Next sprite byte",
+        "772f": "#REGa=next column number",
+        "7732": "Set #REGl to beginning of line if > 0 && < 32, and",
+        "7734": "repeat process for next byte",
+        "7738": "Repeat and process next byte",
+        "773b": "Calculate new pixel position",
+        "7740": "Loop back to top of routine",
+        "7743": "Jump if #REGc != 0",
+        "774f": "Compare actor sprite height values",
+        "7750": "Return if both are zero",
+        "775f": "Mask sprite pixels",
+        "7761": "Header byte",
+        "7762": "Width (tiles), Height (pixels)",
+        "7764": "Pixel data follows",
+        "7e66": "Height (pixels)",
+        "7e67": "Pixel data follows"
+    },
+    "stats": {
+        "labels": 368,
+        "regions": 524,
+        "comments": 1750,
+        "anchors": 0
+    }
+}

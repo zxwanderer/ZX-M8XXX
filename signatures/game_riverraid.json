@@ -1,0 +1,3317 @@
+{
+    "id": "river-raid",
+    "name": "River Raid",
+    "type": "game",
+    "source": "morozov/river-raid-disasm \u2014 Activision",
+    "baseAddress": 16384,
+    "machineType": "48k",
+    "anchors": [],
+    "labels": {
+        "4000": "screen_pixels",
+        "5800": "screen_attributes",
+        "5c78": "int_counter",
+        "5c79": "unused",
+        "5cd2": "start",
+        "5d35": "restart",
+        "5d3f": "starting_bridges",
+        "5d43": "L5D43",
+        "5d44": "init_state",
+        "5d9f": "decrease_lives_player_2",
+        "5da6": "play",
+        "5eee": "L5EEE",
+        "5eef": "state_metronome",
+        "5ef0": "state_bridge_index",
+        "5ef1": "state_input_readings",
+        "5ef2": "L5EF2",
+        "5ef3": "state_plane_missile_coordinates",
+        "5ef4": "state_plane_missile_x",
+        "5ef5": "state_other_mode",
+        "5ef6": "L5EF6",
+        "5ef7": "L5EF7",
+        "5ef9": "L5EF9",
+        "5efa": "state_island_profile_idx",
+        "5efb": "state_island_byte_2",
+        "5efc": "state_island_byte_3",
+        "5efd": "state_island_line_idx",
+        "5efe": "unused",
+        "5f00": "viewport_objects",
+        "5f2e": "exploding_fragments",
+        "5f5f": "L5F5F",
+        "5f60": "viewport_ptr",
+        "5f62": "exploding_fragments_ptr",
+        "5f64": "state_speed",
+        "5f65": "L5F65",
+        "5f66": "state_fuel",
+        "5f67": "state_input_interface",
+        "5f68": "state_gameplay_mode",
+        "5f69": "L5F69",
+        "5f6a": "state_bridge_player_1",
+        "5f6b": "state_bridge_player_2",
+        "5f6c": "L5F6C",
+        "5f6d": "L5F6D",
+        "5f6e": "game_status_buffer_entry_at_5f6e",
+        "5f6f": "game_status_buffer_entry_at_5f6f",
+        "5f70": "state_y",
+        "5f72": "state_x",
+        "5f73": "helicopter_missile_coordinates_ptr",
+        "5f75": "helicopter_missile_state",
+        "5f76": "state_level_fragment_number",
+        "5f77": "state_terrain_profile_number",
+        "5f78": "state_terrain_element_23",
+        "5f7a": "state_terrain_extras",
+        "5f7b": "screen_ptr",
+        "5f7d": "state_terrain_position",
+        "5f7e": "ptr_scroller",
+        "5f80": "unused",
+        "5f81": "L5F81",
+        "5f82": "unused",
+        "5f83": "sp_5F83",
+        "5f85": "tmp_HL",
+        "5f87": "tmp_DE",
+        "5f89": "tmp_BC",
+        "5f8b": "L5F8B",
+        "5f8d": "L5F8D",
+        "5f8f": "state_plane_missile_coordinates_backup",
+        "5f91": "main_loop",
+        "5fda": "scan_cursor",
+        "600a": "scan_kempston",
+        "6039": "scan_sinclair",
+        "6068": "scan_keyboard",
+        "6136": "L6136",
+        "615e": "handle_other_mode_xor",
+        "61bb": "interact_with_something",
+        "623f": "next_bridge_player_1",
+        "6249": "next_bridge_player_2",
+        "6253": "unused",
+        "6256": "fuel",
+        "6268": "hit_terrain",
+        "62ce": "used_by_the_routine_at_r6268",
+        "62d4": "used_by_the_routine_at_r62e8",
+        "62d7": "used_by_the_routine_at_r62e8",
+        "62da": "advance_object",
+        "62e0": "retract_object",
+        "62e8": "interact_with_something2",
+        "63dd": "r6453_r6462_and_r649e",
+        "6414": "hit_helicopter_reg",
+        "6423": "hit_ship",
+        "6444": "hit_helicopter_adv",
+        "6453": "hit_fighter",
+        "6462": "hit_balloon",
+        "6478": "interact_with_fuel",
+        "64a1": "used_by_the_routine_at_r6478",
+        "64b4": "unused",
+        "64bc": "print_bridge",
+        "64e5": "print_bridge_player_2",
+        "64f1": "print_bridge_no_player_2",
+        "6506": "print_space",
+        "650a": "handle_no_fuel",
+        "6568": "r65de",
+        "656f": "used_by_the_routine_at_r650a",
+        "6577": "game_over",
+        "6587": "used_by_the_routine_at_r6d17",
+        "65ab": "used_by_the_routine_at_r656f",
+        "65bb": "used_by_the_routine_at_r650a",
+        "65cb": "used_by_the_routine_at_r650a",
+        "65de": "used_by_the_routine_at_r65cb",
+        "65f3": "handle_right",
+        "6642": "handle_left",
+        "66cc": "ld_sprite_plane_banked",
+        "66d0": "advance",
+        "66ee": "used_by_the_routine_at_r66d0",
+        "6704": "used_by_the_routine_at_r66ee",
+        "670a": "handle_up",
+        "6717": "handle_down",
+        "6724": "handle_fire",
+        "673c": "unused",
+        "673d": "animate_plane_missile",
+        "678e": "used_by_the_routine_at_r673d",
+        "6831": "used_by_the_routine_at_r683b",
+        "6836": "used_by_the_routine_at_r683b",
+        "683b": "used_by_the_routine_at_r60a5",
+        "683d": "used_by_the_routine_at_r60a5",
+        "68a1": "used_by_the_routine_at_r683b",
+        "68aa": "used_by_the_routine_at_r683b",
+        "68ac": "used_by_the_routine_at_r683b",
+        "68b7": "used_by_the_routine_at_r60a5",
+        "68e9": "init_current_bridge",
+        "68ee": "init_current_bridge_loop",
+        "6927": "used_by_the_routine_at_r68c5",
+        "693b": "unused",
+        "693c": "handle_terrain_element_1_eq_3",
+        "6947": "handle_terrain_element_1_eq_2",
+        "694d": "increase_bridge_index",
+        "6963": "next_bridge_index_overflow",
+        "696b": "handle_island",
+        "6978": "locate_island_element",
+        "6990": "render_island_line",
+        "69a0": "L6990_locate_sprite",
+        "6a3f": "used_by_the_routine_at_r6990",
+        "6a45": "used_by_the_routine_at_r6990",
+        "6a4a": "used_by_the_routine_at_r68e9",
+        "6a4f": "render_terrain_row",
+        "6a60": "locate_level_terrain",
+        "6a79": "locate_level_terrain_fragment",
+        "6aa3": "render_terrain_fragment",
+        "6aaf": "locate_terrain_fragment",
+        "6b06": "fill_terrain_left_loop",
+        "6b4b": "fill_terrain_right_loop",
+        "6b58": "state_terrain_element_4_eq_1",
+        "6b5e": "state_terrain_element_4_eq_2",
+        "6b63": "ld_fragment_canal_adjacent_to_river",
+        "6b6b": "ld_fragment_canal_adjacent_to_road",
+        "6b73": "ld_fragment_road",
+        "6b7b": "handle_special_terrain_fragment",
+        "6b8f": "handle_special_terrain_fragment_continue",
+        "6bb0": "state_controls",
+        "6bb1": "pause",
+        "6bbf": "handle_enter",
+        "6bd2": "select_controls",
+        "6bdb": "int_handler",
+        "6bed": "handle_controls",
+        "6c24": "int_return",
+        "6c2b": "unused",
+        "6c30": "state_bit4_counter",
+        "6c31": "do_bonus_life",
+        "6c52": "bit4_finish",
+        "6c5d": "used_by_the_routine_at_r6bed",
+        "6c63": "used_by_the_routine_at_r6bed",
+        "6c7a": "explosion_counter",
+        "6c7b": "beep_explosion",
+        "6cad": "explosion_render_finish",
+        "6cb8": "used_by_the_routine_at_r6bed",
+        "6cbe": "used_by_the_routine_at_r6bed",
+        "6cd6": "used_by_the_routine_at_r6bed",
+        "6cdc": "used_by_the_routine_at_r6bed",
+        "6cf4": "do_low_fuel",
+        "6cf6": "used_by_the_routine_at_r6bed",
+        "6d17": "overview",
+        "6ddd": "used_by_the_routine_at_r6d17",
+        "6deb": "init_starting_bridge",
+        "6dff": "consume_fuel",
+        "6e40": "add_fuel",
+        "6e86": "register_low_fuel",
+        "6e8c": "register_sufficient_fuel",
+        "6e92": "signal_fuel_level_excessive",
+        "6e9c": "explode_fragment",
+        "6eab": "add_object_to_set",
+        "6ebc": "write_object_to_set",
+        "6ec8": "render_explosions",
+        "6f63": "ld_sprite_explosion_f1",
+        "6f67": "ld_sprite_explosion_f2",
+        "6f6b": "ld_sprite_explosion_f3",
+        "6f6f": "ld_sprite_explosion_erasure",
+        "6f73": "init_exploding_fragments_ptr",
+        "6f7a": "used_by_the_routine_at_r6ec8",
+        "6f80": "next_row",
+        "6f91": "locate_level",
+        "6fbb": "render_rock",
+        "6fc8": "locate_rock_element",
+        "6fe6": "ld_enemy_sprites_right",
+        "6ff6": "render_enemy",
+        "7038": "ld_attributes_ship",
+        "703b": "ld_attributes_fighter",
+        "703e": "ld_attributes_tank",
+        "7046": "blending_mode_xor_nop",
+        "7051": "render_fuel",
+        "706c": "render_balloon",
+        "708e": "operate_viewport_objects",
+        "70e8": "the_slot",
+        "7104": "operate_ship_or_helicopter",
+        "7113": "ship_or_helicopter_left_advance",
+        "7128": "operate_ship_or_helicopter_continue",
+        "7155": "fighter_left_reset",
+        "7158": "operate_fighter",
+        "7161": "fighter_left_advance",
+        "716b": "operate_fighter_continue",
+        "7192": "fighter_right_advance",
+        "719f": "fighter_right_reset",
+        "71a2": "used_by_the_routine_at_r708e",
+        "720e": "finish_tank_shell_explosion",
+        "7224": "used_by_the_routine_at_r708e",
+        "7248": "ld_sprite_helicopter_rotor_right",
+        "724c": "animate_object",
+        "7259": "animate_helicopter",
+        "728b": "used_by_the_routine_at_r7296",
+        "7290": "ld_L5EF2_1",
+        "7296": "operate_tank",
+        "72e6": "blenging_mode_xor_xor",
+        "72ef": "blenging_mode_or_or",
+        "72f8": "invert_tank_offset_delta",
+        "72fd": "used_by_the_routine_at_r7302",
+        "7302": "operate_tank_on_bank",
+        "7343": "init_tank_shell_state",
+        "7358": "used_by_the_routine_at_r735e",
+        "735e": "used_by_the_routine_at_r7343",
+        "7380": "used_by_the_routine_at_r735e",
+        "7383": "tank_shell_state",
+        "7384": "tank_shell_trajectory_step",
+        "7385": "tank_shell_coordinates",
+        "7387": "invert_shell_coordinate_delta",
+        "738e": "invert_helicopter_missle_offset",
+        "7393": "operate_helicopter_missile",
+        "73d0": "remove_helicopter_missile",
+        "73d8": "used_by_the_routine_at_r73dd",
+        "73dd": "render_helicopter_missile",
+        "7415": "handle_other_mode_helicopter_missile",
+        "7441": "operate_tank_shell",
+        "74a0": "used_by_the_routine_at_r7441",
+        "74c6": "render_tank_shell_explosion",
+        "74e4": "remove_tank_shell",
+        "74ee": "used_by_the_routine_at_r7296",
+        "7546": "used_by_the_routine_at_r74ee",
+        "754c": "operate_fuel",
+        "758a": "used_by_the_routine_at_r754c",
+        "75a2": "ship_or_helicopter_right_advance",
+        "75ba": "ld_enemy_sprites",
+        "75cb": "ld_enemy_sprites_loop",
+        "75d0": "handle_object_proximity",
+        "7627": "init_viewport_ptr",
+        "762e": "remove_object_from_viewport",
+        "7649": "operate_baloon",
+        "76ac": "jp_operate_viewport_objects",
+        "76af": "used_by_the_routine_at_r7649",
+        "7727": "unused",
+        "7800": "tmp_control_type",
+        "7801": "state_overview_mode",
+        "7802": "controls_timer",
+        "7804": "clear_and_setup",
+        "7810": "setup_sp",
+        "7812": "msg_keyboard_config",
+        "7882": "msg_instructions",
+        "792a": "msg_game_mode",
+        "7a2e": "msg_control_types",
+        "7ab9": "setup",
+        "7acd": "controls_input",
+        "7aed": "game_mode_print",
+        "7aef": "allowing_values_0_through_3",
+        "7b07": "game_mode_input",
+        "7b30": "instructions_print",
+        "7b3e": "instructions_input",
+        "7b57": "switch_to_overview_mode",
+        "7b61": "unused",
+        "8000": "status_line_1",
+        "8031": "status_line_2",
+        "804f": "status_line_3",
+        "8052": "status_line_3_text",
+        "805a": "status_line_4",
+        "805f": "unused",
+        "8063": "data_terrain_profiles",
+        "8153": "msg_game_over",
+        "8182": "msg_credits",
+        "825d": "udg_data",
+        "82c5": "all_ff",
+        "82f5": "sprite_erasure",
+        "8331": "sprite_terrain_pre_post_bridge",
+        "8351": "sprite_road_and_bridge_pixels",
+        "8371": "sprite_road_attributes",
+        "8391": "unused",
+        "83b1": "sprite_plane",
+        "83f1": "sprite_plane_banked",
+        "8431": "sprite_missile",
+        "8451": "L8451",
+        "8471": "sprite_explosion_f1",
+        "8481": "sprite_explosion_f2",
+        "8491": "sprite_explosion_f3",
+        "84a1": "sprite_rock",
+        "8561": "message_at_8561",
+        "85b3": "sprite_enemies_left",
+        "8793": "sprite_enemies_right",
+        "8972": "sprite_balloon",
+        "89f2": "terrain_edge_left",
+        "89fa": "terrain_edge_right",
+        "8a02": "do_fire",
+        "8a04": "used_by_the_routine_at_r6bed",
+        "8a1b": "used_by_the_routine_at_r6d17",
+        "8a20": "used_by_the_routine_at_r6d17",
+        "8a23": "used_by_the_routine_at_r6d17",
+        "8a33": "init_udg",
+        "8a3c": "init_udg_loop",
+        "8a4e": "calculate_pixel_address",
+        "8a86": "sprite_fuel",
+        "8ab8": "sprite_helicopter_rotor_left",
+        "8ac8": "sprite_helicopter_rotor_right",
+        "8ad8": "unused",
+        "8b08": "L6136_ptr",
+        "8b0a": "previous_object_coordinates",
+        "8b0c": "object_coordinates",
+        "8b0e": "render_sprite_ptr",
+        "8b10": "L8B10",
+        "8b12": "L8B12",
+        "8b14": "L8B14",
+        "8b16": "L8B16",
+        "8b18": "unused",
+        "8b1a": "render_object_width",
+        "8b1b": "unused",
+        "8b1e": "render_sprite",
+        "8b3c": "render_object",
+        "8b70": "used_by_the_routine_at_r8bc6",
+        "8b94": "used_by_the_routine_at_r8b70",
+        "8bc6": "used_by_the_routine_at_r8ba3",
+        "8c0b": "used_by_the_routine_at_r8bc6",
+        "8c1b": "L8C1B",
+        "8c3b": "handle_other_mode_00",
+        "8c3c": "L8C3C",
+        "8c45": "jp_L6136",
+        "8c4a": "unused",
+        "8ffc": "sprite_tank_shell_explosion",
+        "90bc": "state_score_player_1",
+        "90be": "message_at_90be",
+        "90c0": "message_at_90c0",
+        "90c2": "state_score_player_2",
+        "90c4": "message_at_90c4",
+        "90c6": "message_at_90c6",
+        "90c8": "message_at_90c8",
+        "90ce": "message_at_90ce",
+        "90e0": "add_points",
+        "9109": "add_life",
+        "9122": "update_score",
+        "913b": "inc_player_1_score_digit",
+        "914b": "print_player_1_score_digit",
+        "9169": "inc_player_2_score_digit",
+        "9179": "print_player_2_score_digit",
+        "9191": "carry_player_1_score_digit",
+        "91a9": "carry_player_2_score_digit",
+        "91c1": "print_score_player_2",
+        "91e8": "used_by_the_routine_at_r5da6",
+        "923a": "state_game_mode",
+        "923b": "state_lives_player_1",
+        "923c": "state_lives_player_2",
+        "923d": "state_player",
+        "923e": "print_lives",
+        "924f": "print_lives_continue",
+        "925f": "print_lives_loop",
+        "9264": "print_lives_padding",
+        "9277": "print_lives_player_2",
+        "9283": "ptr_state_controls",
+        "9285": "game_status_buffer_entry_at_9285",
+        "9287": "game_status_buffer_entry_at_9287",
+        "9289": "game_status_buffer_entry_at_9289",
+        "928b": "game_status_buffer_entry_at_928b",
+        "928d": "ie_screen_attributes",
+        "935d": "handle_zero_attributes",
+        "9367": "used_by_the_routine_at_r928d",
+        "936b": "used_by_the_routine_at_r928d",
+        "936f": "used_by_the_routine_at_r928d",
+        "9375": "used_by_the_routine_at_r928d",
+        "9388": "used_by_the_routine_at_r928d",
+        "938e": "used_by_the_routine_at_r928d",
+        "93b8": "used_by_the_routine_at_r93a1",
+        "93bb": "used_by_the_routine_at_r93a1",
+        "93be": "used_by_the_routine_at_r6577",
+        "93f2": "used_by_the_routine_at_r93be",
+        "940a": "clear_screen",
+        "940f": "clear_scr_block",
+        "9411": "clear_scr_byte",
+        "941b": "clear_scr_attr",
+        "9423": "ld_lives",
+        "9430": "unused",
+        "9500": "level_terrains",
+        "c600": "data_islands",
+        "c800": "level_objects"
+    },
+    "regions": [
+        {
+            "start": 16384,
+            "end": 22520,
+            "type": "db"
+        },
+        {
+            "start": 22528,
+            "end": 23288,
+            "type": "db"
+        },
+        {
+            "start": 23296,
+            "end": 23664,
+            "type": "db"
+        },
+        {
+            "start": 23672,
+            "end": 23672,
+            "type": "db"
+        },
+        {
+            "start": 23673,
+            "end": 23761,
+            "type": "db"
+        },
+        {
+            "start": 23762,
+            "end": 23789,
+            "type": "code"
+        },
+        {
+            "start": 23790,
+            "end": 23813,
+            "type": "code"
+        },
+        {
+            "start": 23814,
+            "end": 23821,
+            "type": "code"
+        },
+        {
+            "start": 23824,
+            "end": 23848,
+            "type": "code"
+        },
+        {
+            "start": 23851,
+            "end": 23858,
+            "type": "code"
+        },
+        {
+            "start": 23861,
+            "end": 23868,
+            "type": "code"
+        },
+        {
+            "start": 23871,
+            "end": 23871,
+            "type": "db"
+        },
+        {
+            "start": 23875,
+            "end": 23875,
+            "type": "db"
+        },
+        {
+            "start": 23876,
+            "end": 23966,
+            "type": "code"
+        },
+        {
+            "start": 23967,
+            "end": 23971,
+            "type": "code"
+        },
+        {
+            "start": 23974,
+            "end": 24201,
+            "type": "code"
+        },
+        {
+            "start": 24202,
+            "end": 24251,
+            "type": "code"
+        },
+        {
+            "start": 24252,
+            "end": 24254,
+            "type": "code"
+        },
+        {
+            "start": 24255,
+            "end": 24282,
+            "type": "code"
+        },
+        {
+            "start": 24283,
+            "end": 24299,
+            "type": "code"
+        },
+        {
+            "start": 24302,
+            "end": 24302,
+            "type": "db"
+        },
+        {
+            "start": 24303,
+            "end": 24303,
+            "type": "db"
+        },
+        {
+            "start": 24304,
+            "end": 24304,
+            "type": "db"
+        },
+        {
+            "start": 24305,
+            "end": 24305,
+            "type": "db"
+        },
+        {
+            "start": 24306,
+            "end": 24306,
+            "type": "db"
+        },
+        {
+            "start": 24307,
+            "end": 24307,
+            "type": "db"
+        },
+        {
+            "start": 24308,
+            "end": 24308,
+            "type": "db"
+        },
+        {
+            "start": 24309,
+            "end": 24309,
+            "type": "db"
+        },
+        {
+            "start": 24310,
+            "end": 24310,
+            "type": "db"
+        },
+        {
+            "start": 24311,
+            "end": 24311,
+            "type": "db"
+        },
+        {
+            "start": 24313,
+            "end": 24313,
+            "type": "db"
+        },
+        {
+            "start": 24314,
+            "end": 24314,
+            "type": "db"
+        },
+        {
+            "start": 24315,
+            "end": 24315,
+            "type": "db"
+        },
+        {
+            "start": 24316,
+            "end": 24316,
+            "type": "db"
+        },
+        {
+            "start": 24317,
+            "end": 24317,
+            "type": "db"
+        },
+        {
+            "start": 24318,
+            "end": 24318,
+            "type": "db"
+        },
+        {
+            "start": 24320,
+            "end": 24365,
+            "type": "db"
+        },
+        {
+            "start": 24366,
+            "end": 24414,
+            "type": "db"
+        },
+        {
+            "start": 24415,
+            "end": 24415,
+            "type": "db"
+        },
+        {
+            "start": 24416,
+            "end": 24416,
+            "type": "db"
+        },
+        {
+            "start": 24418,
+            "end": 24418,
+            "type": "db"
+        },
+        {
+            "start": 24420,
+            "end": 24420,
+            "type": "db"
+        },
+        {
+            "start": 24421,
+            "end": 24421,
+            "type": "db"
+        },
+        {
+            "start": 24422,
+            "end": 24422,
+            "type": "db"
+        },
+        {
+            "start": 24423,
+            "end": 24423,
+            "type": "db"
+        },
+        {
+            "start": 24424,
+            "end": 24424,
+            "type": "db"
+        },
+        {
+            "start": 24425,
+            "end": 24425,
+            "type": "db"
+        },
+        {
+            "start": 24426,
+            "end": 24426,
+            "type": "db"
+        },
+        {
+            "start": 24427,
+            "end": 24427,
+            "type": "db"
+        },
+        {
+            "start": 24428,
+            "end": 24428,
+            "type": "db"
+        },
+        {
+            "start": 24429,
+            "end": 24429,
+            "type": "db"
+        },
+        {
+            "start": 24430,
+            "end": 24430,
+            "type": "db"
+        },
+        {
+            "start": 24431,
+            "end": 24431,
+            "type": "db"
+        },
+        {
+            "start": 24432,
+            "end": 24432,
+            "type": "db"
+        },
+        {
+            "start": 24434,
+            "end": 24434,
+            "type": "db"
+        },
+        {
+            "start": 24435,
+            "end": 24435,
+            "type": "db"
+        },
+        {
+            "start": 24437,
+            "end": 24437,
+            "type": "db"
+        },
+        {
+            "start": 24438,
+            "end": 24438,
+            "type": "db"
+        },
+        {
+            "start": 24439,
+            "end": 24439,
+            "type": "db"
+        },
+        {
+            "start": 24440,
+            "end": 24440,
+            "type": "db"
+        },
+        {
+            "start": 24442,
+            "end": 24442,
+            "type": "db"
+        },
+        {
+            "start": 24443,
+            "end": 24443,
+            "type": "db"
+        },
+        {
+            "start": 24445,
+            "end": 24445,
+            "type": "db"
+        },
+        {
+            "start": 24446,
+            "end": 24446,
+            "type": "db"
+        },
+        {
+            "start": 24448,
+            "end": 24448,
+            "type": "db"
+        },
+        {
+            "start": 24449,
+            "end": 24449,
+            "type": "db"
+        },
+        {
+            "start": 24450,
+            "end": 24450,
+            "type": "db"
+        },
+        {
+            "start": 24451,
+            "end": 24451,
+            "type": "db"
+        },
+        {
+            "start": 24453,
+            "end": 24453,
+            "type": "db"
+        },
+        {
+            "start": 24455,
+            "end": 24455,
+            "type": "db"
+        },
+        {
+            "start": 24457,
+            "end": 24457,
+            "type": "db"
+        },
+        {
+            "start": 24459,
+            "end": 24459,
+            "type": "db"
+        },
+        {
+            "start": 24461,
+            "end": 24461,
+            "type": "db"
+        },
+        {
+            "start": 24463,
+            "end": 24463,
+            "type": "db"
+        },
+        {
+            "start": 24465,
+            "end": 24583,
+            "type": "code"
+        },
+        {
+            "start": 24586,
+            "end": 24630,
+            "type": "code"
+        },
+        {
+            "start": 24633,
+            "end": 24677,
+            "type": "code"
+        },
+        {
+            "start": 24680,
+            "end": 24738,
+            "type": "code"
+        },
+        {
+            "start": 24741,
+            "end": 24804,
+            "type": "code"
+        },
+        {
+            "start": 24805,
+            "end": 24819,
+            "type": "code"
+        },
+        {
+            "start": 24820,
+            "end": 24834,
+            "type": "code"
+        },
+        {
+            "start": 24835,
+            "end": 24867,
+            "type": "code"
+        },
+        {
+            "start": 24868,
+            "end": 24885,
+            "type": "code"
+        },
+        {
+            "start": 24886,
+            "end": 24923,
+            "type": "code"
+        },
+        {
+            "start": 24926,
+            "end": 25016,
+            "type": "code"
+        },
+        {
+            "start": 25019,
+            "end": 25158,
+            "type": "code"
+        },
+        {
+            "start": 25161,
+            "end": 25168,
+            "type": "code"
+        },
+        {
+            "start": 25171,
+            "end": 25171,
+            "type": "db"
+        },
+        {
+            "start": 25174,
+            "end": 25189,
+            "type": "code"
+        },
+        {
+            "start": 25192,
+            "end": 25293,
+            "type": "code"
+        },
+        {
+            "start": 25294,
+            "end": 25299,
+            "type": "code"
+        },
+        {
+            "start": 25300,
+            "end": 25302,
+            "type": "code"
+        },
+        {
+            "start": 25303,
+            "end": 25305,
+            "type": "code"
+        },
+        {
+            "start": 25306,
+            "end": 25311,
+            "type": "code"
+        },
+        {
+            "start": 25312,
+            "end": 25319,
+            "type": "code"
+        },
+        {
+            "start": 25320,
+            "end": 25528,
+            "type": "code"
+        },
+        {
+            "start": 25529,
+            "end": 25564,
+            "type": "code"
+        },
+        {
+            "start": 25565,
+            "end": 25593,
+            "type": "code"
+        },
+        {
+            "start": 25596,
+            "end": 25600,
+            "type": "code"
+        },
+        {
+            "start": 25601,
+            "end": 25617,
+            "type": "code"
+        },
+        {
+            "start": 25620,
+            "end": 25632,
+            "type": "code"
+        },
+        {
+            "start": 25635,
+            "end": 25665,
+            "type": "code"
+        },
+        {
+            "start": 25668,
+            "end": 25680,
+            "type": "code"
+        },
+        {
+            "start": 25683,
+            "end": 25695,
+            "type": "code"
+        },
+        {
+            "start": 25698,
+            "end": 25717,
+            "type": "code"
+        },
+        {
+            "start": 25720,
+            "end": 25755,
+            "type": "code"
+        },
+        {
+            "start": 25758,
+            "end": 25758,
+            "type": "code"
+        },
+        {
+            "start": 25761,
+            "end": 25777,
+            "type": "code"
+        },
+        {
+            "start": 25780,
+            "end": 25780,
+            "type": "db"
+        },
+        {
+            "start": 25788,
+            "end": 25828,
+            "type": "code"
+        },
+        {
+            "start": 25829,
+            "end": 25838,
+            "type": "code"
+        },
+        {
+            "start": 25841,
+            "end": 25861,
+            "type": "code"
+        },
+        {
+            "start": 25862,
+            "end": 25865,
+            "type": "code"
+        },
+        {
+            "start": 25866,
+            "end": 25898,
+            "type": "code"
+        },
+        {
+            "start": 25899,
+            "end": 25901,
+            "type": "code"
+        },
+        {
+            "start": 25902,
+            "end": 25903,
+            "type": "code"
+        },
+        {
+            "start": 25904,
+            "end": 25922,
+            "type": "code"
+        },
+        {
+            "start": 25923,
+            "end": 25959,
+            "type": "code"
+        },
+        {
+            "start": 25960,
+            "end": 25964,
+            "type": "code"
+        },
+        {
+            "start": 25967,
+            "end": 25972,
+            "type": "code"
+        },
+        {
+            "start": 25975,
+            "end": 25988,
+            "type": "code"
+        },
+        {
+            "start": 25991,
+            "end": 26026,
+            "type": "code"
+        },
+        {
+            "start": 26027,
+            "end": 26040,
+            "type": "code"
+        },
+        {
+            "start": 26043,
+            "end": 26056,
+            "type": "code"
+        },
+        {
+            "start": 26059,
+            "end": 26075,
+            "type": "code"
+        },
+        {
+            "start": 26078,
+            "end": 26082,
+            "type": "code"
+        },
+        {
+            "start": 26083,
+            "end": 26096,
+            "type": "code"
+        },
+        {
+            "start": 26099,
+            "end": 26159,
+            "type": "code"
+        },
+        {
+            "start": 26160,
+            "end": 26177,
+            "type": "code"
+        },
+        {
+            "start": 26178,
+            "end": 26239,
+            "type": "code"
+        },
+        {
+            "start": 26242,
+            "end": 26313,
+            "type": "code"
+        },
+        {
+            "start": 26316,
+            "end": 26319,
+            "type": "code"
+        },
+        {
+            "start": 26320,
+            "end": 26349,
+            "type": "code"
+        },
+        {
+            "start": 26350,
+            "end": 26371,
+            "type": "code"
+        },
+        {
+            "start": 26372,
+            "end": 26377,
+            "type": "code"
+        },
+        {
+            "start": 26378,
+            "end": 26390,
+            "type": "code"
+        },
+        {
+            "start": 26391,
+            "end": 26403,
+            "type": "code"
+        },
+        {
+            "start": 26404,
+            "end": 26427,
+            "type": "code"
+        },
+        {
+            "start": 26428,
+            "end": 26428,
+            "type": "db"
+        },
+        {
+            "start": 26429,
+            "end": 26509,
+            "type": "code"
+        },
+        {
+            "start": 26510,
+            "end": 26515,
+            "type": "code"
+        },
+        {
+            "start": 26516,
+            "end": 26552,
+            "type": "code"
+        },
+        {
+            "start": 26553,
+            "end": 26632,
+            "type": "code"
+        },
+        {
+            "start": 26633,
+            "end": 26672,
+            "type": "code"
+        },
+        {
+            "start": 26673,
+            "end": 26677,
+            "type": "code"
+        },
+        {
+            "start": 26678,
+            "end": 26682,
+            "type": "code"
+        },
+        {
+            "start": 26683,
+            "end": 26684,
+            "type": "code"
+        },
+        {
+            "start": 26685,
+            "end": 26782,
+            "type": "code"
+        },
+        {
+            "start": 26785,
+            "end": 26793,
+            "type": "code"
+        },
+        {
+            "start": 26794,
+            "end": 26795,
+            "type": "code"
+        },
+        {
+            "start": 26796,
+            "end": 26806,
+            "type": "code"
+        },
+        {
+            "start": 26807,
+            "end": 26818,
+            "type": "code"
+        },
+        {
+            "start": 26821,
+            "end": 26841,
+            "type": "code"
+        },
+        {
+            "start": 26842,
+            "end": 26848,
+            "type": "code"
+        },
+        {
+            "start": 26849,
+            "end": 26856,
+            "type": "code"
+        },
+        {
+            "start": 26857,
+            "end": 26861,
+            "type": "code"
+        },
+        {
+            "start": 26862,
+            "end": 26900,
+            "type": "code"
+        },
+        {
+            "start": 26901,
+            "end": 26909,
+            "type": "code"
+        },
+        {
+            "start": 26910,
+            "end": 26916,
+            "type": "code"
+        },
+        {
+            "start": 26919,
+            "end": 26938,
+            "type": "code"
+        },
+        {
+            "start": 26939,
+            "end": 26939,
+            "type": "db"
+        },
+        {
+            "start": 26940,
+            "end": 26950,
+            "type": "code"
+        },
+        {
+            "start": 26951,
+            "end": 26956,
+            "type": "code"
+        },
+        {
+            "start": 26957,
+            "end": 26978,
+            "type": "code"
+        },
+        {
+            "start": 26979,
+            "end": 26986,
+            "type": "code"
+        },
+        {
+            "start": 26987,
+            "end": 27023,
+            "type": "code"
+        },
+        {
+            "start": 27024,
+            "end": 27039,
+            "type": "code"
+        },
+        {
+            "start": 27040,
+            "end": 27115,
+            "type": "code"
+        },
+        {
+            "start": 27116,
+            "end": 27119,
+            "type": "code"
+        },
+        {
+            "start": 27120,
+            "end": 27145,
+            "type": "code"
+        },
+        {
+            "start": 27146,
+            "end": 27193,
+            "type": "code"
+        },
+        {
+            "start": 27194,
+            "end": 27198,
+            "type": "code"
+        },
+        {
+            "start": 27199,
+            "end": 27202,
+            "type": "code"
+        },
+        {
+            "start": 27205,
+            "end": 27207,
+            "type": "code"
+        },
+        {
+            "start": 27210,
+            "end": 27214,
+            "type": "code"
+        },
+        {
+            "start": 27215,
+            "end": 27231,
+            "type": "code"
+        },
+        {
+            "start": 27232,
+            "end": 27256,
+            "type": "code"
+        },
+        {
+            "start": 27257,
+            "end": 27298,
+            "type": "code"
+        },
+        {
+            "start": 27299,
+            "end": 27310,
+            "type": "code"
+        },
+        {
+            "start": 27311,
+            "end": 27397,
+            "type": "code"
+        },
+        {
+            "start": 27398,
+            "end": 27423,
+            "type": "code"
+        },
+        {
+            "start": 27424,
+            "end": 27466,
+            "type": "code"
+        },
+        {
+            "start": 27467,
+            "end": 27479,
+            "type": "code"
+        },
+        {
+            "start": 27480,
+            "end": 27483,
+            "type": "code"
+        },
+        {
+            "start": 27486,
+            "end": 27488,
+            "type": "code"
+        },
+        {
+            "start": 27491,
+            "end": 27496,
+            "type": "code"
+        },
+        {
+            "start": 27499,
+            "end": 27504,
+            "type": "code"
+        },
+        {
+            "start": 27507,
+            "end": 27512,
+            "type": "code"
+        },
+        {
+            "start": 27515,
+            "end": 27534,
+            "type": "code"
+        },
+        {
+            "start": 27535,
+            "end": 27555,
+            "type": "code"
+        },
+        {
+            "start": 27556,
+            "end": 27561,
+            "type": "code"
+        },
+        {
+            "start": 27562,
+            "end": 27567,
+            "type": "code"
+        },
+        {
+            "start": 27568,
+            "end": 27568,
+            "type": "db"
+        },
+        {
+            "start": 27569,
+            "end": 27580,
+            "type": "code"
+        },
+        {
+            "start": 27583,
+            "end": 27601,
+            "type": "code"
+        },
+        {
+            "start": 27602,
+            "end": 27608,
+            "type": "code"
+        },
+        {
+            "start": 27611,
+            "end": 27626,
+            "type": "code"
+        },
+        {
+            "start": 27629,
+            "end": 27681,
+            "type": "code"
+        },
+        {
+            "start": 27684,
+            "end": 27689,
+            "type": "code"
+        },
+        {
+            "start": 27691,
+            "end": 27691,
+            "type": "db"
+        },
+        {
+            "start": 27696,
+            "end": 27696,
+            "type": "db"
+        },
+        {
+            "start": 27697,
+            "end": 27729,
+            "type": "code"
+        },
+        {
+            "start": 27730,
+            "end": 27740,
+            "type": "code"
+        },
+        {
+            "start": 27741,
+            "end": 27746,
+            "type": "code"
+        },
+        {
+            "start": 27747,
+            "end": 27751,
+            "type": "code"
+        },
+        {
+            "start": 27752,
+            "end": 27759,
+            "type": "code"
+        },
+        {
+            "start": 27760,
+            "end": 27767,
+            "type": "code"
+        },
+        {
+            "start": 27770,
+            "end": 27770,
+            "type": "db"
+        },
+        {
+            "start": 27771,
+            "end": 27796,
+            "type": "code"
+        },
+        {
+            "start": 27797,
+            "end": 27801,
+            "type": "code"
+        },
+        {
+            "start": 27802,
+            "end": 27812,
+            "type": "code"
+        },
+        {
+            "start": 27813,
+            "end": 27820,
+            "type": "code"
+        },
+        {
+            "start": 27821,
+            "end": 27831,
+            "type": "code"
+        },
+        {
+            "start": 27832,
+            "end": 27837,
+            "type": "code"
+        },
+        {
+            "start": 27838,
+            "end": 27842,
+            "type": "code"
+        },
+        {
+            "start": 27843,
+            "end": 27851,
+            "type": "code"
+        },
+        {
+            "start": 27852,
+            "end": 27859,
+            "type": "code"
+        },
+        {
+            "start": 27862,
+            "end": 27867,
+            "type": "code"
+        },
+        {
+            "start": 27868,
+            "end": 27872,
+            "type": "code"
+        },
+        {
+            "start": 27873,
+            "end": 27881,
+            "type": "code"
+        },
+        {
+            "start": 27882,
+            "end": 27889,
+            "type": "code"
+        },
+        {
+            "start": 27892,
+            "end": 27893,
+            "type": "code"
+        },
+        {
+            "start": 27894,
+            "end": 27908,
+            "type": "code"
+        },
+        {
+            "start": 27909,
+            "end": 27916,
+            "type": "code"
+        },
+        {
+            "start": 27917,
+            "end": 27924,
+            "type": "code"
+        },
+        {
+            "start": 27927,
+            "end": 28003,
+            "type": "code"
+        },
+        {
+            "start": 28004,
+            "end": 28122,
+            "type": "code"
+        },
+        {
+            "start": 28125,
+            "end": 28136,
+            "type": "code"
+        },
+        {
+            "start": 28139,
+            "end": 28158,
+            "type": "code"
+        },
+        {
+            "start": 28159,
+            "end": 28212,
+            "type": "code"
+        },
+        {
+            "start": 28213,
+            "end": 28223,
+            "type": "code"
+        },
+        {
+            "start": 28224,
+            "end": 28282,
+            "type": "code"
+        },
+        {
+            "start": 28283,
+            "end": 28293,
+            "type": "code"
+        },
+        {
+            "start": 28294,
+            "end": 28299,
+            "type": "code"
+        },
+        {
+            "start": 28300,
+            "end": 28305,
+            "type": "code"
+        },
+        {
+            "start": 28306,
+            "end": 28315,
+            "type": "code"
+        },
+        {
+            "start": 28316,
+            "end": 28328,
+            "type": "code"
+        },
+        {
+            "start": 28331,
+            "end": 28345,
+            "type": "code"
+        },
+        {
+            "start": 28348,
+            "end": 28359,
+            "type": "code"
+        },
+        {
+            "start": 28360,
+            "end": 28506,
+            "type": "code"
+        },
+        {
+            "start": 28507,
+            "end": 28512,
+            "type": "code"
+        },
+        {
+            "start": 28515,
+            "end": 28518,
+            "type": "code"
+        },
+        {
+            "start": 28519,
+            "end": 28522,
+            "type": "code"
+        },
+        {
+            "start": 28523,
+            "end": 28526,
+            "type": "code"
+        },
+        {
+            "start": 28527,
+            "end": 28530,
+            "type": "code"
+        },
+        {
+            "start": 28531,
+            "end": 28537,
+            "type": "code"
+        },
+        {
+            "start": 28538,
+            "end": 28541,
+            "type": "code"
+        },
+        {
+            "start": 28544,
+            "end": 28560,
+            "type": "code"
+        },
+        {
+            "start": 28561,
+            "end": 28600,
+            "type": "code"
+        },
+        {
+            "start": 28603,
+            "end": 28615,
+            "type": "code"
+        },
+        {
+            "start": 28616,
+            "end": 28645,
+            "type": "code"
+        },
+        {
+            "start": 28646,
+            "end": 28649,
+            "type": "code"
+        },
+        {
+            "start": 28650,
+            "end": 28661,
+            "type": "code"
+        },
+        {
+            "start": 28662,
+            "end": 28727,
+            "type": "code"
+        },
+        {
+            "start": 28728,
+            "end": 28730,
+            "type": "code"
+        },
+        {
+            "start": 28731,
+            "end": 28733,
+            "type": "code"
+        },
+        {
+            "start": 28734,
+            "end": 28741,
+            "type": "code"
+        },
+        {
+            "start": 28742,
+            "end": 28752,
+            "type": "code"
+        },
+        {
+            "start": 28753,
+            "end": 28779,
+            "type": "code"
+        },
+        {
+            "start": 28780,
+            "end": 28813,
+            "type": "code"
+        },
+        {
+            "start": 28814,
+            "end": 28903,
+            "type": "code"
+        },
+        {
+            "start": 28904,
+            "end": 28929,
+            "type": "code"
+        },
+        {
+            "start": 28932,
+            "end": 28944,
+            "type": "code"
+        },
+        {
+            "start": 28947,
+            "end": 28967,
+            "type": "code"
+        },
+        {
+            "start": 28968,
+            "end": 29010,
+            "type": "code"
+        },
+        {
+            "start": 29013,
+            "end": 29015,
+            "type": "code"
+        },
+        {
+            "start": 29016,
+            "end": 29034,
+            "type": "code"
+        },
+        {
+            "start": 29035,
+            "end": 29071,
+            "type": "code"
+        },
+        {
+            "start": 29074,
+            "end": 29084,
+            "type": "code"
+        },
+        {
+            "start": 29087,
+            "end": 29089,
+            "type": "code"
+        },
+        {
+            "start": 29090,
+            "end": 29163,
+            "type": "code"
+        },
+        {
+            "start": 29164,
+            "end": 29167,
+            "type": "code"
+        },
+        {
+            "start": 29168,
+            "end": 29195,
+            "type": "code"
+        },
+        {
+            "start": 29198,
+            "end": 29217,
+            "type": "code"
+        },
+        {
+            "start": 29220,
+            "end": 29248,
+            "type": "code"
+        },
+        {
+            "start": 29249,
+            "end": 29253,
+            "type": "code"
+        },
+        {
+            "start": 29256,
+            "end": 29259,
+            "type": "code"
+        },
+        {
+            "start": 29260,
+            "end": 29270,
+            "type": "code"
+        },
+        {
+            "start": 29273,
+            "end": 29320,
+            "type": "code"
+        },
+        {
+            "start": 29323,
+            "end": 29327,
+            "type": "code"
+        },
+        {
+            "start": 29328,
+            "end": 29333,
+            "type": "code"
+        },
+        {
+            "start": 29334,
+            "end": 29364,
+            "type": "code"
+        },
+        {
+            "start": 29365,
+            "end": 29411,
+            "type": "code"
+        },
+        {
+            "start": 29414,
+            "end": 29422,
+            "type": "code"
+        },
+        {
+            "start": 29423,
+            "end": 29431,
+            "type": "code"
+        },
+        {
+            "start": 29432,
+            "end": 29436,
+            "type": "code"
+        },
+        {
+            "start": 29437,
+            "end": 29441,
+            "type": "code"
+        },
+        {
+            "start": 29442,
+            "end": 29485,
+            "type": "code"
+        },
+        {
+            "start": 29486,
+            "end": 29504,
+            "type": "code"
+        },
+        {
+            "start": 29507,
+            "end": 29525,
+            "type": "code"
+        },
+        {
+            "start": 29528,
+            "end": 29531,
+            "type": "code"
+        },
+        {
+            "start": 29534,
+            "end": 29565,
+            "type": "code"
+        },
+        {
+            "start": 29568,
+            "end": 29570,
+            "type": "code"
+        },
+        {
+            "start": 29571,
+            "end": 29571,
+            "type": "db"
+        },
+        {
+            "start": 29572,
+            "end": 29572,
+            "type": "db"
+        },
+        {
+            "start": 29573,
+            "end": 29573,
+            "type": "db"
+        },
+        {
+            "start": 29575,
+            "end": 29581,
+            "type": "code"
+        },
+        {
+            "start": 29582,
+            "end": 29586,
+            "type": "code"
+        },
+        {
+            "start": 29587,
+            "end": 29647,
+            "type": "code"
+        },
+        {
+            "start": 29648,
+            "end": 29655,
+            "type": "code"
+        },
+        {
+            "start": 29656,
+            "end": 29660,
+            "type": "code"
+        },
+        {
+            "start": 29661,
+            "end": 29716,
+            "type": "code"
+        },
+        {
+            "start": 29717,
+            "end": 29748,
+            "type": "code"
+        },
+        {
+            "start": 29749,
+            "end": 29760,
+            "type": "code"
+        },
+        {
+            "start": 29761,
+            "end": 29855,
+            "type": "code"
+        },
+        {
+            "start": 29856,
+            "end": 29891,
+            "type": "code"
+        },
+        {
+            "start": 29894,
+            "end": 29923,
+            "type": "code"
+        },
+        {
+            "start": 29924,
+            "end": 29933,
+            "type": "code"
+        },
+        {
+            "start": 29934,
+            "end": 29988,
+            "type": "code"
+        },
+        {
+            "start": 29989,
+            "end": 30009,
+            "type": "code"
+        },
+        {
+            "start": 30010,
+            "end": 30019,
+            "type": "code"
+        },
+        {
+            "start": 30022,
+            "end": 30025,
+            "type": "code"
+        },
+        {
+            "start": 30028,
+            "end": 30087,
+            "type": "code"
+        },
+        {
+            "start": 30090,
+            "end": 30113,
+            "type": "code"
+        },
+        {
+            "start": 30114,
+            "end": 30135,
+            "type": "code"
+        },
+        {
+            "start": 30138,
+            "end": 30154,
+            "type": "code"
+        },
+        {
+            "start": 30155,
+            "end": 30159,
+            "type": "code"
+        },
+        {
+            "start": 30160,
+            "end": 30196,
+            "type": "code"
+        },
+        {
+            "start": 30197,
+            "end": 30244,
+            "type": "code"
+        },
+        {
+            "start": 30247,
+            "end": 30253,
+            "type": "code"
+        },
+        {
+            "start": 30254,
+            "end": 30278,
+            "type": "code"
+        },
+        {
+            "start": 30281,
+            "end": 30340,
+            "type": "code"
+        },
+        {
+            "start": 30341,
+            "end": 30377,
+            "type": "code"
+        },
+        {
+            "start": 30380,
+            "end": 30380,
+            "type": "code"
+        },
+        {
+            "start": 30383,
+            "end": 30423,
+            "type": "code"
+        },
+        {
+            "start": 30426,
+            "end": 30462,
+            "type": "code"
+        },
+        {
+            "start": 30463,
+            "end": 30500,
+            "type": "code"
+        },
+        {
+            "start": 30503,
+            "end": 30719,
+            "type": "db"
+        },
+        {
+            "start": 30720,
+            "end": 30720,
+            "type": "db"
+        },
+        {
+            "start": 30721,
+            "end": 30721,
+            "type": "db"
+        },
+        {
+            "start": 30722,
+            "end": 30722,
+            "type": "dw"
+        },
+        {
+            "start": 30724,
+            "end": 30733,
+            "type": "code"
+        },
+        {
+            "start": 30736,
+            "end": 30736,
+            "type": "dw"
+        },
+        {
+            "start": 30738,
+            "end": 31398,
+            "type": "text"
+        },
+        {
+            "start": 31417,
+            "end": 31434,
+            "type": "code"
+        },
+        {
+            "start": 31437,
+            "end": 31468,
+            "type": "code"
+        },
+        {
+            "start": 31469,
+            "end": 31470,
+            "type": "code"
+        },
+        {
+            "start": 31471,
+            "end": 31492,
+            "type": "code"
+        },
+        {
+            "start": 31495,
+            "end": 31535,
+            "type": "code"
+        },
+        {
+            "start": 31536,
+            "end": 31549,
+            "type": "code"
+        },
+        {
+            "start": 31550,
+            "end": 31574,
+            "type": "code"
+        },
+        {
+            "start": 31575,
+            "end": 31584,
+            "type": "code"
+        },
+        {
+            "start": 31585,
+            "end": 32761,
+            "type": "db"
+        },
+        {
+            "start": 32768,
+            "end": 32815,
+            "type": "text"
+        },
+        {
+            "start": 32817,
+            "end": 32837,
+            "type": "text"
+        },
+        {
+            "start": 32847,
+            "end": 32847,
+            "type": "text"
+        },
+        {
+            "start": 32850,
+            "end": 32850,
+            "type": "text"
+        },
+        {
+            "start": 32858,
+            "end": 32861,
+            "type": "text"
+        },
+        {
+            "start": 32863,
+            "end": 32863,
+            "type": "db"
+        },
+        {
+            "start": 32867,
+            "end": 33099,
+            "type": "db"
+        },
+        {
+            "start": 33107,
+            "end": 33107,
+            "type": "text"
+        },
+        {
+            "start": 33154,
+            "end": 33372,
+            "type": "text"
+        },
+        {
+            "start": 33373,
+            "end": 33469,
+            "type": "db"
+        },
+        {
+            "start": 33477,
+            "end": 33517,
+            "type": "db"
+        },
+        {
+            "start": 33525,
+            "end": 33581,
+            "type": "db"
+        },
+        {
+            "start": 33585,
+            "end": 33609,
+            "type": "db"
+        },
+        {
+            "start": 33617,
+            "end": 33641,
+            "type": "db"
+        },
+        {
+            "start": 33649,
+            "end": 33673,
+            "type": "db"
+        },
+        {
+            "start": 33681,
+            "end": 33705,
+            "type": "db"
+        },
+        {
+            "start": 33713,
+            "end": 33775,
+            "type": "db"
+        },
+        {
+            "start": 33777,
+            "end": 33839,
+            "type": "db"
+        },
+        {
+            "start": 33841,
+            "end": 33872,
+            "type": "db"
+        },
+        {
+            "start": 33873,
+            "end": 33897,
+            "type": "db"
+        },
+        {
+            "start": 33905,
+            "end": 33919,
+            "type": "db"
+        },
+        {
+            "start": 33921,
+            "end": 33935,
+            "type": "db"
+        },
+        {
+            "start": 33937,
+            "end": 33951,
+            "type": "db"
+        },
+        {
+            "start": 33953,
+            "end": 34142,
+            "type": "db"
+        },
+        {
+            "start": 34145,
+            "end": 34217,
+            "type": "text"
+        },
+        {
+            "start": 34227,
+            "end": 34704,
+            "type": "db"
+        },
+        {
+            "start": 34707,
+            "end": 35184,
+            "type": "db"
+        },
+        {
+            "start": 35186,
+            "end": 35312,
+            "type": "db"
+        },
+        {
+            "start": 35314,
+            "end": 35320,
+            "type": "db"
+        },
+        {
+            "start": 35322,
+            "end": 35328,
+            "type": "db"
+        },
+        {
+            "start": 35330,
+            "end": 35331,
+            "type": "code"
+        },
+        {
+            "start": 35332,
+            "end": 35337,
+            "type": "code"
+        },
+        {
+            "start": 35338,
+            "end": 35354,
+            "type": "code"
+        },
+        {
+            "start": 35355,
+            "end": 35359,
+            "type": "code"
+        },
+        {
+            "start": 35360,
+            "end": 35362,
+            "type": "code"
+        },
+        {
+            "start": 35363,
+            "end": 35378,
+            "type": "code"
+        },
+        {
+            "start": 35379,
+            "end": 35387,
+            "type": "code"
+        },
+        {
+            "start": 35388,
+            "end": 35405,
+            "type": "code"
+        },
+        {
+            "start": 35406,
+            "end": 35417,
+            "type": "code"
+        },
+        {
+            "start": 35418,
+            "end": 35443,
+            "type": "code"
+        },
+        {
+            "start": 35444,
+            "end": 35461,
+            "type": "code"
+        },
+        {
+            "start": 35462,
+            "end": 35510,
+            "type": "db"
+        },
+        {
+            "start": 35512,
+            "end": 35520,
+            "type": "db"
+        },
+        {
+            "start": 35528,
+            "end": 35536,
+            "type": "db"
+        },
+        {
+            "start": 35544,
+            "end": 35584,
+            "type": "db"
+        },
+        {
+            "start": 35592,
+            "end": 35592,
+            "type": "db"
+        },
+        {
+            "start": 35594,
+            "end": 35594,
+            "type": "db"
+        },
+        {
+            "start": 35596,
+            "end": 35596,
+            "type": "db"
+        },
+        {
+            "start": 35598,
+            "end": 35598,
+            "type": "db"
+        },
+        {
+            "start": 35600,
+            "end": 35600,
+            "type": "db"
+        },
+        {
+            "start": 35602,
+            "end": 35602,
+            "type": "db"
+        },
+        {
+            "start": 35604,
+            "end": 35604,
+            "type": "db"
+        },
+        {
+            "start": 35606,
+            "end": 35606,
+            "type": "db"
+        },
+        {
+            "start": 35608,
+            "end": 35608,
+            "type": "db"
+        },
+        {
+            "start": 35610,
+            "end": 35610,
+            "type": "db"
+        },
+        {
+            "start": 35611,
+            "end": 35611,
+            "type": "db"
+        },
+        {
+            "start": 35614,
+            "end": 35631,
+            "type": "code"
+        },
+        {
+            "start": 35632,
+            "end": 35643,
+            "type": "code"
+        },
+        {
+            "start": 35644,
+            "end": 35660,
+            "type": "code"
+        },
+        {
+            "start": 35661,
+            "end": 35671,
+            "type": "code"
+        },
+        {
+            "start": 35672,
+            "end": 35693,
+            "type": "code"
+        },
+        {
+            "start": 35696,
+            "end": 35729,
+            "type": "code"
+        },
+        {
+            "start": 35732,
+            "end": 35744,
+            "type": "code"
+        },
+        {
+            "start": 35747,
+            "end": 35779,
+            "type": "code"
+        },
+        {
+            "start": 35782,
+            "end": 35793,
+            "type": "code"
+        },
+        {
+            "start": 35794,
+            "end": 35850,
+            "type": "code"
+        },
+        {
+            "start": 35851,
+            "end": 35861,
+            "type": "code"
+        },
+        {
+            "start": 35862,
+            "end": 35865,
+            "type": "code"
+        },
+        {
+            "start": 35867,
+            "end": 35886,
+            "type": "code"
+        },
+        {
+            "start": 35887,
+            "end": 35898,
+            "type": "code"
+        },
+        {
+            "start": 35899,
+            "end": 35899,
+            "type": "code"
+        },
+        {
+            "start": 35900,
+            "end": 35908,
+            "type": "code"
+        },
+        {
+            "start": 35909,
+            "end": 35913,
+            "type": "code"
+        },
+        {
+            "start": 35914,
+            "end": 36858,
+            "type": "db"
+        },
+        {
+            "start": 36860,
+            "end": 37050,
+            "type": "db"
+        },
+        {
+            "start": 37052,
+            "end": 37052,
+            "type": "text"
+        },
+        {
+            "start": 37054,
+            "end": 37054,
+            "type": "text"
+        },
+        {
+            "start": 37056,
+            "end": 37056,
+            "type": "text"
+        },
+        {
+            "start": 37058,
+            "end": 37058,
+            "type": "text"
+        },
+        {
+            "start": 37060,
+            "end": 37060,
+            "type": "text"
+        },
+        {
+            "start": 37062,
+            "end": 37062,
+            "type": "text"
+        },
+        {
+            "start": 37064,
+            "end": 37064,
+            "type": "text"
+        },
+        {
+            "start": 37070,
+            "end": 37070,
+            "type": "text"
+        },
+        {
+            "start": 37088,
+            "end": 37101,
+            "type": "code"
+        },
+        {
+            "start": 37102,
+            "end": 37111,
+            "type": "code"
+        },
+        {
+            "start": 37112,
+            "end": 37117,
+            "type": "code"
+        },
+        {
+            "start": 37118,
+            "end": 37128,
+            "type": "code"
+        },
+        {
+            "start": 37129,
+            "end": 37153,
+            "type": "code"
+        },
+        {
+            "start": 37154,
+            "end": 37176,
+            "type": "code"
+        },
+        {
+            "start": 37179,
+            "end": 37194,
+            "type": "code"
+        },
+        {
+            "start": 37195,
+            "end": 37224,
+            "type": "code"
+        },
+        {
+            "start": 37225,
+            "end": 37240,
+            "type": "code"
+        },
+        {
+            "start": 37241,
+            "end": 37264,
+            "type": "code"
+        },
+        {
+            "start": 37265,
+            "end": 37286,
+            "type": "code"
+        },
+        {
+            "start": 37289,
+            "end": 37310,
+            "type": "code"
+        },
+        {
+            "start": 37313,
+            "end": 37351,
+            "type": "code"
+        },
+        {
+            "start": 37352,
+            "end": 37433,
+            "type": "code"
+        },
+        {
+            "start": 37434,
+            "end": 37434,
+            "type": "db"
+        },
+        {
+            "start": 37435,
+            "end": 37435,
+            "type": "db"
+        },
+        {
+            "start": 37436,
+            "end": 37436,
+            "type": "db"
+        },
+        {
+            "start": 37437,
+            "end": 37437,
+            "type": "db"
+        },
+        {
+            "start": 37438,
+            "end": 37452,
+            "type": "code"
+        },
+        {
+            "start": 37455,
+            "end": 37470,
+            "type": "code"
+        },
+        {
+            "start": 37471,
+            "end": 37474,
+            "type": "code"
+        },
+        {
+            "start": 37476,
+            "end": 37494,
+            "type": "code"
+        },
+        {
+            "start": 37495,
+            "end": 37504,
+            "type": "code"
+        },
+        {
+            "start": 37507,
+            "end": 37507,
+            "type": "db"
+        },
+        {
+            "start": 37509,
+            "end": 37509,
+            "type": "db"
+        },
+        {
+            "start": 37511,
+            "end": 37511,
+            "type": "db"
+        },
+        {
+            "start": 37513,
+            "end": 37513,
+            "type": "db"
+        },
+        {
+            "start": 37515,
+            "end": 37515,
+            "type": "db"
+        },
+        {
+            "start": 37517,
+            "end": 37609,
+            "type": "code"
+        },
+        {
+            "start": 37610,
+            "end": 37610,
+            "type": "code"
+        },
+        {
+            "start": 37611,
+            "end": 37630,
+            "type": "code"
+        },
+        {
+            "start": 37631,
+            "end": 37703,
+            "type": "code"
+        },
+        {
+            "start": 37704,
+            "end": 37704,
+            "type": "code"
+        },
+        {
+            "start": 37705,
+            "end": 37724,
+            "type": "code"
+        },
+        {
+            "start": 37725,
+            "end": 37734,
+            "type": "code"
+        },
+        {
+            "start": 37735,
+            "end": 37736,
+            "type": "code"
+        },
+        {
+            "start": 37739,
+            "end": 37740,
+            "type": "code"
+        },
+        {
+            "start": 37743,
+            "end": 37748,
+            "type": "code"
+        },
+        {
+            "start": 37749,
+            "end": 37765,
+            "type": "code"
+        },
+        {
+            "start": 37768,
+            "end": 37773,
+            "type": "code"
+        },
+        {
+            "start": 37774,
+            "end": 37790,
+            "type": "code"
+        },
+        {
+            "start": 37793,
+            "end": 37794,
+            "type": "code"
+        },
+        {
+            "start": 37795,
+            "end": 37815,
+            "type": "code"
+        },
+        {
+            "start": 37816,
+            "end": 37818,
+            "type": "code"
+        },
+        {
+            "start": 37819,
+            "end": 37821,
+            "type": "code"
+        },
+        {
+            "start": 37822,
+            "end": 37873,
+            "type": "code"
+        },
+        {
+            "start": 37874,
+            "end": 37897,
+            "type": "code"
+        },
+        {
+            "start": 37898,
+            "end": 37902,
+            "type": "code"
+        },
+        {
+            "start": 37903,
+            "end": 37904,
+            "type": "code"
+        },
+        {
+            "start": 37905,
+            "end": 37914,
+            "type": "code"
+        },
+        {
+            "start": 37915,
+            "end": 37922,
+            "type": "code"
+        },
+        {
+            "start": 37923,
+            "end": 37935,
+            "type": "code"
+        },
+        {
+            "start": 37936,
+            "end": 38136,
+            "type": "db"
+        },
+        {
+            "start": 38144,
+            "end": 50680,
+            "type": "db"
+        },
+        {
+            "start": 50688,
+            "end": 51196,
+            "type": "db"
+        },
+        {
+            "start": 51200,
+            "end": 63486,
+            "type": "db"
+        }
+    ],
+    "comments": {
+        "5d44": "Initialize #R$5F72. Why isn't it $80?",
+        "5db4": "PAPER BLUE; INK GREEN",
+        "5e20": "AT 1,5",
+        "5e29": "INK YELLOW",
+        "5f91": "Scan Enter",
+        "6068": "Scan \"O\" (LEFT)",
+        "6071": "Scan \"P\" (RIGHT)",
+        "607a": "Scan \"2\" (UP)",
+        "6083": "Scan \"W\" (DOWN)",
+        "608c": "Scan lower row right (FIRE)",
+        "6097": "Scan lower row left (FIRE)",
+        "64c4": "INK of Player 1 color",
+        "64e5": "INK of Player 2 color",
+        "6595": "INK of Player 2 color",
+        "659b": "AT 20,...",
+        "6621": "Player 2 and ship use the same attributes",
+        "6670": "Player 2 and ship use the same attributes",
+        "66b2": "Player 2 and ship use the same attributes",
+        "6739": "Set CONTROLS_BIT_FIRE",
+        "6791": "Reset CONTROLS_BIT_FIRE",
+        "67e1": "Reset CONTROLS_BIT_SPEED_DECREASED",
+        "694d": "Reset Y-position",
+        "6954": "Increase bridge index",
+        "695b": "Check for overflow",
+        "6963": "Reset bridge index",
+        "6990": "Next island line.",
+        "69a0": "Point #REGhl to the element of #R$8063 with the index",
+        "69a1": "defined by #R$5EFA.",
+        "69a4": "Point #REGhl to the profile line with the index defined",
+        "69a7": "by #R$5F7D.",
+        "6a54": "Point #REGhl to the #R$9500 array.",
+        "6a57": "Level terrain array size (64 elements \u00d7 4 bytes each)",
+        "6a60": "Point #REGhl to the element of #R$9500 with the index",
+        "6a61": "defined by #R$5EF0.",
+        "6a64": "Next fragment",
+        "6a6d": "If it's the last fragment, advance to the next level",
+        "6a72": "Terrain fragment size (4 bytes)",
+        "6a79": "Point #REGhl to the fragment of the current #R$9500",
+        "6a7a": "element with the index defined by #R$5F76.",
+        "6aaf": "Point #REGhl to the element of #R$8063 with the index",
+        "6ab0": "defined by #R$5F77.",
+        "6ab3": "Next line",
+        "6aba": "If it's the last line, advance to the next fragment.",
+        "6abf": "Point #REGhl to byte of the current terrain fragment",
+        "6ac1": "defined by #R$5F7D.",
+        "6ac5": "Load the value of the current terrain row offset into",
+        "6ac9": "Load the value of the current terrain profile byte into",
+        "6aca": "Jump to handling a special terrain fragment.",
+        "6acf": "Now #REGa contains the coordinate of the left terrain",
+        "6ad3": "For some reason, subtract 16 from the coordinate of the",
+        "6ad5": "Store the result in #REGd to reuse it in multiple",
+        "6ada": "Point #REGhl to #R$89F2.",
+        "6add": "Restore the coordinate of the left terrain edge into",
+        "6ade": "Use only the lowest three bits of the coordinate.",
+        "6ae0": "Shift the remaining bits right and left effectively",
+        "6ae2": "discarding the lowest bit and store the result into",
+        "6ae3": "#REGc. Why not just make AND 6 instead of AND 7 above?",
+        "6ae5": "Restore the coordinate of the left terrain edge into",
+        "6ae6": "Point #REGhl to the element of #R$89F2 defined by #REGc.",
+        "6ae7": "Temporarily store the pointer in #REGde.",
+        "6ae8": "Copy the coordinate of the left terrain edge into #REGc.",
+        "6ae9": "Point #REGhl screen address of the beginning of the",
+        "6aee": "Calculate the number of full tiles corresponding to the",
+        "6af0": "coordinate of the left terrain edge.",
+        "6af4": "Calculate the address where the terrain edge needs to be",
+        "6af5": "Now #REGhl points to the element of #R$89F2 to be",
+        "6af6": "Why on earth is the edge represented by two bytes?",
+        "6af9": "Copy the bytes. The 0th element of #R$89F2 contains a",
+        "6afb": "Restore #REGde back to the screen address of beginning",
+        "6afc": "of the edge.",
+        "6afd": "Copy the coordinate of the left terrain edge into #REGb.",
+        "6afe": "Again, calculate the number of full tiles corresponding",
+        "6b00": "to the coordinate of the left edge.",
+        "6bb7": "Loop until anything else than H is pressed",
+        "6bbf": "Scan Caps Shift",
+        "6bc8": "Scan Symbol Shift",
+        "6be4": "Check if H was pressed",
+        "6bed": "Check if H was pressed",
+        "6c13": "Distill the state down to CONTROLS_BIT_SPEED_DECREASED",
+        "6c15": "Check if only CONTROLS_BIT_SPEED_DECREASED is set.",
+        "6c1a": "Check if only CONTROLS_BIT_SPEED_ALTERED is set.",
+        "6c1f": "Check if both bits are set.",
+        "6c5a": "Reset CONTROLS_BIT_BONUS_LIFE",
+        "6d23": "PAPER BLUE; INK GREEN",
+        "6db2": "INK BLACK",
+        "6db8": "PAPER BLACK",
+        "6dbe": "AT 1,31",
+        "6dee": "Shift the game mode right discarding the bit",
+        "6df0": "Point to the beginning of the list",
+        "6df3": "Advance to the element corresponding to the game mode.",
+        "6df7": "Get the starting bridge number",
+        "6e89": "Set CONTROLS_BIT_LOW_FUEL",
+        "6e8f": "Reset CONTROLS_BIT_LOW_FUEL",
+        "6ea1": "Reset CONTROLS_BIT_FIRE",
+        "6f91": "Have #REGhl point to the level defined by #REGa",
+        "7048": "Put \"XOR B\" into #R$8C3C",
+        "704d": "Put \"NOP\" into #R$8C1B",
+        "708e": "Reset state_other_mode to OTHER_MODE_00.",
+        "7093": "Load the current viewport_ptr into HL.",
+        "7096": "Load the first byte of the object slot (X position) into",
+        "7097": "Advance HL to the next byte.",
+        "7098": "Load the second byte of the object slot (Y position)",
+        "7099": "Advance HL to the next byte.",
+        "709a": "Load the third byte of the object slot (object",
+        "709b": "Advance HL to point to the next slot.",
+        "709c": "Update viewport_ptr to point to the next slot.",
+        "709f": "Copy the X position (C) into A for comparison.",
+        "70a0": "Check if this slot is empty.",
+        "70a2": "If empty, skip this slot and process the next one.",
+        "70a5": "Check if we've reached the end of the viewport objects",
+        "70a7": "If end of list, reset viewport_ptr to the beginning.",
+        "70aa": "Advance the object's Y position (move it down the",
+        "70ad": "Move HL back to point to the Y position byte of the",
+        "70ae": "current slot.",
+        "70af": "Store the updated Y position (B) back into the slot.",
+        "70b0": "Copy the Y position into A for boundary checking.",
+        "70b1": "Mask the Y position with VIEWPORT_HEIGHT.",
+        "70b3": "Check if the object has moved beyond the viewport",
+        "70b5": "If beyond boundary, remove the object from the viewport.",
+        "70b8": "Copy the object definition (D) into A.",
+        "70b9": "Extract the object type (bits 0-2) from the definition.",
+        "70bb": "Check if this is an advanced helicopter.",
+        "70bd": "Preserve DE, HL, BC registers for the potential call.",
+        "70c0": "If it's an advanced helicopter, render its missile.",
+        "70c3": "Restore BC, HL, DE registers.",
+        "70c6": "Load the current gameplay mode.",
+        "70c9": "Check if gameplay mode is GAMEPLAY_MODE_SCROLL_IN.",
+        "70cb": "If so, skip to the next object without further",
+        "70ce": "Check bit 7 of the object definition (activation flag).",
+        "70d0": "If bit 7 is set, the object is already activated, skip",
+        "70d3": "Load the activation mask from L5F5F.",
+        "70d6": "Copy the mask into E.",
+        "70d7": "Load the interrupt counter.",
+        "70da": "AND the counter with the mask to check if it's time to",
+        "70db": "Compare with zero.",
+        "70dd": "If not zero, skip activation and jump to L7224.",
+        "70e0": "Set bit 7 of D to mark the object as activated.",
+        "70e2": "Move HL forward to point to the object definition byte.",
+        "70e3": "Store the updated definition (with bit 7 set) back to",
+        "70e4": "Point HL to the interrupt counter.",
+        "70e7": "Increment the interrupt counter.",
+        "70e8": "Copy the object definition into A for type dispatch.",
+        "70e9": "Extract the object type (bits 0-2).",
+        "70eb": "Check if this is a fighter.",
+        "70ed": "If fighter, jump to operate_fighter.",
+        "70f0": "Check if this is a balloon.",
+        "70f2": "If balloon, jump to operate_baloon.",
+        "70f5": "Check if this is a fuel station.",
+        "70f7": "If fuel, jump to operate_fuel.",
+        "70fa": "Check if this is a tank.",
+        "70fc": "If tank, jump to operate_tank.",
+        "70ff": "Check if object type is 0 (no object or special case).",
+        "7101": "If type is 0, jump to L71A2.",
+        "72e8": "Put \"XOR B\" into #R$8C1B",
+        "72eb": "Put \"XOR B\" into #R$8C3C",
+        "72f1": "Put \"OR B\" into #R$8C1B",
+        "72f4": "Put \"OR B\" into #R$8C3C",
+        "7348": "Copy the orientation bit from the object definition to",
+        "7349": "the shell state.",
+        "734c": "Derive the speed from the interrupt counter (sort of a",
+        "734f": "PRNG).",
+        "7353": "Make sure the speed is never zero.",
+        "7529": "Set CONTROLS_BIT_BONUS_LIFE",
+        "75bd": "Enemy sprite array size (3\u00d71 tiles \u00d7 8 bytes/tile \u00d7 4",
+        "75d4": "Return if the object is located in the top half of the",
+        "75d5": "screen. Otherwise, the other object may be the player",
+        "75d7": "and should be ignored.",
+        "7604": "Invert object orientation",
+        "7808": "PAPER BLACK; INK WHITE",
+        "7812": "INK RED",
+        "7814": "AT 0,8",
+        "7824": "INK MAGENTA",
+        "7826": "AT 2,8",
+        "7836": "INK YELLOW",
+        "7838": "AT 4,8",
+        "7848": "INK GREEN",
+        "784a": "AT 6,8",
+        "785a": "INK CYAN",
+        "785c": "AT 8,8",
+        "786f": "AT 9,8",
+        "7880": "INK WHITE",
+        "7882": "AT 11,7",
+        "7895": "AT 13,6",
+        "78ab": "AT 15,4",
+        "78c6": "AT 16,3",
+        "78e3": "AT 17,9",
+        "78f1": "AT 19,0",
+        "7914": "AT 20,5",
+        "792a": "INK WHITE",
+        "792c": "PAPER BLACK",
+        "792e": "AT 2,3",
+        "794b": "AT 3,10",
+        "7959": "AT 6,6",
+        "7974": "AT 7,6",
+        "798e": "AT 9,9",
+        "79a2": "AT 10,9",
+        "79b6": "AT 12,9",
+        "79ca": "AT 13,7",
+        "79de": "AT 15,9",
+        "79f2": "AT 16,9",
+        "7a06": "AT 18,9",
+        "7a1a": "AT 19,9",
+        "7a2e": "INK WHITE",
+        "7a30": "PAPER BLACK",
+        "7a32": "AT 3,3",
+        "7a4f": "AT 4,10",
+        "7a5d": "AT 8,6",
+        "7a73": "AT 10,6",
+        "7a8b": "AT 12,6",
+        "7aa3": "AT 14,6",
+        "7ab9": "Print control types dialog",
+        "7ac2": "Initialize timer",
+        "7acd": "Decrease timer",
+        "7ad4": "Check if the time is up",
+        "7adc": "Scan keyboard",
+        "7ae0": "Subtract $31 from the pressed key ASCII code,",
+        "7ae5": "Validate the pressed key by making sure that none of",
+        "7ae7": "the bits older than the first two are set, effectively",
+        "7ae9": "Repeat if a valid key was not pressed.",
+        "7aed": "The purpose of this block is really unclear",
+        "7af4": "PAPER BLACK; INK WHITE",
+        "7af9": "Print game mode dialog",
+        "7b0a": "Scan keyboard",
+        "7b0e": "Subtract $31 from the pressed key ASCII code,",
+        "7b13": "Validate the pressed key by making sure that none of",
+        "7b15": "the bits older than the first three are set, effectively",
+        "7b17": "Repeat if a valid key was not pressed.",
+        "7b1a": "PAPER BLACK; INK WHITE",
+        "7b27": "Print keyboard configuration",
+        "7b41": "Scan keyboard",
+        "7b48": "Loop until Enter is pressed",
+        "7b4d": "Switch to the non-overview mode",
+        "8000": "PAPER BLACK",
+        "8002": "INK WHITE",
+        "8004": "AT 19,2",
+        "8011": "One half UDG",
+        "8016": "AT 20,8",
+        "8019": "Fuel gauge scale UDG",
+        "8022": "AT 21,8",
+        "8025": "INK MAGENTA",
+        "8027": "Fuel gauge reading UDG",
+        "802f": "INK YELLOW",
+        "8031": "AT 1,2",
+        "8034": "INK YELLOW",
+        "8040": "INK WHITE",
+        "8042": "AT 1,18",
+        "804f": "AT 19,18",
+        "805a": "AT 20,4",
+        "805d": "INK WHITE",
+        "8063": "Terrain 1",
+        "8073": "Terrain 2 (special, pre-bridge)",
+        "8083": "Terrain 3 (special, bridge)",
+        "8093": "Terrain 4 (special, post-bridge)",
+        "80a3": "Terrain 5",
+        "80b3": "Terrain 6",
+        "80c3": "Terrain 7",
+        "80d3": "Terrain 8",
+        "80e3": "Terrain 9",
+        "80f3": "Terrain 10",
+        "8103": "Terrain 11",
+        "8113": "Terrain 12 (river narrows)",
+        "8123": "Terrain 13 (river widens)",
+        "8133": "Terrain 14",
+        "8143": "Terrain 15",
+        "818d": "Trademark",
+        "81a8": "Copyright",
+        "81af": "Activision",
+        "83b1": "Frame 1",
+        "83c1": "Frame 2",
+        "83d1": "Frame 3",
+        "83e1": "Frame 4",
+        "83f1": "Frame 1",
+        "8401": "Frame 2",
+        "8411": "Frame 3",
+        "8421": "Frame 4",
+        "8431": "Frame 1",
+        "8439": "Frame 2",
+        "8441": "Frame 3",
+        "8449": "Frame 4",
+        "84a1": "Rock 1",
+        "84d1": "Rock 2",
+        "8501": "Rock 3",
+        "8531": "Rock 4",
+        "85b3": "Frame 1",
+        "85cb": "Frame 2",
+        "85e3": "Frame 3",
+        "85fb": "Frame 4",
+        "8613": "Frame 1",
+        "862b": "Frame 2",
+        "8643": "Frame 3",
+        "865b": "Frame 4",
+        "8673": "Frame 1",
+        "868b": "Frame 2",
+        "86a3": "Frame 3",
+        "86bb": "Frame 4",
+        "86d3": "Frame 1",
+        "86eb": "Frame 2",
+        "8703": "Frame 3",
+        "871b": "Frame 4",
+        "8733": "Frame 1",
+        "874b": "Frame 2",
+        "8763": "Frame 3",
+        "877b": "Frame 4",
+        "8793": "Frame 1",
+        "87ab": "Frame 2",
+        "87c3": "Frame 3",
+        "87db": "Frame 4",
+        "87f3": "Frame 1",
+        "880b": "Frame 2",
+        "8823": "Frame 3",
+        "883b": "Frame 4",
+        "8853": "Frame 1",
+        "886b": "Frame 2",
+        "8883": "Frame 3",
+        "889b": "Frame 4",
+        "88b3": "Frame 1",
+        "88cb": "Frame 2",
+        "88e3": "Frame 3",
+        "88fb": "Frame 4",
+        "8913": "Frame 1",
+        "892b": "Frame 2",
+        "8943": "Frame 3",
+        "895b": "Frame 4",
+        "8972": "Frame 1",
+        "8992": "Frame 2",
+        "89b2": "Frame 3",
+        "89d2": "Frame 4",
+        "89f2": "10 pixels",
+        "89f4": "12 pixels",
+        "89f6": "14 pixels",
+        "89f8": "16 pixels",
+        "89fa": "16 pixels",
+        "89fc": "14 pixels",
+        "89fe": "12 pixels",
+        "8a00": "10 pixels",
+        "8a54": "Load the number of the third of the screen",
+        "8a55": "corresponding to the vertical coordinate of the object",
+        "8a56": "into #REGa.",
+        "8a5a": "Load the starting address of the third of the screen",
+        "8a5b": "into #REGhl.",
+        "8a5f": "Leave only the 6 lowest bits in #REGb which define the",
+        "8a60": "coordinate of the object relative to its third of the",
+        "8a62": "screen.",
+        "8a63": "Unset the 3 lowest bits, so now #REGa contains the",
+        "8a66": "Multiply the value of #REGa by 4 and put into #REGde",
+        "8a68": "which makes the offset of the starting tile address from",
+        "8a69": "its third of the screen.",
+        "8a6c": "Now #REGhl contains the screen address of the tile.",
+        "8a6e": "Leave only the 3 lowest bits in #REGb which define the",
+        "8a6f": "coordinate of the object relative to it tile.",
+        "8ffc": "Frame 1",
+        "901c": "Frame 2",
+        "903c": "Frame 3",
+        "905c": "Frame 4",
+        "907c": "Frame 5",
+        "909c": "Frame 6",
+        "9119": "Set CONTROLS_BIT_BONUS_LIFE",
+        "9145": "Check for digit overflow (the value got beyond the 0-9",
+        "914b": "INK of Player 1 color",
+        "9151": "PAPER BLACK",
+        "9157": "AT 1,...",
+        "9173": "Check for digit overflow (the value got beyond the 0-9",
+        "9179": "INK of Player 2 color",
+        "917f": "AT 1,...",
+        "9191": "Write \"0\" to the overflown digit.",
+        "9193": "Check if #REGd is equal to 0 in a very weird way: set",
+        "9195": "Subtract #REGd from it.",
+        "9196": "Increase #REGa by one.",
+        "9197": "Check if we got 7 (which is only possible if #REGd is",
+        "91c1": "INK of Player 2 color",
+        "91c7": "Print score.",
+        "91d0": "\"0\"",
+        "91d3": "AT 1,18",
+        "91dc": "\"P2\"",
+        "91ed": "AT 1,21",
+        "91fe": "INK WHITE",
+        "9225": "AT 1,18",
+        "9246": "INK of Player 1 color",
+        "9250": "AT 20,18",
+        "925f": "Print the \u2708 UDG symbol",
+        "9277": "INK of Player 2 color",
+        "9283": "Pointer to #R$6BB0",
+        "940d": "Clear the $18 of 256-byte blocks (6144 bytes) of pixels",
+        "940f": "256-byte counter",
+        "9414": "...loop until the counter is zero",
+        "9417": "Process next block",
+        "9419": "Set the $03 of 256-byte blocks (768 bytes) of attribute",
+        "941d": "...loop until the counter is zero",
+        "9420": "Process next block",
+        "9500": "Bridge 1",
+        "9600": "Bridge 2",
+        "9700": "Bridge 3",
+        "9800": "Bridge 4",
+        "9900": "Bridge 5",
+        "9a00": "Bridge 6",
+        "9b00": "Bridge 7",
+        "9c00": "Bridge 8",
+        "9d00": "Bridge 9",
+        "9e00": "Bridge 10",
+        "9f00": "Bridge 11",
+        "a000": "Bridge 12",
+        "a100": "Bridge 13",
+        "a200": "Bridge 14",
+        "a300": "Bridge 15",
+        "a400": "Bridge 16",
+        "a500": "Bridge 17",
+        "a600": "Bridge 18",
+        "a700": "Bridge 19",
+        "a800": "Bridge 20",
+        "a900": "Bridge 21",
+        "aa00": "Bridge 22",
+        "ab00": "Bridge 23",
+        "ac00": "Bridge 24",
+        "ad00": "Bridge 25",
+        "ae00": "Bridge 26",
+        "af00": "Bridge 27",
+        "b000": "Bridge 28",
+        "b100": "Bridge 29",
+        "b200": "Bridge 30",
+        "b300": "Bridge 31",
+        "b400": "Bridge 32",
+        "b500": "Bridge 33",
+        "b600": "Bridge 34",
+        "b700": "Bridge 35",
+        "b800": "Bridge 36",
+        "b900": "Bridge 37",
+        "ba00": "Bridge 38",
+        "bb00": "Bridge 39",
+        "bc00": "Bridge 40",
+        "bd00": "Bridge 41",
+        "be00": "Bridge 42",
+        "bf00": "Bridge 43",
+        "c000": "Bridge 44",
+        "c100": "Bridge 45",
+        "c200": "Bridge 46",
+        "c300": "Bridge 47",
+        "c400": "Bridge 48",
+        "c800": "Level 1",
+        "c900": "Level 2",
+        "ca00": "Level 3",
+        "cb00": "Level 4",
+        "cc00": "Level 5",
+        "cd00": "Level 6",
+        "ce00": "Level 7",
+        "cf00": "Level 8",
+        "d000": "Level 9",
+        "d100": "Level 10",
+        "d200": "Level 11",
+        "d300": "Level 12",
+        "d400": "Level 13",
+        "d500": "Level 14",
+        "d600": "Level 15",
+        "d700": "Level 16",
+        "d800": "Level 17",
+        "d900": "Level 18",
+        "da00": "Level 19",
+        "db00": "Level 20",
+        "dc00": "Level 21",
+        "dd00": "Level 22",
+        "de00": "Level 23",
+        "df00": "Level 24",
+        "e000": "Level 25",
+        "e100": "Level 26",
+        "e200": "Level 27",
+        "e300": "Level 28",
+        "e400": "Level 29",
+        "e500": "Level 30",
+        "e600": "Level 31",
+        "e700": "Level 32",
+        "e800": "Level 33",
+        "e900": "Level 34",
+        "ea00": "Level 35",
+        "eb00": "Level 36",
+        "ec00": "Level 37",
+        "ed00": "Level 38",
+        "ee00": "Level 39",
+        "ef00": "Level 40",
+        "f000": "Level 41",
+        "f100": "Level 42",
+        "f200": "Level 43",
+        "f300": "Level 44",
+        "f400": "Level 45",
+        "f500": "Level 46",
+        "f600": "Level 47",
+        "f700": "Level 48"
+    },
+    "stats": {
+        "labels": 401,
+        "regions": 482,
+        "comments": 485,
+        "anchors": 0
+    }
+}

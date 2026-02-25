@@ -78,6 +78,10 @@
             this.onRomLoaded = null;
             this.onError = null;
             this.onBreakpoint = null; // Called when breakpoint hit
+            this.breakpointTStates = 0; // T-states accumulated since last breakpoint
+            this._bpTStatesResetPending = false; // Deferred reset: stays visible until next action
+            this._debugCallStack = []; // Runtime call stack: [{addr, caller}] tracked via SP changes
+            this._debugCallStackMaxDepth = 32; // Max tracked depth
             this.pendingSnapCallback = null; // Called at next frame boundary for safe snapshots
             
             // Speed control (100 = normal, 0 = max)
@@ -202,6 +206,7 @@
             this.kempstonMouseWheel = 0; // Wheel position 0-15
             this.kempstonMouseEnabled = false;
             this.kempstonMouseWheelEnabled = false;
+            this.kempstonMouseSwapButtons = false; // Swap left/right buttons (bit0↔bit1)
 
             // Extended Kempston Joystick (bits 5-7: C, A, Start buttons)
             this.kempstonExtendedEnabled = false;
@@ -911,6 +916,7 @@
         setOverlayMode(mode) {
             // mode: 'normal', 'grid', 'box', 'screen', 'reveal', 'beam', 'beamscreen', 'noattr', 'nobitmap'
             this.overlayMode = mode;
+            this.ula.borderOnly = (mode === 'screen' || mode === 'reveal' || mode === 'beamscreen');
         }
 
         setZoom(zoom) {
@@ -947,6 +953,9 @@
             this.autoMap.read.clear();
             this.autoMap.written.clear();
             this.autoMap.currentFetchAddrs.clear();
+
+            // Clear runtime call stack
+            this._debugCallStack = [];
         }
 
         // ========== Port I/O ==========
@@ -1146,6 +1155,7 @@
                     port: port,
                     value: result,
                     pc: this.cpu.pc,
+                    src: this.getPortSource(),
                     frame: this.totalFrames,
                     rzxFrame: this.rzxPlaying ? this.rzxFrame : -1,
                     t: this.cpu.tStates
@@ -1173,6 +1183,7 @@
                     port: port,
                     value: val,
                     pc: this.cpu.pc,
+                    src: this.getPortSource(),
                     frame: this.totalFrames,
                     rzxFrame: this.rzxPlaying ? this.rzxFrame : -1,
                     t: this.cpu.tStates
@@ -1367,6 +1378,7 @@
             // Preserve T-state overshoot from previous frame (Swan-style)
             // If instruction ended past frame boundary, carry over the excess
             if (this.cpu.tStates >= tstatesPerFrame) {
+                this.breakpointTStates += tstatesPerFrame;
                 this.cpu.tStates -= tstatesPerFrame;
                 // Also adjust tape timing tracker to stay in sync
                 if (this._lastTapeUpdate >= tstatesPerFrame) {
@@ -1447,8 +1459,10 @@
                         rzxRecInstrBeforeInt = this.cpu.instructionCount;
                     }
                 }
+                const _intOldPC = this.cpu.pc, _intOldSP = this.cpu.sp;
                 const intTstates = this.cpu.interrupt();
                 this.cpu.tStates += intTstates;
+                this._trackInterruptCall(_intOldPC, _intOldSP);
                 intFired = true;
 
                 // RZX recording: start recording RIGHT AFTER interrupt fires
@@ -1506,6 +1520,7 @@
                     this.breakpointHit = true;
                     this.triggerHit = true;
                     this.lastTrigger = { trigger: execTrigger, addr: this.cpu.pc, type: 'exec' };
+                    this.breakpointTStates += this.cpu.tStates;
                     this.stop();
                     // Complete rendering of remaining lines
                     while (nextLineToRender < totalLines) {
@@ -1518,6 +1533,7 @@
                     this.drawOverlay();
                     if (this.onBreakpoint) this.onBreakpoint(this.cpu.pc);
                     if (this.onTrigger) this.onTrigger(this.lastTrigger);
+                    this._bpTStatesResetPending = true;
                     return;
                 }
                 if (tapeTrapsEnabled && this.tapeTrap.checkTrap()) continue;
@@ -1565,8 +1581,10 @@
                         if (this.rzxRecording) {
                             rzxRecInstrBeforeInt = this.cpu.instructionCount;
                         }
+                        const _hintOldPC = this.cpu.pc, _hintOldSP = this.cpu.sp;
                         const intTstates = this.cpu.interrupt();
                         this.cpu.tStates += intTstates;
+                        this._trackInterruptCall(_hintOldPC, _hintOldSP);
                         intFired = true;
                         // RZX recording: start recording RIGHT AFTER interrupt fires
                         if (this.rzxRecordPending) {
@@ -1622,7 +1640,9 @@
                             this.memory.read((instrPC + 3) & 0xffff)
                         ];
                     }
+                    const _csOldPC = this.cpu.pc, _csOldSP = this.cpu.sp;
                     this.cpu.execute();
+                    this._trackCallStack(_csOldPC, _csOldSP);
                     // If HALT instruction was just executed, mark as traced to avoid duplicate
                     if (this.cpu.halted) {
                         this.haltTraced = true;
@@ -1675,6 +1695,7 @@
                 if (this.watchpointHit) {
                     this.watchpointHit = false;
                     this.triggerHit = false;
+                    this.breakpointTStates += this.cpu.tStates;
                     this.stop();
                     // Complete rendering of remaining lines
                     while (nextLineToRender < totalLines) {
@@ -1687,6 +1708,7 @@
                     this.drawOverlay();
                     if (this.onWatchpoint) this.onWatchpoint(this.lastWatchpoint);
                     if (this.onTrigger) this.onTrigger(this.lastTrigger);
+                    this._bpTStatesResetPending = true;
                     return;
                 }
 
@@ -1694,6 +1716,7 @@
                 if (this.portBreakpointHit) {
                     this.portBreakpointHit = false;
                     this.triggerHit = false;
+                    this.breakpointTStates += this.cpu.tStates;
                     this.stop();
                     // Complete rendering of remaining lines
                     while (nextLineToRender < totalLines) {
@@ -1706,6 +1729,7 @@
                     this.drawOverlay();
                     if (this.onPortBreakpoint) this.onPortBreakpoint(this.lastPortBreakpoint);
                     if (this.onTrigger) this.onTrigger(this.lastTrigger);
+                    this._bpTStatesResetPending = true;
                     return;
                 }
             }
@@ -1722,8 +1746,10 @@
             // During RZX playback, the frame ended when instruction count was reached
             // Now fire the interrupt to start the next frame's execution
             if (this.rzxPlaying && this.cpu.iff1 && !this.cpu.eiPending) {
+                const _rzxIntOldPC = this.cpu.pc, _rzxIntOldSP = this.cpu.sp;
                 const intTstates = this.cpu.interrupt();
                 this.cpu.tStates += intTstates;
+                this._trackInterruptCall(_rzxIntOldPC, _rzxIntOldSP);
             }
 
             // Render remaining lines
@@ -1735,7 +1761,7 @@
 
             // Handle border-only modes: replace paper area with border color
             // Use proper T-state calculation to extend border into paper area
-            const borderOnlyMode = this.overlayMode === 'screen' || this.overlayMode === 'beamscreen';
+            const borderOnlyMode = this.overlayMode === 'screen' || this.overlayMode === 'reveal' || this.overlayMode === 'beamscreen';
             if (borderOnlyMode) {
                 const dims = this.ula.getDimensions();
                 const changes = this.ula.borderChanges;
@@ -1805,7 +1831,10 @@
                 // Get tape audio from tape player (if playing and enabled)
                 // Also suppress tape audio briefly after returning from high speed
                 const tapeAudioSuppressed = this._suppressTapeAudioUntil && Date.now() < this._suppressTapeAudioUntil;
-                const tapeAudioChanges = (this.tapeAudioEnabled && this.tapePlayer.isPlaying() && !tapeAudioSuppressed)
+                // Suppress tape audio in flash load mode — tape player may still run
+                // for turbo block EAR bit generation, but audio output is muted
+                const tapeAudioChanges = (this.tapeAudioEnabled && !this.tapeFlashLoad &&
+                    this.tapePlayer.isPlaying() && !tapeAudioSuppressed)
                     ? this.tapePlayer.getEdgeTransitions() : [];
 
                 // Pass tape audio changes (ROM doesn't echo tape signal to speaker)
@@ -1963,8 +1992,10 @@
                     this.cpu.incR();
                     this.cpu.instructionCount++;  // HALT NOP M1 cycle
                 }
+                const _hlIntOldPC = this.cpu.pc, _hlIntOldSP = this.cpu.sp;
                 const intTstates = this.cpu.interrupt();
                 this.cpu.tStates += intTstates;
+                this._trackInterruptCall(_hlIntOldPC, _hlIntOldSP);
                 intFired = true;
             }
 
@@ -2045,8 +2076,10 @@
                         // Swan shows T=60 at $805B, we had T=41, need +19T but only 4T affects quantized border
                         this.cpu.tStates = nextT + 4;
                         this.cpu.incR();
+                        const _hlHintOldPC = this.cpu.pc, _hlHintOldSP = this.cpu.sp;
                         const intTstates = this.cpu.interrupt();
                         this.cpu.tStates += intTstates;
+                        this._trackInterruptCall(_hlHintOldPC, _hlHintOldSP);
                         intFired = true;
                         continue;
                     }
@@ -2069,7 +2102,9 @@
                         }
                     }
                 } else {
+                    const _hlCsOldPC = this.cpu.pc, _hlCsOldSP = this.cpu.sp;
                     this.cpu.execute();
+                    this._trackCallStack(_hlCsOldPC, _hlCsOldSP);
 
                     // RZX playback: check if instruction count reached (FUSE-style frame end)
                     if (this.rzxPlaying && rzxExpectedFetchCount > 0) {
@@ -2104,8 +2139,10 @@
 
             // RZX playback: fire interrupt at frame end (FUSE-style)
             if (this.rzxPlaying && this.cpu.iff1 && !this.cpu.eiPending) {
+                const _hlRzxIntOldPC = this.cpu.pc, _hlRzxIntOldSP = this.cpu.sp;
                 const intTstates = this.cpu.interrupt();
                 this.cpu.tStates += intTstates;
+                this._trackInterruptCall(_hlRzxIntOldPC, _hlRzxIntOldSP);
             }
 
             // Render any remaining scanlines (same as runFrame)
@@ -2124,7 +2161,10 @@
                 // Get tape audio from tape player (if playing and enabled)
                 // Also suppress tape audio briefly after returning from high speed
                 const tapeAudioSuppressed = this._suppressTapeAudioUntil && Date.now() < this._suppressTapeAudioUntil;
-                const tapeAudioChanges = (this.tapeAudioEnabled && this.tapePlayer.isPlaying() && !tapeAudioSuppressed)
+                // Suppress tape audio in flash load mode — tape player may still run
+                // for turbo block EAR bit generation, but audio output is muted
+                const tapeAudioChanges = (this.tapeAudioEnabled && !this.tapeFlashLoad &&
+                    this.tapePlayer.isPlaying() && !tapeAudioSuppressed)
                     ? this.tapePlayer.getEdgeTransitions() : [];
 
                 // Pass tape audio changes (ROM doesn't echo tape signal to speaker)
@@ -2314,6 +2354,9 @@
         }
 
         drawRevealOverlay() {
+            // Reveal mode: main canvas shows border-only (borderOnly=true), overlay draws
+            // the normal screen picture (paper area) semi-transparently on top so you can
+            // see border effects underneath the screen content.
             if (!this.overlayCtx) return;
             const ctx = this.overlayCtx;
             const dims = this.ula.getDimensions();
@@ -2322,72 +2365,86 @@
             // Clear overlay canvas
             ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 
-            // Scale coordinates by zoom
             const borderTop = dims.borderTop * zoom;
             const borderLeft = dims.borderLeft * zoom;
             const screenWidth = dims.screenWidth * zoom;
             const screenHeight = dims.screenHeight * zoom;
 
-            // Reveal mode: show border extended OVER the paper (semi-transparent)
-            // Use proper T-state calculation to extend border into paper area
-            const changes = this.ula.borderChanges;
-            const palette = this.ula.palette;
+            // Render the normal screen content (bitmaps + attributes) into a temp canvas
+            const screen = this.ula.memory.getScreenBase();
+            const screenRam = screen.ram;
+            const pal = this.ula.palette;
+            const ulaplus = this.ula.ulaplus;
+            const ulaPlusActive = ulaplus && ulaplus.enabled && ulaplus.paletteEnabled;
+            const flashActive = this.ula.flashState;
 
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = dims.width;
             tempCanvas.height = dims.height;
             const tempCtx = tempCanvas.getContext('2d');
             const tempImageData = tempCtx.createImageData(dims.width, dims.height);
+            const data = tempImageData.data;
 
-            // For each line in paper area, extend border using proper T-state calculation
-            for (let y = dims.borderTop; y < dims.borderTop + dims.screenHeight; y++) {
-                // Calculate T-state range for this line
-                const lineStartTstate = this.ula.calculateLineStartTstate(y);
+            for (let y = 0; y < 192; y++) {
+                const third = Math.floor(y / 64);
+                const lineInThird = y & 0x07;
+                const charRow = Math.floor((y & 0x38) / 8);
+                const pixelAddr = (third << 11) | (lineInThird << 8) | (charRow << 5);
+                const attrAddr = 0x1800 + Math.floor(y / 8) * 32;
+                const screenY = y + dims.borderTop;
 
-                // Find starting color for this line
-                let currentColor = (changes && changes.length > 0) ? changes[0].color : this.ula.borderColor;
-                let changeIdx = 0;
+                for (let col = 0; col < 32; col++) {
+                    const pixelByte = screenRam[pixelAddr + col];
+                    const attr = screenRam[attrAddr + col];
 
-                if (changes && changes.length > 0) {
-                    for (let i = 0; i < changes.length; i++) {
-                        if (changes[i].tState <= lineStartTstate) {
-                            currentColor = changes[i].color;
-                            changeIdx = i + 1;
+                    let inkR, inkG, inkB, paperR, paperG, paperB;
+                    if (ulaPlusActive) {
+                        const clut = ((attr >> 6) & 0x03) << 4;
+                        const inkIdx = clut + (attr & 0x07);
+                        const paperIdx = clut + 8 + ((attr >> 3) & 0x07);
+                        // Decode GRB 332 palette entries to RGB
+                        const inkGrb = ulaplus.palette[inkIdx];
+                        const paperGrb = ulaplus.palette[paperIdx];
+                        const ig3 = (inkGrb >> 5) & 7, ir3 = (inkGrb >> 2) & 7, ib2 = inkGrb & 3;
+                        inkR = (ir3 << 5) | (ir3 << 2) | (ir3 >> 1);
+                        inkG = (ig3 << 5) | (ig3 << 2) | (ig3 >> 1);
+                        inkB = (ib2 << 6) | (ib2 << 4) | (ib2 << 2) | ib2;
+                        const pg3 = (paperGrb >> 5) & 7, pr3 = (paperGrb >> 2) & 7, pb2 = paperGrb & 3;
+                        paperR = (pr3 << 5) | (pr3 << 2) | (pr3 >> 1);
+                        paperG = (pg3 << 5) | (pg3 << 2) | (pg3 >> 1);
+                        paperB = (pb2 << 6) | (pb2 << 4) | (pb2 << 2) | pb2;
+                    } else {
+                        let ink = attr & 0x07;
+                        let paper = (attr >> 3) & 0x07;
+                        const bright = (attr & 0x40) ? 8 : 0;
+                        if ((attr & 0x80) && flashActive) {
+                            const tmp = ink; ink = paper; paper = tmp;
+                        }
+                        const inkRgb = pal[ink + bright];
+                        const paperRgb = pal[paper + bright];
+                        inkR = inkRgb[0]; inkG = inkRgb[1]; inkB = inkRgb[2];
+                        paperR = paperRgb[0]; paperG = paperRgb[1]; paperB = paperRgb[2];
+                    }
+
+                    for (let bit = 7; bit >= 0; bit--) {
+                        const px = dims.borderLeft + col * 8 + (7 - bit);
+                        const idx = (screenY * dims.width + px) * 4;
+                        if (pixelByte & (1 << bit)) {
+                            data[idx] = inkR; data[idx + 1] = inkG; data[idx + 2] = inkB;
                         } else {
-                            break;
+                            data[idx] = paperR; data[idx + 1] = paperG; data[idx + 2] = paperB;
                         }
+                        data[idx + 3] = 128;  // 50% transparent — border shows through
                     }
-                }
-
-                // Fill paper area with proper border colors based on T-state
-                for (let x = dims.borderLeft; x < dims.borderLeft + dims.screenWidth; x++) {
-                    // T-state for this pixel position
-                    const pixelTstate = lineStartTstate + Math.floor(x / 2);
-
-                    // Update color if there are changes before this T-state
-                    if (changes) {
-                        while (changeIdx < changes.length && changes[changeIdx].tState <= pixelTstate) {
-                            currentColor = changes[changeIdx].color;
-                            changeIdx++;
-                        }
-                    }
-
-                    // Ensure color index is valid and get RGB from palette
-                    const colorIdx = currentColor & 7;
-                    const rgb = palette ? palette[colorIdx] : [0, 0, 0, 255];
-                    const idx = (y * dims.width + x) * 4;
-                    tempImageData.data[idx] = rgb[0];
-                    tempImageData.data[idx + 1] = rgb[1];
-                    tempImageData.data[idx + 2] = rgb[2];
-                    tempImageData.data[idx + 3] = 180;  // Semi-transparent overlay
                 }
             }
+
             tempCtx.putImageData(tempImageData, 0, 0);
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(tempCanvas, 0, 0, dims.width, dims.height,
                           0, 0, dims.width * zoom, dims.height * zoom);
 
-            // Draw border around screen area for clarity (1px line)
+            // Draw border around screen area for clarity
             ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
             ctx.lineWidth = 1;
             ctx.strokeRect(borderLeft + 0.5, borderTop + 0.5, screenWidth - 1, screenHeight - 1);
@@ -2858,14 +2915,15 @@
         }
 
         drawNoBitmapOverlay() {
-            // No Bitmap mode: Show cells with diagonal crosses using ink/paper colors
-            // For multicolor support: extract ink/paper colors from the already-rendered frame buffer
-            // (attribute memory has final values, but frame buffer has correct per-scanline colors)
+            // No Bitmap mode: each 8x8 cell shows paper color with a diagonal
+            // ink-colored X cross so you can see where ink differs from paper.
+            // Per-cell color sampling for multicolor support.
             if (!this.overlayCtx) return;
             const ctx = this.overlayCtx;
             const dims = this.ula.getDimensions();
             const zoom = this.zoom;
             const frameBuffer = this.ula.frameBuffer;
+            if (!frameBuffer) return;
 
             // Clear overlay canvas
             ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
@@ -2876,6 +2934,7 @@
             tempCanvas.height = dims.height;
             const tempCtx = tempCanvas.getContext('2d');
             const tempImageData = tempCtx.createImageData(dims.width, dims.height);
+            const data = tempImageData.data;
 
             // Copy border from frame buffer
             for (let y = 0; y < dims.height; y++) {
@@ -2884,55 +2943,59 @@
                                      y >= dims.borderTop && y < dims.borderTop + dims.screenHeight;
                     if (!isScreen) {
                         const idx = (y * dims.width + x) * 4;
-                        tempImageData.data[idx] = frameBuffer[idx];
-                        tempImageData.data[idx + 1] = frameBuffer[idx + 1];
-                        tempImageData.data[idx + 2] = frameBuffer[idx + 2];
-                        tempImageData.data[idx + 3] = 255;
+                        data[idx] = frameBuffer[idx];
+                        data[idx + 1] = frameBuffer[idx + 1];
+                        data[idx + 2] = frameBuffer[idx + 2];
+                        data[idx + 3] = 255;
                     }
                 }
             }
 
-            // Process each scanline for multicolor support
-            for (let y = 0; y < 192; y++) {
-                const visY = dims.borderTop + y;
-                const lineInCell = y % 8;
-
+            // For each 8x8 cell, detect ink/paper from the top scanline of the cell,
+            // then fill the entire cell with paper + centered cross in ink.
+            for (let charRow = 0; charRow < 24; charRow++) {
                 for (let charCol = 0; charCol < 32; charCol++) {
                     const cellX = dims.borderLeft + charCol * 8;
+                    const cellY = dims.borderTop + charRow * 8;
 
-                    // Extract ink and paper colors from frame buffer for this 8-pixel span
-                    // Sample all 8 pixels and find the two unique colors
+                    // Sample all 64 pixels to find paper and ink colors
                     const colors = new Map();
-                    for (let px = 0; px < 8; px++) {
-                        const idx = (visY * dims.width + cellX + px) * 4;
-                        const r = frameBuffer[idx];
-                        const g = frameBuffer[idx + 1];
-                        const b = frameBuffer[idx + 2];
-                        const key = (r << 16) | (g << 8) | b;
-                        colors.set(key, (colors.get(key) || 0) + 1);
+                    for (let ly = 0; ly < 8; ly++) {
+                        for (let px = 0; px < 8; px++) {
+                            const idx = ((cellY + ly) * dims.width + cellX + px) * 4;
+                            const key = (frameBuffer[idx] << 16) | (frameBuffer[idx + 1] << 8) | frameBuffer[idx + 2];
+                            colors.set(key, (colors.get(key) || 0) + 1);
+                        }
                     }
 
-                    // Get the two most common colors (paper usually more common than ink)
                     const sorted = [...colors.entries()].sort((a, b) => b[1] - a[1]);
                     const paperKey = sorted[0] ? sorted[0][0] : 0;
                     const inkKey = sorted[1] ? sorted[1][0] : paperKey;
+                    const paperR = (paperKey >> 16) & 0xFF, paperG = (paperKey >> 8) & 0xFF, paperB = paperKey & 0xFF;
+                    const inkR = (inkKey >> 16) & 0xFF, inkG = (inkKey >> 8) & 0xFF, inkB = inkKey & 0xFF;
+                    const sameColor = (paperKey === inkKey);
 
-                    const paperColor = [(paperKey >> 16) & 0xFF, (paperKey >> 8) & 0xFF, paperKey & 0xFF];
-                    const inkColor = [(inkKey >> 16) & 0xFF, (inkKey >> 8) & 0xFF, inkKey & 0xFF];
+                    // Fill entire cell with paper
+                    for (let ly = 0; ly < 8; ly++) {
+                        for (let px = 0; px < 8; px++) {
+                            const idx = ((cellY + ly) * dims.width + cellX + px) * 4;
+                            data[idx] = paperR;
+                            data[idx + 1] = paperG;
+                            data[idx + 2] = paperB;
+                            data[idx + 3] = 255;
+                        }
+                    }
 
-                    // Draw 8 pixels of this scanline with diagonal cross pattern
-                    for (let px = 0; px < 8; px++) {
-                        const x = cellX + px;
-                        const idx = (visY * dims.width + x) * 4;
-
-                        // Draw X pattern: pixels on diagonals use ink, others use paper
-                        const onDiagonal = (px === lineInCell) || (px === 7 - lineInCell);
-                        const color = onDiagonal ? inkColor : paperColor;
-
-                        tempImageData.data[idx] = color[0];
-                        tempImageData.data[idx + 1] = color[1];
-                        tempImageData.data[idx + 2] = color[2];
-                        tempImageData.data[idx + 3] = 255;
+                    // Draw diagonal X cross in ink (only if ink differs from paper)
+                    if (!sameColor) {
+                        for (let d = 0; d < 8; d++) {
+                            // Top-left to bottom-right diagonal
+                            const idx1 = ((cellY + d) * dims.width + cellX + d) * 4;
+                            data[idx1] = inkR; data[idx1 + 1] = inkG; data[idx1 + 2] = inkB;
+                            // Top-right to bottom-left diagonal
+                            const idx2 = ((cellY + d) * dims.width + cellX + 7 - d) * 4;
+                            data[idx2] = inkR; data[idx2 + 1] = inkG; data[idx2 + 2] = inkB;
+                        }
                     }
                 }
             }
@@ -2948,6 +3011,10 @@
         start(force = false) {
             if (!force && (this.running || !this.romLoaded)) {
                 return;
+            }
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
             }
 
             // If forcing, ensure we're stopped first to clear any stale timers
@@ -3135,10 +3202,67 @@
             }
         }
 
+        // ========== Debugging - Call Stack Tracking ==========
+
+        // Track CALL/RST/INT (push) and RET/RETI/RETN (pop) by observing SP changes.
+        // oldPC = PC before instruction, oldSP = SP before instruction.
+        // After instruction: this.cpu.pc = new PC, this.cpu.sp = new SP.
+        _trackCallStack(oldPC, oldSP) {
+            const newSP = this.cpu.sp;
+            const newPC = this.cpu.pc;
+            const spDelta = (oldSP - newSP) & 0xFFFF;
+
+            if (spDelta === 0) return; // No SP change
+
+            if (spDelta === 2) {
+                // SP decreased by 2 — possible CALL/RST (PUSH also decreases by 2)
+                // Read the value that was pushed onto the stack (return address)
+                const pushed = this.memory.read(newSP) | (this.memory.read((newSP + 1) & 0xFFFF) << 8);
+                // For CALL nn: return addr = oldPC+3; for RST: return addr = oldPC+1
+                // For CALL with DD/FD prefix: return addr = oldPC+4
+                // Check if pushed value is a plausible return address (within 1-4 bytes of oldPC)
+                // PUSH reg pushes register values, not return addresses — filtered out here
+                const diff = (pushed - oldPC) & 0xFFFF;
+                if (diff >= 1 && diff <= 4) {
+                    // CALL/RST detected — newPC is the target
+                    if (this._debugCallStack.length < this._debugCallStackMaxDepth) {
+                        this._debugCallStack.push({ addr: newPC, caller: oldPC });
+                    }
+                }
+            } else if (spDelta === 0xFFFE) {
+                // SP increased by 2 — possible RET (POP also increases by 2)
+                // Verify: for RET, newPC equals the value popped from [oldSP]
+                // For POP reg, newPC = oldPC+1/+2 which won't match the popped data value
+                const popped = this.memory.read(oldSP) | (this.memory.read((oldSP + 1) & 0xFFFF) << 8);
+                if (newPC === popped && this._debugCallStack.length > 0) {
+                    this._debugCallStack.pop();
+                }
+            } else {
+                // SP changed by something other than ±2 (LD SP,nn / LD SP,HL / etc.)
+                // Stack frame is no longer valid — reset call stack
+                this._debugCallStack = [];
+            }
+        }
+
+        // Track interrupt as a call (pushes PC onto stack, jumps to handler)
+        _trackInterruptCall(oldPC, oldSP) {
+            const newSP = this.cpu.sp;
+            const newPC = this.cpu.pc;
+            if (((oldSP - newSP) & 0xFFFF) === 2) {
+                if (this._debugCallStack.length < this._debugCallStackMaxDepth) {
+                    this._debugCallStack.push({ addr: newPC, caller: oldPC, isInt: true });
+                }
+            }
+        }
+
         // ========== Debugging - Stepping ==========
 
         stepInto() {
             if (this.running || !this.romLoaded) return false;
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
+            }
 
             // If CPU is halted, run until INT fires and CPU exits HALT
             if (this.cpu.halted) {
@@ -3164,11 +3288,20 @@
                 ];
             }
             this.autoMap.inExecution = true;
+            const tBefore = this.cpu.tStates;
+            const _siOldPC = this.cpu.pc, _siOldSP = this.cpu.sp;
             this.cpu.step();
+            this._trackCallStack(_siOldPC, _siOldSP);
             this.autoMap.inExecution = false;
 
             // Handle frame boundary crossing during stepping (with late timing support)
-            this.handleFrameBoundary();
+            const frameCrossed = this.handleFrameBoundary();
+            // Accumulate T-states for breakpoint counter (account for frame wrap)
+            if (frameCrossed) {
+                this.breakpointTStates += (this.getTstatesPerFrame() - tBefore) + this.cpu.tStates;
+            } else {
+                this.breakpointTStates += this.cpu.tStates - tBefore;
+            }
 
             // Record trace after execution (includes port/mem ops)
             if (tracing) {
@@ -3196,10 +3329,11 @@
                 cycles += 4;
             }
 
+            this.breakpointTStates += cycles;
             this.renderToScreen();
             return !this.cpu.halted;
         }
-        
+
         // Redraw current screen (for grid toggle when paused)
         redraw() {
             if (!this.romLoaded) return;
@@ -3228,7 +3362,7 @@
             }
 
             // Handle border-only modes: replace paper area with border color
-            const borderOnlyMode = this.overlayMode === 'screen' || this.overlayMode === 'beamscreen';
+            const borderOnlyMode = this.overlayMode === 'screen' || this.overlayMode === 'reveal' || this.overlayMode === 'beamscreen';
             if (borderOnlyMode) {
                 const dims = this.ula.getDimensions();
                 const changes = this.ula.borderChanges;
@@ -3313,6 +3447,10 @@
         // Run until PC reaches target address (or max cycles exceeded)
         runToAddress(targetAddr, maxCycles = 10000000) {
             if (this.running || !this.romLoaded) return false;
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
+            }
             this.autoMap.inExecution = true;
             const tracing = this.traceEnabled && this.onBeforeStep;
             const tstatesPerFrame = this.getTstatesPerFrame();
@@ -3325,8 +3463,10 @@
                 if (this.cpu.pc !== startPC && this.cpu.pc !== targetAddr && this.hasBreakpointAt(this.cpu.pc)) {
                     this.breakpointHit = true;
                     this.autoMap.inExecution = false;
+                    this.breakpointTStates += cycles;
                     this.renderToScreen();
                     if (this.onBreakpoint) this.onBreakpoint(this.cpu.pc);
+                    this._bpTStatesResetPending = true;
                     return false;
                 }
                 // Clear trace ops and capture PC/bytes before execution
@@ -3344,7 +3484,9 @@
                         this.memory.read((instrPC + 3) & 0xffff)
                     ];
                 }
+                const _rtaOldPC = this.cpu.pc, _rtaOldSP = this.cpu.sp;
                 cycles += this.cpu.step();
+                this._trackCallStack(_rtaOldPC, _rtaOldSP);
 
                 // Handle frame boundary crossing (with late timing support)
                 this.handleFrameBoundary();
@@ -3355,6 +3497,7 @@
                 }
             }
             this.autoMap.inExecution = false;
+            this.breakpointTStates += cycles;
             // Render current screen state
             this.renderToScreen();
             return this.cpu.pc === targetAddr;
@@ -3453,7 +3596,9 @@
                         console.log(`[INT-step] FIRED at T=${this.cpu.tStates}, pendingIntAt=${this.pendingIntAt}, halted=${this.cpu.halted}`);
                     }
                     this.pendingInt = false;
+                    const _fbOldPC = this.cpu.pc, _fbOldSP = this.cpu.sp;
                     this.cpu.interrupt();
+                    this._trackInterruptCall(_fbOldPC, _fbOldSP);
                     // Adjust T-states for next frame
                     if (this.cpu.tStates >= tstatesPerFrame) {
                         this.cpu.tStates -= tstatesPerFrame;
@@ -3500,6 +3645,10 @@
         // Run until next interrupt
         runToInterrupt(maxCycles = 10000000) {
             if (this.running || !this.romLoaded) return false;
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
+            }
             this.autoMap.inExecution = true;
             const tracing = this.traceEnabled && this.onBeforeStep;
             let cycles = 0;
@@ -3513,6 +3662,7 @@
                 if (this.handleFrameBoundary()) {
                     // Interrupt was fired
                     this.autoMap.inExecution = false;
+                    this.breakpointTStates += cycles;
                     this.renderToScreen();
                     return true;
                 }
@@ -3521,8 +3671,10 @@
                 if (this.cpu.pc !== startPC && this.hasBreakpointAt(this.cpu.pc)) {
                     this.breakpointHit = true;
                     this.autoMap.inExecution = false;
+                    this.breakpointTStates += cycles;
                     this.renderToScreen();
                     if (this.onBreakpoint) this.onBreakpoint(this.cpu.pc);
+                    this._bpTStatesResetPending = true;
                     return false;
                 }
 
@@ -3541,7 +3693,9 @@
                         this.memory.read((instrPC + 3) & 0xffff)
                     ];
                 }
+                const _rtiOldPC = this.cpu.pc, _rtiOldSP = this.cpu.sp;
                 cycles += this.cpu.step();
+                this._trackCallStack(_rtiOldPC, _rtiOldSP);
                 // Record trace after execution
                 if (tracing) {
                     this.onBeforeStep(this.cpu, this.memory, instrPC, this.tracePortOps, this.traceMemOps, instrBytes);
@@ -3549,6 +3703,7 @@
             }
 
             this.autoMap.inExecution = false;
+            this.breakpointTStates += cycles;
             this.renderToScreen();
             return false;
         }
@@ -3556,6 +3711,10 @@
         // Run until RET instruction is executed
         runToRet(maxCycles = 10000000) {
             if (this.running || !this.romLoaded) return false;
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
+            }
             this.autoMap.inExecution = true;
             const tracing = this.traceEnabled && this.onBeforeStep;
             const tstatesPerFrame = this.getTstatesPerFrame();
@@ -3594,12 +3753,15 @@
                         ];
                     }
                     // Execute the RET and stop after
+                    const _rtrOldPC = this.cpu.pc, _rtrOldSP = this.cpu.sp;
                     cycles += this.cpu.step();
+                    this._trackCallStack(_rtrOldPC, _rtrOldSP);
                     // Record trace after execution
                     if (tracing) {
                         this.onBeforeStep(this.cpu, this.memory, instrPC, this.tracePortOps, this.traceMemOps, instrBytes);
                     }
                     this.autoMap.inExecution = false;
+                    this.breakpointTStates += cycles;
                     this.renderToScreen();
                     return true;
                 }
@@ -3608,8 +3770,10 @@
                 if (this.hasBreakpointAt(this.cpu.pc)) {
                     this.breakpointHit = true;
                     this.autoMap.inExecution = false;
+                    this.breakpointTStates += cycles;
                     this.renderToScreen();
                     if (this.onBreakpoint) this.onBreakpoint(this.cpu.pc);
+                    this._bpTStatesResetPending = true;
                     return false;
                 }
 
@@ -3628,7 +3792,9 @@
                         this.memory.read((instrPC + 3) & 0xffff)
                     ];
                 }
+                const _rtrlOldPC = this.cpu.pc, _rtrlOldSP = this.cpu.sp;
                 cycles += this.cpu.step();
+                this._trackCallStack(_rtrlOldPC, _rtrlOldSP);
 
                 // Handle frame boundary crossing (with late timing support)
                 this.handleFrameBoundary();
@@ -3647,6 +3813,10 @@
         // Run for specified number of T-states (ignores breakpoints for precise timing)
         runTstates(tstates) {
             if (this.running || !this.romLoaded) return 0;
+            if (this._bpTStatesResetPending) {
+                this.breakpointTStates = 0;
+                this._bpTStatesResetPending = false;
+            }
             this.autoMap.inExecution = true;
             const tracing = this.traceEnabled && this.onBeforeStep;
             let executed = 0;
@@ -3672,7 +3842,9 @@
                     ];
                 }
                 const before = this.cpu.tStates;
+                const _rtsOldPC = this.cpu.pc, _rtsOldSP = this.cpu.sp;
                 this.cpu.step();
+                this._trackCallStack(_rtsOldPC, _rtsOldSP);
                 executed += this.cpu.tStates - before;
                 // Record trace after execution
                 if (tracing) {
@@ -3681,6 +3853,7 @@
             }
 
             this.autoMap.inExecution = false;
+            this.breakpointTStates += executed;
             this.renderToScreen();
             return executed;
         }
@@ -4753,7 +4926,9 @@
         setMouseButton(button, pressed) {
             // Buttons are active low (0 = pressed, 1 = released)
             // button: 0=left, 1=middle, 2=right
-            const bit = button === 0 ? 1 : (button === 1 ? 2 : 0); // left=bit1, middle=bit2, right=bit0
+            // Default: left=bit1, right=bit0. Swap: left=bit0, right=bit1
+            const swap = this.kempstonMouseSwapButtons;
+            const bit = button === 0 ? (swap ? 0 : 1) : (button === 1 ? 2 : (swap ? 1 : 0));
             if (pressed) {
                 this.kempstonMouseButtons &= ~(1 << bit);
             } else {
@@ -6548,14 +6723,15 @@
         exportPortLog(filter = 'both') {
             const hex4 = v => v.toString(16).toUpperCase().padStart(4, '0');
             const hex2 = v => v.toString(16).toUpperCase().padStart(2, '0');
-            const lines = ['Dir\tPort\tValue\tPC\tFrame\tT-states'];
+            const lines = ['Dir\tPort\tValue\tPC\tSrc\tFrame\tT-states'];
             let count = 0;
             for (const entry of this.portLog) {
                 // Apply filter
                 if (filter === 'in' && entry.dir !== 'IN') continue;
                 if (filter === 'out' && entry.dir !== 'OUT') continue;
                 const frameStr = entry.frame >= 0 ? entry.frame : '-';
-                lines.push(`${entry.dir}\t${hex4(entry.port)}\t${hex2(entry.value)}\t${hex4(entry.pc)}\t${frameStr}\t${entry.t}`);
+                const src = entry.src || '';
+                lines.push(`${entry.dir}\t${hex4(entry.port)}\t${hex2(entry.value)}\t${hex4(entry.pc)}\t${src}\t${frameStr}\t${entry.t}`);
                 count++;
             }
             return { text: lines.join('\n'), count };
@@ -6594,6 +6770,16 @@
 
         getPortTraceFilters() {
             return this.portTraceFilters;
+        }
+
+        getPortSource() {
+            const pc = this.cpu.pc;
+            if (pc >= 0x4000) return '';
+            const mem = this.memory;
+            if (mem.specialPagingMode) return 'RAM';
+            if (mem.trdosActive) return 'TRDOS';
+            if (mem.ramInRomMode || mem.scorpionRamInRomMode) return 'RAM';
+            return 'ROM:' + mem.currentRomBank;
         }
 
         matchesPortTraceFilter(port) {
@@ -6667,6 +6853,216 @@
             };
         }
 
+        // ========== Static Code-Flow Analysis ==========
+
+        /**
+         * Classify a disassembled instruction's control flow.
+         * @param {string} mnemonic - Instruction mnemonic string
+         * @param {Array} refs - Refs array from disassembler (may be undefined)
+         * @returns {{ flow: string, unconditional: boolean, target: number|null, indirect: boolean }}
+         */
+        _classifyInstruction(mnemonic, refs) {
+            const m = mnemonic.trim();
+            const target = (refs && refs.length > 0) ? refs[0].target : null;
+
+            // RET / RETI / RETN
+            if (m === 'RET' || m === 'RETI' || m === 'RETN') {
+                return { flow: 'ret', unconditional: true, target: null, indirect: false };
+            }
+            if (m.startsWith('RET ')) {
+                return { flow: 'ret', unconditional: false, target: null, indirect: false };
+            }
+
+            // HALT
+            if (m === 'HALT') {
+                return { flow: 'halt', unconditional: true, target: null, indirect: false };
+            }
+
+            // JP (HL) / JP (IX) / JP (IY)
+            if (m === 'JP (HL)' || m === 'JP (IX)' || m === 'JP (IY)') {
+                return { flow: 'branch', unconditional: true, target: null, indirect: true };
+            }
+
+            // RST xx
+            if (m.startsWith('RST ')) {
+                return { flow: 'rst', unconditional: true, target: target, indirect: false };
+            }
+
+            // DJNZ
+            if (m.startsWith('DJNZ')) {
+                return { flow: 'branch', unconditional: false, target: target, indirect: false };
+            }
+
+            const ccRegex = /^(NZ|Z|NC|C|PO|PE|P|M),/i;
+
+            // JP / JR
+            if (m.startsWith('JP ') || m.startsWith('JR ')) {
+                const keyword = m.startsWith('JP') ? 'JP ' : 'JR ';
+                const rest = m.substring(keyword.length);
+                const conditional = ccRegex.test(rest);
+                return { flow: 'branch', unconditional: !conditional, target: target, indirect: false };
+            }
+
+            // CALL
+            if (m.startsWith('CALL ')) {
+                const rest = m.substring(5);
+                const conditional = ccRegex.test(rest);
+                return { flow: 'call', unconditional: !conditional, target: target, indirect: false };
+            }
+
+            // Everything else
+            return { flow: 'linear', unconditional: true, target: null, indirect: false };
+        }
+
+        /**
+         * Check if an address should be skipped during code-flow analysis.
+         */
+        _cfaShouldSkip(addr, skipRom, visited, isDataRegion) {
+            if (addr < 0 || addr > 0xFFFF) return true;
+            if (visited.has(addr)) return true;
+            if (skipRom && addr < 0x4000) return true;
+            if (isDataRegion && isDataRegion(addr)) return true;
+            return false;
+        }
+
+        /**
+         * Static code-flow analysis via recursive descent disassembly.
+         * Follows control flow from entry points to identify code regions,
+         * subroutine entries, and cross-references.
+         *
+         * @param {Object} options
+         * @param {number[]} options.entryPoints - Starting addresses
+         * @param {boolean} [options.skipRom=true] - Skip ROM area (0x0000-0x3FFF)
+         * @param {function} [options.isDataRegion] - Callback: addr => bool
+         * @param {function} [options.onProgress] - Callback: (processed, queued) => void
+         * @param {number} [options.maxInstructions=100000] - Safety limit
+         * @returns {Promise<{codeAddresses: Set, callTargets: Set, xrefs: Array, indirectJumps: Array, warnings: Array}>}
+         */
+        async analyzeCodeFlow(options) {
+            const {
+                entryPoints = [],
+                skipRom = true,
+                isDataRegion = null,
+                onProgress = null,
+                maxInstructions = 100000
+            } = options;
+
+            const visited = new Set();
+            const codeAddresses = new Set();
+            const callTargets = new Set();
+            const xrefs = [];
+            const indirectJumps = [];
+            const warnings = [];
+
+            // BFS queue — seed with entry points
+            const queue = [];
+            for (const ep of entryPoints) {
+                const addr = ep & 0xFFFF;
+                if (!this._cfaShouldSkip(addr, skipRom, visited, isDataRegion)) {
+                    queue.push(addr);
+                }
+            }
+
+            const disasm = new Disassembler(this.memory);
+            let processed = 0;
+            let lastYield = Date.now();
+
+            while (queue.length > 0) {
+                if (processed >= maxInstructions) {
+                    warnings.push(`Stopped after ${maxInstructions} instructions (safety limit)`);
+                    break;
+                }
+
+                const startAddr = queue.shift();
+                if (this._cfaShouldSkip(startAddr, skipRom, visited, isDataRegion)) {
+                    continue;
+                }
+
+                // Walk linearly from startAddr
+                let pc = startAddr;
+                while (pc <= 0xFFFF) {
+                    if (this._cfaShouldSkip(pc, skipRom, visited, isDataRegion)) {
+                        break;
+                    }
+                    if (processed >= maxInstructions) break;
+
+                    visited.add(pc);
+                    const result = disasm.disassemble(pc, true);
+                    processed++;
+
+                    // Mark all instruction bytes as code
+                    for (let i = 0; i < result.length; i++) {
+                        codeAddresses.add((pc + i) & 0xFFFF);
+                    }
+
+                    // Collect refs as xrefs
+                    if (result.refs) {
+                        for (const ref of result.refs) {
+                            xrefs.push({ from: pc, target: ref.target, type: ref.type });
+                        }
+                    }
+
+                    const classified = this._classifyInstruction(result.mnemonic, result.refs);
+
+                    if (classified.flow === 'ret') {
+                        // Unconditional ret: end path; conditional ret: continue fall-through
+                        if (classified.unconditional) break;
+                        pc = (pc + result.length) & 0xFFFF;
+                    } else if (classified.flow === 'halt') {
+                        break;
+                    } else if (classified.indirect) {
+                        // JP (HL)/(IX)/(IY) — cannot follow
+                        indirectJumps.push(pc);
+                        warnings.push(`Indirect jump at $${pc.toString(16).toUpperCase().padStart(4, '0')}: ${result.mnemonic}`);
+                        break;
+                    } else if (classified.flow === 'branch') {
+                        if (classified.target !== null && !this._cfaShouldSkip(classified.target, skipRom, visited, isDataRegion)) {
+                            queue.push(classified.target);
+                        }
+                        if (classified.unconditional) {
+                            break; // No fall-through
+                        }
+                        pc = (pc + result.length) & 0xFFFF;
+                    } else if (classified.flow === 'call') {
+                        if (classified.target !== null) {
+                            callTargets.add(classified.target);
+                            if (!this._cfaShouldSkip(classified.target, skipRom, visited, isDataRegion)) {
+                                queue.push(classified.target);
+                            }
+                        }
+                        pc = (pc + result.length) & 0xFFFF;
+                    } else if (classified.flow === 'rst') {
+                        if (classified.target !== null) {
+                            callTargets.add(classified.target);
+                            if (classified.target === 0) {
+                                // RST 0 = reset, end path
+                                break;
+                            }
+                            if (!this._cfaShouldSkip(classified.target, skipRom, visited, isDataRegion)) {
+                                queue.push(classified.target);
+                            }
+                        }
+                        pc = (pc + result.length) & 0xFFFF;
+                    } else {
+                        // Linear
+                        pc = (pc + result.length) & 0xFFFF;
+                    }
+
+                    // Yield to UI every 20ms
+                    const now = Date.now();
+                    if (now - lastYield >= 20) {
+                        if (onProgress) onProgress(processed, queue.length);
+                        await new Promise(r => setTimeout(r, 0));
+                        lastYield = Date.now();
+                    }
+                }
+            }
+
+            if (onProgress) onProgress(processed, 0);
+
+            return { codeAddresses, callTargets, xrefs, indirectJumps, warnings };
+        }
+
         // ========== Utility ==========
 
         getFps() { return this.actualFps; }
@@ -6727,7 +7123,7 @@
         }
 
         /**
-         * Start audio output using AudioWorklet
+         * Start audio output using AudioWorklet (or ScriptProcessorNode fallback)
          */
         async start() {
             if (this.context) return;
@@ -6747,16 +7143,19 @@
                 this.gainNode.gain.value = this.muted ? 0 : this.volume;
                 this.gainNode.connect(this.context.destination);
 
-                // Load AudioWorklet module
-                await this.context.audioWorklet.addModule('audio-processor.js');
-
-                // Create AudioWorkletNode
-                this.workletNode = new AudioWorkletNode(this.context, 'zx-audio-processor', {
-                    numberOfInputs: 0,
-                    numberOfOutputs: 1,
-                    outputChannelCount: [2]
-                });
-                this.workletNode.connect(this.gainNode);
+                if (this.context.audioWorklet) {
+                    // Modern path: AudioWorklet (requires secure context)
+                    await this.context.audioWorklet.addModule('audio-processor.js');
+                    this.workletNode = new AudioWorkletNode(this.context, 'zx-audio-processor', {
+                        numberOfInputs: 0,
+                        numberOfOutputs: 1,
+                        outputChannelCount: [2]
+                    });
+                    this.workletNode.connect(this.gainNode);
+                } else {
+                    // Fallback: ScriptProcessorNode (works over plain HTTP)
+                    this._initScriptProcessor();
+                }
 
                 // Resume context (may be suspended due to autoplay policy)
                 if (this.context.state === 'suspended') {
@@ -6771,12 +7170,58 @@
         }
 
         /**
+         * Initialize ScriptProcessorNode fallback for non-secure contexts
+         */
+        _initScriptProcessor() {
+            const bufferSize = 8192;
+            const ringL = new Float32Array(bufferSize);
+            const ringR = new Float32Array(bufferSize);
+            let writePos = 0;
+            let readPos = 0;
+
+            this.scriptNode = this.context.createScriptProcessor(2048, 0, 2);
+            this.scriptNode.onaudioprocess = (e) => {
+                const outL = e.outputBuffer.getChannelData(0);
+                const outR = e.outputBuffer.getChannelData(1);
+                for (let i = 0; i < outL.length; i++) {
+                    if (readPos !== writePos) {
+                        outL[i] = ringL[readPos];
+                        outR[i] = ringR[readPos];
+                        readPos = (readPos + 1) % bufferSize;
+                    } else {
+                        outL[i] = 0;
+                        outR[i] = 0;
+                    }
+                }
+            };
+            this.scriptNode.connect(this.gainNode);
+
+            // Expose write function for flushSamples
+            this._scriptRing = { ringL, ringR, bufferSize };
+            this._scriptWritePos = () => writePos;
+            this._scriptWrite = (left, right) => {
+                for (let i = 0; i < left.length; i++) {
+                    ringL[writePos] = left[i];
+                    ringR[writePos] = right[i];
+                    writePos = (writePos + 1) % bufferSize;
+                }
+            };
+        }
+
+        /**
          * Stop audio output
          */
         stop() {
             if (this.workletNode) {
                 this.workletNode.disconnect();
                 this.workletNode = null;
+            }
+            if (this.scriptNode) {
+                this.scriptNode.disconnect();
+                this.scriptNode = null;
+                this._scriptWrite = null;
+                this._scriptRing = null;
+                this._scriptWritePos = null;
             }
             if (this.gainNode) {
                 this.gainNode.disconnect();
@@ -6818,16 +7263,25 @@
         }
 
         /**
-         * Send buffered samples to AudioWorklet
+         * Send buffered samples to audio output
          */
         flushSamples() {
-            if (!this.workletNode || this.sendBufferPos === 0) return;
+            if (this.sendBufferPos === 0) return;
 
-            // Send samples to worklet
-            this.workletNode.port.postMessage({
-                left: this.sendBufferL.slice(0, this.sendBufferPos),
-                right: this.sendBufferR.slice(0, this.sendBufferPos)
-            });
+            if (this.workletNode) {
+                this.workletNode.port.postMessage({
+                    left: this.sendBufferL.slice(0, this.sendBufferPos),
+                    right: this.sendBufferR.slice(0, this.sendBufferPos)
+                });
+            } else if (this._scriptWrite) {
+                this._scriptWrite(
+                    this.sendBufferL.slice(0, this.sendBufferPos),
+                    this.sendBufferR.slice(0, this.sendBufferPos)
+                );
+            } else {
+                this.sendBufferPos = 0;
+                return;
+            }
             this.sendBufferPos = 0;
         }
 
@@ -6840,7 +7294,7 @@
          * @param {Array} tapeAudioChanges - Array of {tStates, level} tape signal changes
          */
         processFrame(frameTstates, beeperChanges = [], beeperLevel = 0, tapeAudioChanges = []) {
-            if (!this.enabled || !this.workletNode) return;
+            if (!this.enabled || (!this.workletNode && !this.scriptNode)) return;
 
             // Generate samples for this frame
             const samplesToGenerate = this.samplesPerFrame;

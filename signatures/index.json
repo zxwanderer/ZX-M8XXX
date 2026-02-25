@@ -1,0 +1,125 @@
+{
+    "version": 2,
+    "packs": [
+        {
+            "id": "rom-48k",
+            "file": "rom_48k.json",
+            "type": "engine",
+            "enabled": true,
+            "name": "ZX Spectrum 48K ROM",
+            "description": "1172 labels, 1081 regions, 6997 comments — standard ROM routines"
+        },
+        {
+            "id": "agd-4.7",
+            "file": "engine_agd47.json",
+            "type": "engine",
+            "enabled": true,
+            "name": "AGD 4.7 (Arcade Game Designer)",
+            "description": "192 labels, 130 comments, 13 regions from EngineZX.asm v0.7.10"
+        },
+        {
+            "id": "manic-miner",
+            "file": "engine_mm.json",
+            "type": "engine",
+            "enabled": true,
+            "name": "Manic Miner Engine",
+            "description": "192 labels — shared by 200+ MM-family games"
+        },
+        {
+            "id": "jet-set-willy",
+            "file": "engine_jsw.json",
+            "type": "engine",
+            "enabled": true,
+            "name": "Jet Set Willy Engine",
+            "description": "385 labels — shared by 100+ JSW-family games"
+        },
+        {
+            "id": "knight-lore",
+            "file": "game_knightlore.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Knight Lore (Filmation)",
+            "description": "896 labels — Ultimate isometric engine"
+        },
+        {
+            "id": "jetpac",
+            "file": "game_jetpac.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Jetpac",
+            "description": "368 labels — Ultimate Play the Game"
+        },
+        {
+            "id": "atic-atac",
+            "file": "game_aticatac.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Atic Atac",
+            "description": "1433 labels — Ultimate Play the Game"
+        },
+        {
+            "id": "skool-daze",
+            "file": "game_skooldaze.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Skool Daze",
+            "description": "1160 labels — Microsphere engine"
+        },
+        {
+            "id": "back-to-skool",
+            "file": "game_backtoskool.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Back to Skool",
+            "description": "1432 labels — Microsphere engine"
+        },
+        {
+            "id": "contact-sam-cruise",
+            "file": "game_contactsamcruise.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Contact Sam Cruise",
+            "description": "1214 labels — Microsphere engine"
+        },
+        {
+            "id": "hungry-horace",
+            "file": "game_hungryhorace.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Hungry Horace",
+            "description": "153 labels — Melbourne House"
+        },
+        {
+            "id": "elite",
+            "file": "game_elite.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Elite",
+            "description": "1066 labels — Acornsoft/Bell & Braben"
+        },
+        {
+            "id": "river-raid",
+            "file": "game_riverraid.json",
+            "type": "game",
+            "enabled": false,
+            "name": "River Raid",
+            "description": "401 labels — Activision"
+        },
+        {
+            "id": "dun-darach",
+            "file": "game_dundarach.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Dun Darach",
+            "description": "1229 labels — Gargoyle Games"
+        },
+        {
+            "id": "dynamite-dan-2",
+            "file": "game_dynamitedan2.json",
+            "type": "game",
+            "enabled": false,
+            "name": "Dynamite Dan 2",
+            "description": "355 labels — Mirrorsoft"
+        }
+    ]
+}

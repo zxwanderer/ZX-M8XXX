@@ -1,0 +1,7397 @@
+{
+    "id": "knight-lore",
+    "name": "Knight Lore (Filmation)",
+    "type": "game",
+    "source": "mrcook/zx-spectrum-games \u2014 Filmation engine",
+    "baseAddress": 23456,
+    "machineType": "48k",
+    "anchors": [],
+    "labels": {
+        "5ba0": "seed_1",
+        "5ba2": "seed_2",
+        "5ba4": "user_input_method",
+        "5ba5": "seed_3",
+        "5ba6": "old_input_method",
+        "5ba8": "objs_wiped_cnt",
+        "5ba9": "tmp_SP",
+        "5bab": "room_size_X",
+        "5bac": "room_size_Y",
+        "5bad": "curr_room_attrib",
+        "5bae": "room_size_Z",
+        "5baf": "portcullis_moving",
+        "5bb0": "portcullis_move_cnt",
+        "5bb1": "transform_flag_graphic",
+        "5bb2": "not_1st_screen",
+        "5bb3": "pickup_drop_pressed",
+        "5bb4": "objects_carried_changed",
+        "5bb5": "user_input",
+        "5bb6": "tmp_attrib",
+        "5bb7": "render_status_info",
+        "5bb8": "suppress_border",
+        "5bb9": "days",
+        "5bba": "lives",
+        "5bbb": "objects_put_in_cauldron",
+        "5bbc": "fire_seed",
+        "5bbd": "ball_bounce_height",
+        "5bbe": "rendered_objs_cnt",
+        "5bbf": "is_spike_ball_dropping",
+        "5bc0": "disable_spike_ball_drop",
+        "5bc1": "tmp_dZ",
+        "5bc2": "tmp_bouncing_ball_dZ",
+        "5bc3": "all_objs_in_cauldron",
+        "5bc4": "obj_dropping_into_cauldron",
+        "5bc5": "rising_blocks_z",
+        "5bc6": "num_scrns_visited",
+        "5bc7": "gfxbase_8x8",
+        "5bc9": "percent_msw",
+        "5bca": "percent_lsw",
+        "5bcb": "tmp_objects_to_draw",
+        "5bcd": "render_obj_1",
+        "5bcf": "render_obj_2",
+        "5bd1": "audio_played",
+        "5bd2": "debounce_5",
+        "5bd3": "cant_drop",
+        "5bd8": "inventory",
+        "5bdc": "objects_carried",
+        "5be3": "unk_5BE3",
+        "5be4": "object_carried_2",
+        "5be7": "end_of_objects_carried",
+        "5be8": "scrn_visited",
+        "5c08": "graphic_objs_tbl",
+        "5c48": "special_objs_here",
+        "5c68": "special_objs_here_1",
+        "5c88": "other_objs_here",
+        "6108": "font",
+        "6248": "room_size_tbl",
+        "6251": "location_tbl",
+        "6bd1": "block_type_tbl",
+        "6c0b": "block",
+        "6c12": "block_high",
+        "6c19": "block_ew",
+        "6c20": "block_ns",
+        "6c27": "moveable_block",
+        "6c2e": "dropping_block",
+        "6c35": "collapsing_block",
+        "6c3c": "fire",
+        "6c43": "ball_ud_y",
+        "6c4a": "ball_ud_xy",
+        "6c51": "ball_ud",
+        "6c58": "ball_ud_x",
+        "6c5f": "ball_bounce",
+        "6c66": "rock",
+        "6c6d": "gargoyle",
+        "6c74": "spike",
+        "6c7b": "spike_high",
+        "6c82": "spike_ball_fall",
+        "6c89": "spike_ball_high_fall",
+        "6c90": "chest",
+        "6c97": "table",
+        "6c9e": "guard_ew",
+        "6cab": "guard_square",
+        "6cb8": "ghost",
+        "6cbf": "fire_ns",
+        "6cc6": "fire_ew",
+        "6ccd": "repel_spell",
+        "6cd4": "gate_ud_1",
+        "6cdb": "gate_ud_2",
+        "6ce2": "background_type_tbl",
+        "6d12": "arch_n",
+        "6d23": "arch_e",
+        "6d34": "high_arch_e",
+        "6d45": "arch_s",
+        "6d56": "high_arch_s",
+        "6d67": "arch_w",
+        "6d78": "tree_arch_n",
+        "6d89": "tree_arch_e",
+        "6d9a": "tree_arch_s",
+        "6dab": "tree_arch_w",
+        "6dbc": "gate_n",
+        "6dc5": "gate_e",
+        "6dce": "gate_s",
+        "6dd7": "gate_w",
+        "6de0": "wall_size_1",
+        "6e49": "wall_size_2",
+        "6eba": "wall_size_3",
+        "6f2b": "tree_room_size_1",
+        "6f8c": "tree_filler_w",
+        "6f9d": "tree_filler_n",
+        "6fae": "wizard",
+        "6fbf": "cauldron",
+        "6fd0": "high_arch_e_base",
+        "6fe1": "high_arch_s_base",
+        "6ff2": "special_objs_tbl",
+        "7112": "sprite_tbl",
+        "728a": "spr_nul",
+        "728c": "spr_000",
+        "7348": "spr_001",
+        "7404": "spr_002",
+        "74e6": "spr_003",
+        "75b0": "spr_004",
+        "763c": "spr_005",
+        "76c8": "spr_006",
+        "773c": "spr_007",
+        "77aa": "spr_008",
+        "7894": "spr_009",
+        "7926": "spr_010",
+        "7964": "spr_011",
+        "79a6": "spr_012",
+        "7a92": "spr_013",
+        "7b5a": "spr_014",
+        "7c5c": "spr_015",
+        "7c64": "spr_016",
+        "7c96": "spr_017",
+        "7d98": "filler",
+        "7da4": "spr_018",
+        "7de6": "spr_019",
+        "7e08": "spr_020",
+        "7eea": "spr_021",
+        "7f30": "spr_022",
+        "7fb0": "spr_023",
+        "80a2": "spr_024",
+        "8164": "spr_025",
+        "81de": "spr_026",
+        "825e": "spr_027",
+        "82ea": "spr_028",
+        "837c": "spr_029",
+        "840e": "spr_030",
+        "84a0": "spr_031",
+        "8514": "spr_032",
+        "859a": "spr_033",
+        "8626": "spr_034",
+        "8694": "spr_035",
+        "8726": "spr_036",
+        "87a6": "spr_037",
+        "87e8": "spr_038",
+        "882a": "spr_039",
+        "88a4": "spr_040",
+        "8918": "spr_041",
+        "8992": "spr_042",
+        "8a0c": "spr_043",
+        "8b0a": "spr_044",
+        "8bf4": "spr_045",
+        "8cee": "spr_046",
+        "8d80": "spr_047",
+        "8e18": "spr_048",
+        "8eb0": "spr_049",
+        "8f42": "spr_050",
+        "8fd4": "spr_051",
+        "9066": "spr_052",
+        "90fe": "spr_053",
+        "9196": "spr_054",
+        "922e": "spr_055",
+        "9290": "spr_056",
+        "92f2": "spr_057",
+        "9354": "spr_058",
+        "93b6": "spr_059",
+        "9418": "spr_060",
+        "947a": "spr_061",
+        "94dc": "spr_062",
+        "953e": "spr_063",
+        "95d0": "spr_064",
+        "9668": "spr_065",
+        "9700": "spr_066",
+        "97c2": "spr_067",
+        "9884": "spr_068",
+        "9946": "spr_069",
+        "9a08": "spr_070",
+        "9aca": "spr_071",
+        "9c04": "spr_072",
+        "9c92": "spr_073",
+        "9d54": "spr_074",
+        "9e5e": "spr_075",
+        "9eb8": "spr_076",
+        "9fb4": "spr_077",
+        "a046": "spr_078",
+        "a0b4": "spr_079",
+        "a116": "spr_080",
+        "a178": "spr_081",
+        "a1da": "spr_082",
+        "a23c": "spr_083",
+        "a29e": "spr_084",
+        "a300": "spr_085",
+        "a362": "spr_086",
+        "a3c4": "spr_087",
+        "a474": "spr_088",
+        "a524": "spr_089",
+        "a5d4": "spr_090",
+        "a684": "spr_091",
+        "a73a": "spr_092",
+        "a7f0": "spr_093",
+        "a8a6": "spr_094",
+        "a95c": "spr_095",
+        "aa0c": "spr_096",
+        "aabc": "spr_097",
+        "ab72": "spr_098",
+        "ac28": "spr_099",
+        "acea": "spr_100",
+        "adb2": "spr_101",
+        "ae98": "spr_102",
+        "af6c": "START",
+        "af7f": "start_menu",
+        "af88": "main",
+        "afb7": "player_dies",
+        "afba": "game_loop",
+        "afbd": "onscreen_loop",
+        "afc7": "update_sprite_loop",
+        "afd5": "jump_to_upd_object",
+        "afdb": "jump_to_tbl_entry",
+        "afe4": "ret_from_tbl_jp",
+        "b000": "loc_B000",
+        "b035": "game_delay",
+        "b038": "delay_loop",
+        "b03f": "no_delay",
+        "b074": "loc_B074",
+        "b088": "reset_objs_wipe_flag",
+        "b090": "loc_B090",
+        "b096": "upd_sprite_jmp_tbl",
+        "b20e": "start_game_tune",
+        "b218": "game_over_tune",
+        "b239": "game_complete_tune",
+        "b253": "menu_tune",
+        "b2b6": "play_audio_wait_key",
+        "b2be": "play_audio_until_keypress",
+        "b2c5": "loc_B2C5",
+        "b2cf": "play_audio",
+        "b2d9": "end_audio",
+        "b2da": "play_note",
+        "b2f9": "calc_duration",
+        "b2ff": "loc_B2FF",
+        "b300": "loc_B300",
+        "b304": "loc_B304",
+        "b30f": "loc_B30F",
+        "b31c": "snd_delay",
+        "b327": "loc_B327",
+        "b328": "loc_B328",
+        "b332": "freq_tbl",
+        "b3e9": "audio_B3E9",
+        "b3fb": "byte_B3FB",
+        "b403": "audio_B403",
+        "b40d": "loc_B40D",
+        "b419": "audio_B419",
+        "b423": "loc_B423",
+        "b42e": "audio_B42E",
+        "b433": "loc_B433",
+        "b441": "audio_B441",
+        "b443": "loc_B443",
+        "b451": "audio_B451",
+        "b454": "audio_B454",
+        "b45d": "audio_B45D",
+        "b462": "audio_B462",
+        "b467": "audio_B467",
+        "b472": "audio_B472",
+        "b47d": "loc_B47D",
+        "b489": "audio_B489",
+        "b495": "loc_B495",
+        "b4a3": "toggle_audio_hw_x16",
+        "b4a8": "toggle_audio_hw_x24",
+        "b4ad": "audio_guard_wizard",
+        "b4bb": "audio_B4BB",
+        "b4c1": "audio_B4C1",
+        "b4c6": "loc_B4C6",
+        "b4d1": "loc_B4D1",
+        "b4e6": "toggle_audio_hw_xC",
+        "b4ed": "toggle_audio_hw",
+        "b4f2": "loc_B4F2",
+        "b4f9": "loc_B4F9",
+        "b4fd": "do_any_objs_intersect",
+        "b510": "loc_B510",
+        "b524": "loc_B524",
+        "b52e": "loc_B52E",
+        "b538": "is_object_not_ignored",
+        "b544": "shuffle_objects_required",
+        "b54c": "loc_B54C",
+        "b555": "loc_B555",
+        "b566": "upd_131_to_133",
+        "b58b": "dX_dY_tbl",
+        "b593": "p4_m4",
+        "b596": "save_dX_dY",
+        "b5a4": "loc_B5A4",
+        "b5a9": "loc_B5A9",
+        "b5af": "dec_dZ_wipe_and_draw",
+        "b5b5": "p4_p4",
+        "b5ba": "m4_m4",
+        "b5bf": "m4_p4",
+        "b5c4": "loc_B5C4",
+        "b5cf": "loc_B5CF",
+        "b5de": "loc_B5DE",
+        "b5e3": "loc_B5E3",
+        "b5f7": "read_port",
+        "b5ff": "upd_182_183",
+        "b626": "loc_B626",
+        "b63c": "loc_B63C",
+        "b64f": "loc_B64F",
+        "b65d": "loc_B65D",
+        "b661": "loc_B661",
+        "b668": "loc_B668",
+        "b66e": "loc_B66E",
+        "b676": "loc_B676",
+        "b67a": "loc_B67A",
+        "b683": "upd_91",
+        "b69f": "loc_B69F",
+        "b6a2": "upd_143",
+        "b6b1": "upd_55",
+        "b6b9": "upd_54",
+        "b6bf": "loc_B6BF",
+        "b6db": "loc_B6DB",
+        "b6de": "loc_B6DE",
+        "b6ef": "loc_B6EF",
+        "b6f9": "upd_144_to_149_152_to_157",
+        "b716": "loc_B716",
+        "b71a": "loc_B71A",
+        "b720": "loc_B720",
+        "b726": "loc_B726",
+        "b730": "loc_B730",
+        "b736": "loc_B736",
+        "b73c": "upd_150_151",
+        "b749": "loc_B749",
+        "b763": "loc_B763",
+        "b76c": "set_guard_wizard_sprite",
+        "b783": "loc_B783",
+        "b788": "loc_B788",
+        "b78e": "loc_B78E",
+        "b798": "loc_B798",
+        "b79d": "loc_B79D",
+        "b7a3": "upd_22",
+        "b7a9": "upd_63",
+        "b7cd": "spiked_ball_drop",
+        "b7d9": "draw_spiked_ball",
+        "b7dc": "loc_B7DC",
+        "b7e7": "upd_23",
+        "b7ed": "upd_86_87",
+        "b7fe": "loc_B7FE",
+        "b80f": "upd_180_181",
+        "b820": "loc_B820",
+        "b82f": "loc_B82F",
+        "b83a": "loc_B83A",
+        "b83f": "upd_176_177",
+        "b856": "set_deadly_wipe_and_draw_flags",
+        "b85c": "set_both_deadly_flags",
+        "b865": "upd_178_179",
+        "b876": "loc_B876",
+        "b892": "loc_B892",
+        "b894": "ball_up",
+        "b8a9": "init_cauldron_bubbles",
+        "b8c8": "cauldron_bubbles",
+        "b8da": "upd_160_to_163",
+        "b916": "loc_B916",
+        "b919": "loc_B919",
+        "b923": "upd_168_to_175",
+        "b92c": "upd_164_to_167",
+        "b942": "loc_B942",
+        "b945": "loc_B945",
+        "b95e": "upd_111",
+        "b962": "loc_B962",
+        "b965": "move_towards_plyr",
+        "b973": "loc_B973",
+        "b981": "loc_B981",
+        "b985": "toggle_next_prev_sprite",
+        "b98c": "next_graphic_no_mod_4",
+        "b998": "save_graphic_no",
+        "b99c": "upd_141",
+        "b99f": "upd_142",
+        "b9a5": "upd_30_31_158_159",
+        "b9cc": "move_guard_wizard_NSEW",
+        "b9d8": "guard_NSEW_tbl",
+        "b9e0": "guard_W",
+        "b9eb": "next_guard_dir",
+        "b9fb": "guard_N",
+        "ba08": "guard_E",
+        "ba15": "guard_S",
+        "ba22": "game_over",
+        "ba29": "loc_BA29",
+        "ba79": "loc_BA79",
+        "ba87": "loc_BA87",
+        "ba9b": "wait_for_key_press",
+        "ba9e": "loc_BA9E",
+        "baab": "game_complete_msg",
+        "bad2": "complete_colours",
+        "bad8": "complete_xy",
+        "bae4": "the_potion_casts",
+        "bb4c": "gameover_colours",
+        "bb52": "gameover_xy",
+        "bb5e": "a_GAME_OVER",
+        "bbb7": "rating_tbl",
+        "bbc7": "a_POOR",
+        "bbcf": "a_AVERAGE",
+        "bbd8": "a_FAIR",
+        "bbe0": "a_GOOD",
+        "bbe8": "a_EXCELLENT",
+        "bbf2": "a_MARVELLOUS",
+        "bbfd": "a_HERO",
+        "bc05": "a_ADVENTURER",
+        "bc10": "calc_and_display_percent",
+        "bc18": "count_screens",
+        "bc1b": "loc_BC1B",
+        "bc1f": "loc_BC1F",
+        "bc38": "loc_BC38",
+        "bc61": "loc_BC61",
+        "bc66": "print_days",
+        "bc7a": "print_lives_gfx",
+        "bca3": "print_lives",
+        "bcae": "print_BCD_number",
+        "bcb6": "loc_BCB6",
+        "bcc0": "print_BCD_lsd",
+        "bcca": "display_day",
+        "bce7": "day_txt",
+        "bcec": "day_font",
+        "bd0c": "do_menu_selection",
+        "bd15": "loc_BD15",
+        "bd23": "menu_loop",
+        "bd3e": "check_for_kempston_joystick",
+        "bd46": "check_for_cursor_joystick",
+        "bd4e": "check_for_interface_ii",
+        "bd54": "check_for_directional_control",
+        "bd6c": "check_for_start_game",
+        "bd85": "clr_debounce",
+        "bd89": "flash_menu",
+        "bda2": "menu_colours",
+        "bdaa": "menu_xy",
+        "bdba": "menu_text",
+        "be31": "print_text_single_colour",
+        "be45": "print_text_std_font",
+        "be4c": "print_text",
+        "be56": "loc_BE56",
+        "be5f": "loc_BE5F",
+        "be72": "loc_BE72",
+        "be7f": "print_8x8",
+        "be91": "loc_BE91",
+        "bea3": "toggle_selected",
+        "bea6": "loc_BEA6",
+        "beaa": "loc_BEAA",
+        "bead": "loc_BEAD",
+        "beaf": "loc_BEAF",
+        "beb3": "display_menu",
+        "bebf": "display_text_list",
+        "bee4": "multiple_print_sprite",
+        "befe": "upd_120_to_126",
+        "bf11": "upd_127",
+        "bf21": "init_death_sparkles",
+        "bf2b": "upd_112_to_118_184",
+        "bf31": "loc_BF31",
+        "bf37": "upd_185_187",
+        "bf3f": "upd_119",
+        "bf45": "display_objects_carried",
+        "bf4e": "display_objects",
+        "bf59": "display_object",
+        "bf91": "loc_BF91",
+        "bfd3": "object_attributes",
+        "bfdb": "sprite_scratchpad",
+        "bffb": "chk_pickup_drop",
+        "c00b": "loc_C00B",
+        "c00e": "handle_pickup_drop",
+        "c041": "loc_C041",
+        "c06f": "loc_C06F",
+        "c08c": "loc_C08C",
+        "c093": "loc_C093",
+        "c09d": "done_pickup_drop",
+        "c0a9": "loc_C0A9",
+        "c0b2": "room_to_drop",
+        "c0dd": "loc_C0DD",
+        "c106": "drop_object",
+        "c12b": "adjust_carried",
+        "c141": "pickup_object",
+        "c172": "can_pickup_spec_obj",
+        "c17a": "is_on_or_near_obj",
+        "c19f": "loc_C19F",
+        "c1a1": "is_obj_moving",
+        "c1ab": "upd_103",
+        "c1ee": "loc_C1EE",
+        "c1f1": "upd_104_to_110",
+        "c202": "loc_C202",
+        "c213": "loc_C213",
+        "c222": "loc_C222",
+        "c22c": "loc_C22C",
+        "c22f": "loc_C22F",
+        "c232": "audio_B467_wipe_and_draw",
+        "c238": "centre_of_room",
+        "c245": "add_obj_to_cauldron",
+        "c265": "loc_C265",
+        "c274": "ret_next_obj_required",
+        "c27d": "objects_required",
+        "c28b": "upd_96_to_102",
+        "c29b": "loc_C29B",
+        "c2a5": "cycle_colours_with_sound",
+        "c2a7": "loc_C2A7",
+        "c2ad": "cycle_attribute_mem",
+        "c2c3": "loc_C2C3",
+        "c2cb": "no_update",
+        "c2cc": "prepare_final_animation",
+        "c2dc": "loc_C2DC",
+        "c2ee": "loc_C2EE",
+        "c2f9": "loc_C2F9",
+        "c306": "chk_and_init_transform",
+        "c337": "upd_92_to_95",
+        "c349": "loc_C349",
+        "c357": "rand_legs_sprite",
+        "c369": "loc_C369",
+        "c377": "loc_C377",
+        "c394": "loc_C394",
+        "c397": "print_sun_moon",
+        "c3a4": "display_sun_moon_frame",
+        "c3c3": "display_frame",
+        "c3ff": "toggle_day_night",
+        "c419": "inc_days",
+        "c432": "blit_2x8",
+        "c440": "sun_moon_yoff",
+        "c44d": "sun_moon_scratchpad",
+        "c46d": "init_sun",
+        "c47e": "init_special_objects",
+        "c489": "init_obj_loop",
+        "c4aa": "upd_62",
+        "c4b6": "upd_85",
+        "c4c3": "upd_84",
+        "c4c6": "dec_dZ_upd_XYZ_wipe_if_moving",
+        "c4d3": "upd_128_to_130",
+        "c4d8": "adj_m4_m12",
+        "c4dd": "adj_m6_m12",
+        "c4e0": "jp_set_pixel_adj",
+        "c4e3": "upd_6_7",
+        "c4e8": "upd_10",
+        "c4ed": "upd_11",
+        "c4f2": "upd_12_to_15",
+        "c4f7": "adj_m8_m12",
+        "c4fc": "adj_m7_m12",
+        "c501": "adj_m12_m12",
+        "c506": "upd_88_to_90",
+        "c50b": "adj_p7_m12",
+        "c510": "adj_p3_m12",
+        "c515": "fill_window",
+        "c518": "loc_C518",
+        "c51a": "loc_C51A",
+        "c525": "find_special_objs_here",
+        "c530": "loc_C530",
+        "c572": "loc_C572",
+        "c583": "loc_C583",
+        "c591": "update_special_objs",
+        "c595": "loc_C595",
+        "c5b7": "loc_C5B7",
+        "c5c8": "upd_80_to_83",
+        "c5dd": "loc_C5DD",
+        "c5fd": "loc_C5FD",
+        "c603": "calc_ghost_sprite",
+        "c60c": "loc_C60C",
+        "c616": "loc_C616",
+        "c624": "set_ghost_hflip",
+        "c629": "loc_C629",
+        "c62f": "loc_C62F",
+        "c63a": "clr_ghost_hflip",
+        "c63f": "loc_C63F",
+        "c645": "get_delta_from_tbl",
+        "c64e": "delta_tbl",
+        "c65e": "upd_8",
+        "c685": "init_portcullis_down",
+        "c691": "loc_C691",
+        "c692": "set_wipe_and_draw_flags",
+        "c69d": "set_wipe_and_draw_IY",
+        "c6ad": "init_portcullis_up",
+        "c6bd": "upd_9",
+        "c6e0": "stop_portcullis",
+        "c6ea": "move_portcullis_up",
+        "c700": "dec_dZ_and_update_XYZ",
+        "c706": "add_dXYZ",
+        "c722": "upd_3_5",
+        "c72b": "set_pixel_adj",
+        "c732": "adj_3_5_hflip",
+        "c737": "adj_m3_p1",
+        "c73c": "upd_2_4",
+        "c74c": "loc_C74C",
+        "c760": "loc_C760",
+        "c76c": "adj_2_4_hflip",
+        "c785": "loc_C785",
+        "c791": "loc_C791",
+        "c7a9": "adj_arch_tbl",
+        "c7b1": "adj_ew",
+        "c7bf": "loc_C7BF",
+        "c7c4": "adj_ns",
+        "c7d2": "loc_C7D2",
+        "c7d5": "loc_C7D5",
+        "c7d6": "loc_C7D6",
+        "c7db": "chk_plyr_spec_near_arch",
+        "c7e4": "loc_C7E4",
+        "c7f9": "loc_C7F9",
+        "c7fe": "is_near_to",
+        "c808": "loc_C808",
+        "c814": "loc_C814",
+        "c820": "loc_C820",
+        "c823": "upd_16_to_21_24_to_29",
+        "c828": "upd_48_to_53_56_to_61",
+        "c82b": "upd_player_bottom",
+        "c83e": "loc_C83E",
+        "c855": "loc_C855",
+        "c86a": "loc_C86A",
+        "c86d": "plyr_OOB",
+        "c87a": "chk_plyr_OOB",
+        "c891": "loc_C891",
+        "c89d": "loc_C89D",
+        "c89f": "handle_left_right",
+        "c8be": "loc_C8BE",
+        "c8cd": "chk_facing_N",
+        "c8d2": "loc_C8D2",
+        "c8d5": "loc_C8D5",
+        "c8d9": "chk_facing_E",
+        "c8e0": "chk_facing_S",
+        "c8e5": "loc_C8E5",
+        "c8e9": "chk_facing_W",
+        "c8ef": "flag_forward",
+        "c8f2": "left_right_rotational",
+        "c8fd": "loc_C8FD",
+        "c915": "loc_C915",
+        "c91f": "left_right_calc_sprite",
+        "c927": "loc_C927",
+        "c92f": "loc_C92F",
+        "c940": "loc_C940",
+        "c948": "handle_jump",
+        "c969": "handle_forward",
+        "c97a": "loc_C97A",
+        "c97f": "animate_human_legs",
+        "c98b": "loc_C98B",
+        "c994": "loc_C994",
+        "c9a1": "move_player",
+        "c9ab": "loc_C9AB",
+        "c9bc": "loc_C9BC",
+        "c9c1": "loc_C9C1",
+        "c9cc": "loc_C9CC",
+        "c9cd": "loc_C9CD",
+        "c9f3": "clear_dX_dY",
+        "c9fb": "calc_plyr_dXY",
+        "ca17": "lookup_plyr_dXY",
+        "ca1e": "get_sprite_dir",
+        "ca32": "off_CA32",
+        "ca3a": "move_plyr_W",
+        "ca3f": "loc_CA3F",
+        "ca43": "move_plyr_E",
+        "ca4a": "move_plyr_N",
+        "ca4f": "loc_CA4F",
+        "ca53": "move_plyr_S",
+        "ca5a": "adj_dZ_for_out_of_bounds",
+        "ca5e": "loc_CA5E",
+        "ca70": "handle_exit_screen",
+        "ca89": "adj_d_for_out_of_bounds",
+        "ca90": "loc_CA90",
+        "ca92": "screen_move_tbl",
+        "ca9a": "screen_west",
+        "cab3": "screen_e_w",
+        "caba": "exit_screen",
+        "caf3": "screen_east",
+        "cb0e": "screen_north",
+        "cb29": "screen_south",
+        "cb45": "adj_for_out_of_bounds",
+        "cb6a": "dZ_ok",
+        "cb7b": "loc_CB7B",
+        "cb8c": "loc_CB8C",
+        "cb9a": "adj_dX_for_obj_intersect",
+        "cba0": "loc_CBA0",
+        "cbaf": "loc_CBAF",
+        "cbd9": "loc_CBD9",
+        "cbe1": "loc_CBE1",
+        "cbe9": "adj_dY_for_obj_intersect",
+        "cbef": "loc_CBEF",
+        "cbfe": "loc_CBFE",
+        "cc28": "loc_CC28",
+        "cc30": "loc_CC30",
+        "cc38": "adj_dZ_for_obj_intersect",
+        "cc3e": "loc_CC3E",
+        "cc4d": "loc_CC4D",
+        "cc81": "loc_CC81",
+        "cc8d": "loc_CC8D",
+        "cc95": "loc_CC95",
+        "cc9d": "do_objs_intersect_on_x",
+        "ccb0": "loc_CCB0",
+        "ccb2": "do_objs_intersect_on_y",
+        "ccc5": "loc_CCC5",
+        "ccc7": "do_objs_intersect_on_z",
+        "ccd6": "loc_CCD6",
+        "ccd8": "loc_CCD8",
+        "ccdd": "adj_dX_for_out_of_bounds",
+        "ccec": "loc_CCEC",
+        "ccf6": "loc_CCF6",
+        "cd07": "dX_ok",
+        "cd08": "adj_dY_for_out_of_bounds",
+        "cd17": "loc_CD17",
+        "cd21": "loc_CD21",
+        "cd32": "dY_ok",
+        "cd33": "calc_2d_info",
+        "cd43": "loc_CD43",
+        "cd4d": "set_draw_objs_overlapped",
+        "cd6c": "loc_CD6C",
+        "cd7a": "loc_CD7A",
+        "cd87": "loc_CD87",
+        "cd99": "loc_CD99",
+        "cd9b": "test_overlap_obj",
+        "cdb3": "loc_CDB3",
+        "cdbc": "loc_CDBC",
+        "cdc2": "next_overlap_obj",
+        "cdcc": "loc_CDCC",
+        "cdd3": "loc_CDD3",
+        "cdda": "upd_32_to_47",
+        "cddf": "upd_64_to_79",
+        "cde2": "upd_player_top",
+        "cdef": "loc_CDEF",
+        "ce14": "loc_CE14",
+        "ce22": "set_top_sprite",
+        "ce27": "loc_CE27",
+        "ce33": "loc_CE33",
+        "ce3a": "loc_CE3A",
+        "ce40": "loc_CE40",
+        "ce49": "save_2d_info",
+        "ce62": "list_objects_to_draw",
+        "ce72": "loc_CE72",
+        "ce80": "loc_CE80",
+        "ce8b": "objects_to_draw",
+        "cebb": "calc_display_order_and_render",
+        "cec3": "process_remaining_objs",
+        "cec6": "loc_CEC6",
+        "cedb": "loc_CEDB",
+        "cf15": "loc_CF15",
+        "cf16": "loc_CF16",
+        "cf39": "loc_CF39",
+        "cf3c": "loc_CF3C",
+        "cf5f": "loc_CF5F",
+        "cf62": "loc_CF62",
+        "cf69": "off_CF69",
+        "cf9f": "continue_1",
+        "cfa2": "continue_2",
+        "cfa5": "d_3467121516",
+        "cfad": "loc_CFAD",
+        "cfb8": "loc_CFB8",
+        "cfce": "loc_CFCE",
+        "cfd1": "loc_CFD1",
+        "cfe1": "objs_coincide",
+        "cff0": "loc_CFF0",
+        "cffd": "loc_CFFD",
+        "d000": "render_obj_no1",
+        "d003": "render_obj",
+        "d015": "render_done",
+        "d01a": "render_list",
+        "d022": "check_user_input",
+        "d03e": "interface_ii",
+        "d046": "loc_D046",
+        "d05c": "loc_D05C",
+        "d062": "loc_D062",
+        "d068": "loc_D068",
+        "d06e": "loc_D06E",
+        "d074": "loc_D074",
+        "d077": "kempston",
+        "d081": "loc_D081",
+        "d087": "loc_D087",
+        "d08d": "loc_D08D",
+        "d093": "loc_D093",
+        "d099": "loc_D099",
+        "d09c": "cursor",
+        "d0a9": "loc_D0A9",
+        "d0b4": "loc_D0B4",
+        "d0ba": "loc_D0BA",
+        "d0c0": "loc_D0C0",
+        "d0c8": "keyboard",
+        "d0e4": "loc_D0E4",
+        "d0ea": "loc_D0EA",
+        "d0f0": "loc_D0F0",
+        "d0f6": "loc_D0F6",
+        "d0ff": "loc_D0FF",
+        "d108": "loc_D108",
+        "d111": "finished_input",
+        "d125": "loc_D125",
+        "d12a": "lose_life",
+        "d161": "plyr_spr_1_scratchpad",
+        "d169": "start_loc_1",
+        "d16d": "flags12_1",
+        "d171": "byte_D171",
+        "d181": "plyr_spr_2_scratchpad",
+        "d189": "start_loc_2",
+        "d191": "byte_D191",
+        "d1a1": "plyr_spr_init_data",
+        "d1b1": "init_start_location",
+        "d1e2": "start_locations",
+        "d1e6": "build_screen_objects",
+        "d1ef": "loc_D1EF",
+        "d219": "flag_room_visited",
+        "d237": "transfer_sprite",
+        "d24c": "transfer_sprite_and_print",
+        "d255": "display_panel",
+        "d27e": "panel_data",
+        "d296": "print_border",
+        "d2cf": "border_data",
+        "d2ef": "colour_panel",
+        "d30d": "colour_sun_moon",
+        "d317": "loc_D317",
+        "d320": "adjust_plyr_xyz_for_room_size",
+        "d33f": "enter_arch_s",
+        "d34a": "adjust_plyr_y",
+        "d34d": "copy_spr_1_xy_2",
+        "d362": "enter_arch_n",
+        "d36f": "enter_arch_w",
+        "d37a": "adjust_plyr_x",
+        "d37f": "enter_arch_e",
+        "d38c": "adjust_plyr_Z_for_arch",
+        "d395": "loc_D395",
+        "d3a9": "adj_plyr_Z",
+        "d3b5": "get_ptr_object",
+        "d3c6": "retrieve_screen",
+        "d3cf": "find_screen",
+        "d3e2": "zero_end_of_graphic_objs_tbl",
+        "d3f0": "found_screen",
+        "d41e": "next_bg_obj",
+        "d432": "next_bg_obj_sprite",
+        "d44c": "find_fg_objs",
+        "d452": "next_fg_obj",
+        "d46b": "next_fg_obj_in_count",
+        "d46c": "next_fg_obj_sprite",
+        "d4cd": "loc_D4CD",
+        "d4ea": "loc_D4EA",
+        "d4f2": "add_HL_A",
+        "d4f9": "HL_equals_DE_x_A",
+        "d4ff": "loc_D4FF",
+        "d504": "loc_D504",
+        "d508": "zero_DE",
+        "d509": "fill_DE",
+        "d50e": "handle_pause",
+        "d519": "debounce_space_press",
+        "d525": "wait_for_space",
+        "d52e": "debounce_space_release",
+        "d53a": "clr_mem",
+        "d53c": "clr_byte",
+        "d544": "clr_bitmap_memory",
+        "d54c": "clr_attribute_memory",
+        "d556": "fill_attr",
+        "d55f": "clear_scrn",
+        "d567": "clear_scrn_buffer",
+        "d56f": "update_screen",
+        "d578": "loc_D578",
+        "d57b": "loc_D57B",
+        "d59a": "loc_D59A",
+        "d59f": "render_dynamic_objects",
+        "d5b2": "wipe_next_object",
+        "d5db": "loc_D5DB",
+        "d5f6": "loc_D5F6",
+        "d60b": "loc_D60B",
+        "d61c": "loc_D61C",
+        "d62c": "loc_D62C",
+        "d649": "loc_D649",
+        "d64e": "loc_D64E",
+        "d653": "loc_D653",
+        "d666": "loc_D666",
+        "d679": "loc_D679",
+        "d67c": "blit_to_screen",
+        "d69a": "loc_D69A",
+        "d69e": "build_lookup_tbls",
+        "d6a0": "loc_D6A0",
+        "d6a7": "loc_D6A7",
+        "d6bb": "loc_D6BB",
+        "d6be": "loc_D6BE",
+        "d6c9": "calc_pixel_XY",
+        "d6ef": "flip_sprite",
+        "d704": "calc_pixel_XY_and_render",
+        "d710": "loc_D710",
+        "d718": "print_sprite",
+        "d73c": "loc_D73C",
+        "d75a": "loc_D75A",
+        "d76f": "loc_D76F",
+        "d790": "loc_D790",
+        "d7aa": "loc_D7AA",
+        "d7ac": "loc_D7AC",
+        "d7ff": "loc_D7FF",
+        "d800": "loc_D800",
+        "d811": "calc_vidbuf_addr",
+        "d826": "calc_vram_addr",
+        "d848": "calc_attrib_addr",
+        "d865": "vflip_sprite_data",
+        "d88c": "loc_D88C",
+        "d88d": "vflip_sprite_line_pair",
+        "d8a2": "loc_D8A2",
+        "d8bf": "loc_D8BF",
+        "d8cd": "loc_D8CD",
+        "d8dc": "loc_D8DC",
+        "d8de": "aCopyright1984A_c_g_",
+        "ffff": "bits_lookup_table"
+    },
+    "regions": [
+        {
+            "start": 23456,
+            "end": 23456,
+            "type": "db"
+        },
+        {
+            "start": 23458,
+            "end": 23458,
+            "type": "db"
+        },
+        {
+            "start": 23460,
+            "end": 23460,
+            "type": "db"
+        },
+        {
+            "start": 23461,
+            "end": 23461,
+            "type": "db"
+        },
+        {
+            "start": 23462,
+            "end": 23463,
+            "type": "db"
+        },
+        {
+            "start": 23464,
+            "end": 23464,
+            "type": "db"
+        },
+        {
+            "start": 23465,
+            "end": 23465,
+            "type": "db"
+        },
+        {
+            "start": 23467,
+            "end": 23467,
+            "type": "db"
+        },
+        {
+            "start": 23468,
+            "end": 23468,
+            "type": "db"
+        },
+        {
+            "start": 23469,
+            "end": 23469,
+            "type": "db"
+        },
+        {
+            "start": 23470,
+            "end": 23470,
+            "type": "db"
+        },
+        {
+            "start": 23471,
+            "end": 23471,
+            "type": "db"
+        },
+        {
+            "start": 23472,
+            "end": 23472,
+            "type": "db"
+        },
+        {
+            "start": 23473,
+            "end": 23473,
+            "type": "db"
+        },
+        {
+            "start": 23474,
+            "end": 23474,
+            "type": "db"
+        },
+        {
+            "start": 23475,
+            "end": 23475,
+            "type": "db"
+        },
+        {
+            "start": 23476,
+            "end": 23476,
+            "type": "db"
+        },
+        {
+            "start": 23477,
+            "end": 23477,
+            "type": "db"
+        },
+        {
+            "start": 23478,
+            "end": 23478,
+            "type": "db"
+        },
+        {
+            "start": 23479,
+            "end": 23479,
+            "type": "db"
+        },
+        {
+            "start": 23480,
+            "end": 23480,
+            "type": "db"
+        },
+        {
+            "start": 23481,
+            "end": 23481,
+            "type": "db"
+        },
+        {
+            "start": 23482,
+            "end": 23482,
+            "type": "db"
+        },
+        {
+            "start": 23483,
+            "end": 23483,
+            "type": "db"
+        },
+        {
+            "start": 23484,
+            "end": 23484,
+            "type": "db"
+        },
+        {
+            "start": 23485,
+            "end": 23485,
+            "type": "db"
+        },
+        {
+            "start": 23486,
+            "end": 23486,
+            "type": "db"
+        },
+        {
+            "start": 23487,
+            "end": 23487,
+            "type": "db"
+        },
+        {
+            "start": 23488,
+            "end": 23488,
+            "type": "db"
+        },
+        {
+            "start": 23489,
+            "end": 23489,
+            "type": "db"
+        },
+        {
+            "start": 23490,
+            "end": 23490,
+            "type": "db"
+        },
+        {
+            "start": 23491,
+            "end": 23491,
+            "type": "db"
+        },
+        {
+            "start": 23492,
+            "end": 23492,
+            "type": "db"
+        },
+        {
+            "start": 23493,
+            "end": 23493,
+            "type": "db"
+        },
+        {
+            "start": 23494,
+            "end": 23494,
+            "type": "db"
+        },
+        {
+            "start": 23495,
+            "end": 23495,
+            "type": "db"
+        },
+        {
+            "start": 23497,
+            "end": 23497,
+            "type": "db"
+        },
+        {
+            "start": 23498,
+            "end": 23498,
+            "type": "db"
+        },
+        {
+            "start": 23499,
+            "end": 23499,
+            "type": "db"
+        },
+        {
+            "start": 23501,
+            "end": 23501,
+            "type": "db"
+        },
+        {
+            "start": 23503,
+            "end": 23503,
+            "type": "db"
+        },
+        {
+            "start": 23505,
+            "end": 23505,
+            "type": "db"
+        },
+        {
+            "start": 23506,
+            "end": 23506,
+            "type": "db"
+        },
+        {
+            "start": 23507,
+            "end": 23508,
+            "type": "db"
+        },
+        {
+            "start": 23512,
+            "end": 23512,
+            "type": "db"
+        },
+        {
+            "start": 23516,
+            "end": 23516,
+            "type": "db"
+        },
+        {
+            "start": 23523,
+            "end": 23523,
+            "type": "db"
+        },
+        {
+            "start": 23524,
+            "end": 23525,
+            "type": "db"
+        },
+        {
+            "start": 23527,
+            "end": 23527,
+            "type": "db"
+        },
+        {
+            "start": 23528,
+            "end": 23528,
+            "type": "db"
+        },
+        {
+            "start": 23560,
+            "end": 23592,
+            "type": "db"
+        },
+        {
+            "start": 23624,
+            "end": 23624,
+            "type": "db"
+        },
+        {
+            "start": 23656,
+            "end": 23656,
+            "type": "db"
+        },
+        {
+            "start": 23688,
+            "end": 23688,
+            "type": "db"
+        },
+        {
+            "start": 23720,
+            "end": 23720,
+            "type": "db"
+        },
+        {
+            "start": 24840,
+            "end": 25152,
+            "type": "db"
+        },
+        {
+            "start": 25160,
+            "end": 25166,
+            "type": "db"
+        },
+        {
+            "start": 25169,
+            "end": 27592,
+            "type": "db"
+        },
+        {
+            "start": 27601,
+            "end": 27657,
+            "type": "db"
+        },
+        {
+            "start": 27659,
+            "end": 27659,
+            "type": "db"
+        },
+        {
+            "start": 27666,
+            "end": 27666,
+            "type": "db"
+        },
+        {
+            "start": 27673,
+            "end": 27673,
+            "type": "db"
+        },
+        {
+            "start": 27680,
+            "end": 27680,
+            "type": "db"
+        },
+        {
+            "start": 27687,
+            "end": 27687,
+            "type": "db"
+        },
+        {
+            "start": 27694,
+            "end": 27694,
+            "type": "db"
+        },
+        {
+            "start": 27701,
+            "end": 27701,
+            "type": "db"
+        },
+        {
+            "start": 27708,
+            "end": 27708,
+            "type": "db"
+        },
+        {
+            "start": 27715,
+            "end": 27715,
+            "type": "db"
+        },
+        {
+            "start": 27722,
+            "end": 27722,
+            "type": "db"
+        },
+        {
+            "start": 27729,
+            "end": 27729,
+            "type": "db"
+        },
+        {
+            "start": 27736,
+            "end": 27736,
+            "type": "db"
+        },
+        {
+            "start": 27743,
+            "end": 27743,
+            "type": "db"
+        },
+        {
+            "start": 27750,
+            "end": 27750,
+            "type": "db"
+        },
+        {
+            "start": 27757,
+            "end": 27757,
+            "type": "db"
+        },
+        {
+            "start": 27764,
+            "end": 27764,
+            "type": "db"
+        },
+        {
+            "start": 27771,
+            "end": 27771,
+            "type": "db"
+        },
+        {
+            "start": 27778,
+            "end": 27778,
+            "type": "db"
+        },
+        {
+            "start": 27785,
+            "end": 27785,
+            "type": "db"
+        },
+        {
+            "start": 27792,
+            "end": 27792,
+            "type": "db"
+        },
+        {
+            "start": 27799,
+            "end": 27799,
+            "type": "db"
+        },
+        {
+            "start": 27806,
+            "end": 27806,
+            "type": "db"
+        },
+        {
+            "start": 27819,
+            "end": 27819,
+            "type": "db"
+        },
+        {
+            "start": 27832,
+            "end": 27832,
+            "type": "db"
+        },
+        {
+            "start": 27839,
+            "end": 27839,
+            "type": "db"
+        },
+        {
+            "start": 27846,
+            "end": 27846,
+            "type": "db"
+        },
+        {
+            "start": 27853,
+            "end": 27853,
+            "type": "db"
+        },
+        {
+            "start": 27860,
+            "end": 27860,
+            "type": "db"
+        },
+        {
+            "start": 27867,
+            "end": 27867,
+            "type": "db"
+        },
+        {
+            "start": 27874,
+            "end": 27920,
+            "type": "db"
+        },
+        {
+            "start": 27922,
+            "end": 27938,
+            "type": "db"
+        },
+        {
+            "start": 27939,
+            "end": 27955,
+            "type": "db"
+        },
+        {
+            "start": 27956,
+            "end": 27972,
+            "type": "db"
+        },
+        {
+            "start": 27973,
+            "end": 27989,
+            "type": "db"
+        },
+        {
+            "start": 27990,
+            "end": 28006,
+            "type": "db"
+        },
+        {
+            "start": 28007,
+            "end": 28023,
+            "type": "db"
+        },
+        {
+            "start": 28024,
+            "end": 28040,
+            "type": "db"
+        },
+        {
+            "start": 28041,
+            "end": 28057,
+            "type": "db"
+        },
+        {
+            "start": 28058,
+            "end": 28074,
+            "type": "db"
+        },
+        {
+            "start": 28075,
+            "end": 28091,
+            "type": "db"
+        },
+        {
+            "start": 28092,
+            "end": 28100,
+            "type": "db"
+        },
+        {
+            "start": 28101,
+            "end": 28109,
+            "type": "db"
+        },
+        {
+            "start": 28110,
+            "end": 28118,
+            "type": "db"
+        },
+        {
+            "start": 28119,
+            "end": 28127,
+            "type": "db"
+        },
+        {
+            "start": 28128,
+            "end": 28232,
+            "type": "db"
+        },
+        {
+            "start": 28233,
+            "end": 28345,
+            "type": "db"
+        },
+        {
+            "start": 28346,
+            "end": 28458,
+            "type": "db"
+        },
+        {
+            "start": 28459,
+            "end": 28555,
+            "type": "db"
+        },
+        {
+            "start": 28556,
+            "end": 28572,
+            "type": "db"
+        },
+        {
+            "start": 28573,
+            "end": 28589,
+            "type": "db"
+        },
+        {
+            "start": 28590,
+            "end": 28606,
+            "type": "db"
+        },
+        {
+            "start": 28607,
+            "end": 28623,
+            "type": "db"
+        },
+        {
+            "start": 28624,
+            "end": 28640,
+            "type": "db"
+        },
+        {
+            "start": 28641,
+            "end": 28657,
+            "type": "db"
+        },
+        {
+            "start": 28658,
+            "end": 28937,
+            "type": "db"
+        },
+        {
+            "start": 28946,
+            "end": 29314,
+            "type": "db"
+        },
+        {
+            "start": 29322,
+            "end": 29322,
+            "type": "db"
+        },
+        {
+            "start": 29324,
+            "end": 29510,
+            "type": "db"
+        },
+        {
+            "start": 29512,
+            "end": 29698,
+            "type": "db"
+        },
+        {
+            "start": 29700,
+            "end": 29918,
+            "type": "db"
+        },
+        {
+            "start": 29926,
+            "end": 30120,
+            "type": "db"
+        },
+        {
+            "start": 30128,
+            "end": 30266,
+            "type": "db"
+        },
+        {
+            "start": 30268,
+            "end": 30406,
+            "type": "db"
+        },
+        {
+            "start": 30408,
+            "end": 30522,
+            "type": "db"
+        },
+        {
+            "start": 30524,
+            "end": 30630,
+            "type": "db"
+        },
+        {
+            "start": 30634,
+            "end": 30860,
+            "type": "db"
+        },
+        {
+            "start": 30868,
+            "end": 31006,
+            "type": "db"
+        },
+        {
+            "start": 31014,
+            "end": 31072,
+            "type": "db"
+        },
+        {
+            "start": 31076,
+            "end": 31134,
+            "type": "db"
+        },
+        {
+            "start": 31142,
+            "end": 31376,
+            "type": "db"
+        },
+        {
+            "start": 31378,
+            "end": 31572,
+            "type": "db"
+        },
+        {
+            "start": 31578,
+            "end": 31828,
+            "type": "db"
+        },
+        {
+            "start": 31836,
+            "end": 31838,
+            "type": "db"
+        },
+        {
+            "start": 31844,
+            "end": 31886,
+            "type": "db"
+        },
+        {
+            "start": 31894,
+            "end": 32144,
+            "type": "db"
+        },
+        {
+            "start": 32152,
+            "end": 32152,
+            "type": "db"
+        },
+        {
+            "start": 32164,
+            "end": 32222,
+            "type": "db"
+        },
+        {
+            "start": 32230,
+            "end": 32256,
+            "type": "db"
+        },
+        {
+            "start": 32264,
+            "end": 32482,
+            "type": "db"
+        },
+        {
+            "start": 32490,
+            "end": 32556,
+            "type": "db"
+        },
+        {
+            "start": 32560,
+            "end": 32682,
+            "type": "db"
+        },
+        {
+            "start": 32688,
+            "end": 32922,
+            "type": "db"
+        },
+        {
+            "start": 32930,
+            "end": 33116,
+            "type": "db"
+        },
+        {
+            "start": 33124,
+            "end": 33238,
+            "type": "db"
+        },
+        {
+            "start": 33246,
+            "end": 33368,
+            "type": "db"
+        },
+        {
+            "start": 33374,
+            "end": 33512,
+            "type": "db"
+        },
+        {
+            "start": 33514,
+            "end": 33652,
+            "type": "db"
+        },
+        {
+            "start": 33660,
+            "end": 33798,
+            "type": "db"
+        },
+        {
+            "start": 33806,
+            "end": 33944,
+            "type": "db"
+        },
+        {
+            "start": 33952,
+            "end": 34066,
+            "type": "db"
+        },
+        {
+            "start": 34068,
+            "end": 34198,
+            "type": "db"
+        },
+        {
+            "start": 34202,
+            "end": 34340,
+            "type": "db"
+        },
+        {
+            "start": 34342,
+            "end": 34448,
+            "type": "db"
+        },
+        {
+            "start": 34452,
+            "end": 34590,
+            "type": "db"
+        },
+        {
+            "start": 34598,
+            "end": 34720,
+            "type": "db"
+        },
+        {
+            "start": 34726,
+            "end": 34784,
+            "type": "db"
+        },
+        {
+            "start": 34792,
+            "end": 34850,
+            "type": "db"
+        },
+        {
+            "start": 34858,
+            "end": 34972,
+            "type": "db"
+        },
+        {
+            "start": 34980,
+            "end": 35094,
+            "type": "db"
+        },
+        {
+            "start": 35096,
+            "end": 35210,
+            "type": "db"
+        },
+        {
+            "start": 35218,
+            "end": 35332,
+            "type": "db"
+        },
+        {
+            "start": 35340,
+            "end": 35590,
+            "type": "db"
+        },
+        {
+            "start": 35594,
+            "end": 35820,
+            "type": "db"
+        },
+        {
+            "start": 35828,
+            "end": 36070,
+            "type": "db"
+        },
+        {
+            "start": 36078,
+            "end": 36216,
+            "type": "db"
+        },
+        {
+            "start": 36224,
+            "end": 36370,
+            "type": "db"
+        },
+        {
+            "start": 36376,
+            "end": 36522,
+            "type": "db"
+        },
+        {
+            "start": 36528,
+            "end": 36666,
+            "type": "db"
+        },
+        {
+            "start": 36674,
+            "end": 36812,
+            "type": "db"
+        },
+        {
+            "start": 36820,
+            "end": 36958,
+            "type": "db"
+        },
+        {
+            "start": 36966,
+            "end": 37112,
+            "type": "db"
+        },
+        {
+            "start": 37118,
+            "end": 37264,
+            "type": "db"
+        },
+        {
+            "start": 37270,
+            "end": 37416,
+            "type": "db"
+        },
+        {
+            "start": 37422,
+            "end": 37512,
+            "type": "db"
+        },
+        {
+            "start": 37520,
+            "end": 37610,
+            "type": "db"
+        },
+        {
+            "start": 37618,
+            "end": 37708,
+            "type": "db"
+        },
+        {
+            "start": 37716,
+            "end": 37806,
+            "type": "db"
+        },
+        {
+            "start": 37814,
+            "end": 37904,
+            "type": "db"
+        },
+        {
+            "start": 37912,
+            "end": 38002,
+            "type": "db"
+        },
+        {
+            "start": 38010,
+            "end": 38100,
+            "type": "db"
+        },
+        {
+            "start": 38108,
+            "end": 38198,
+            "type": "db"
+        },
+        {
+            "start": 38206,
+            "end": 38344,
+            "type": "db"
+        },
+        {
+            "start": 38352,
+            "end": 38498,
+            "type": "db"
+        },
+        {
+            "start": 38504,
+            "end": 38650,
+            "type": "db"
+        },
+        {
+            "start": 38656,
+            "end": 38842,
+            "type": "db"
+        },
+        {
+            "start": 38850,
+            "end": 39036,
+            "type": "db"
+        },
+        {
+            "start": 39044,
+            "end": 39230,
+            "type": "db"
+        },
+        {
+            "start": 39238,
+            "end": 39424,
+            "type": "db"
+        },
+        {
+            "start": 39432,
+            "end": 39618,
+            "type": "db"
+        },
+        {
+            "start": 39626,
+            "end": 39932,
+            "type": "db"
+        },
+        {
+            "start": 39940,
+            "end": 40078,
+            "type": "db"
+        },
+        {
+            "start": 40082,
+            "end": 40268,
+            "type": "db"
+        },
+        {
+            "start": 40276,
+            "end": 40534,
+            "type": "db"
+        },
+        {
+            "start": 40542,
+            "end": 40624,
+            "type": "db"
+        },
+        {
+            "start": 40632,
+            "end": 40882,
+            "type": "db"
+        },
+        {
+            "start": 40884,
+            "end": 41022,
+            "type": "db"
+        },
+        {
+            "start": 41030,
+            "end": 41136,
+            "type": "db"
+        },
+        {
+            "start": 41140,
+            "end": 41230,
+            "type": "db"
+        },
+        {
+            "start": 41238,
+            "end": 41328,
+            "type": "db"
+        },
+        {
+            "start": 41336,
+            "end": 41426,
+            "type": "db"
+        },
+        {
+            "start": 41434,
+            "end": 41524,
+            "type": "db"
+        },
+        {
+            "start": 41532,
+            "end": 41622,
+            "type": "db"
+        },
+        {
+            "start": 41630,
+            "end": 41720,
+            "type": "db"
+        },
+        {
+            "start": 41728,
+            "end": 41818,
+            "type": "db"
+        },
+        {
+            "start": 41826,
+            "end": 41916,
+            "type": "db"
+        },
+        {
+            "start": 41924,
+            "end": 42094,
+            "type": "db"
+        },
+        {
+            "start": 42100,
+            "end": 42270,
+            "type": "db"
+        },
+        {
+            "start": 42276,
+            "end": 42446,
+            "type": "db"
+        },
+        {
+            "start": 42452,
+            "end": 42622,
+            "type": "db"
+        },
+        {
+            "start": 42628,
+            "end": 42806,
+            "type": "db"
+        },
+        {
+            "start": 42810,
+            "end": 42988,
+            "type": "db"
+        },
+        {
+            "start": 42992,
+            "end": 43170,
+            "type": "db"
+        },
+        {
+            "start": 43174,
+            "end": 43352,
+            "type": "db"
+        },
+        {
+            "start": 43356,
+            "end": 43526,
+            "type": "db"
+        },
+        {
+            "start": 43532,
+            "end": 43702,
+            "type": "db"
+        },
+        {
+            "start": 43708,
+            "end": 43886,
+            "type": "db"
+        },
+        {
+            "start": 43890,
+            "end": 44068,
+            "type": "db"
+        },
+        {
+            "start": 44072,
+            "end": 44258,
+            "type": "db"
+        },
+        {
+            "start": 44266,
+            "end": 44460,
+            "type": "db"
+        },
+        {
+            "start": 44466,
+            "end": 44692,
+            "type": "db"
+        },
+        {
+            "start": 44696,
+            "end": 44906,
+            "type": "db"
+        },
+        {
+            "start": 44908,
+            "end": 44925,
+            "type": "code"
+        },
+        {
+            "start": 44927,
+            "end": 44933,
+            "type": "code"
+        },
+        {
+            "start": 44936,
+            "end": 44980,
+            "type": "code"
+        },
+        {
+            "start": 44983,
+            "end": 44983,
+            "type": "code"
+        },
+        {
+            "start": 44986,
+            "end": 44986,
+            "type": "code"
+        },
+        {
+            "start": 44989,
+            "end": 44995,
+            "type": "code"
+        },
+        {
+            "start": 44999,
+            "end": 45010,
+            "type": "code"
+        },
+        {
+            "start": 45013,
+            "end": 45016,
+            "type": "code"
+        },
+        {
+            "start": 45019,
+            "end": 45027,
+            "type": "code"
+        },
+        {
+            "start": 45028,
+            "end": 45054,
+            "type": "code"
+        },
+        {
+            "start": 45056,
+            "end": 45107,
+            "type": "code"
+        },
+        {
+            "start": 45109,
+            "end": 45109,
+            "type": "code"
+        },
+        {
+            "start": 45112,
+            "end": 45117,
+            "type": "code"
+        },
+        {
+            "start": 45119,
+            "end": 45169,
+            "type": "code"
+        },
+        {
+            "start": 45172,
+            "end": 45189,
+            "type": "code"
+        },
+        {
+            "start": 45192,
+            "end": 45197,
+            "type": "code"
+        },
+        {
+            "start": 45200,
+            "end": 45205,
+            "type": "code"
+        },
+        {
+            "start": 45206,
+            "end": 45580,
+            "type": "db"
+        },
+        {
+            "start": 45582,
+            "end": 45590,
+            "type": "db"
+        },
+        {
+            "start": 45592,
+            "end": 45624,
+            "type": "db"
+        },
+        {
+            "start": 45625,
+            "end": 45649,
+            "type": "db"
+        },
+        {
+            "start": 45651,
+            "end": 45747,
+            "type": "db"
+        },
+        {
+            "start": 45750,
+            "end": 45756,
+            "type": "code"
+        },
+        {
+            "start": 45758,
+            "end": 45764,
+            "type": "code"
+        },
+        {
+            "start": 45765,
+            "end": 45773,
+            "type": "code"
+        },
+        {
+            "start": 45775,
+            "end": 45783,
+            "type": "code"
+        },
+        {
+            "start": 45785,
+            "end": 45785,
+            "type": "code"
+        },
+        {
+            "start": 45786,
+            "end": 45816,
+            "type": "code"
+        },
+        {
+            "start": 45817,
+            "end": 45821,
+            "type": "code"
+        },
+        {
+            "start": 45823,
+            "end": 45823,
+            "type": "code"
+        },
+        {
+            "start": 45824,
+            "end": 45826,
+            "type": "code"
+        },
+        {
+            "start": 45828,
+            "end": 45837,
+            "type": "code"
+        },
+        {
+            "start": 45839,
+            "end": 45851,
+            "type": "code"
+        },
+        {
+            "start": 45852,
+            "end": 45860,
+            "type": "code"
+        },
+        {
+            "start": 45863,
+            "end": 45863,
+            "type": "code"
+        },
+        {
+            "start": 45864,
+            "end": 45873,
+            "type": "code"
+        },
+        {
+            "start": 45874,
+            "end": 46054,
+            "type": "db"
+        },
+        {
+            "start": 46057,
+            "end": 46072,
+            "type": "code"
+        },
+        {
+            "start": 46075,
+            "end": 46075,
+            "type": "db"
+        },
+        {
+            "start": 46083,
+            "end": 46090,
+            "type": "code"
+        },
+        {
+            "start": 46093,
+            "end": 46104,
+            "type": "code"
+        },
+        {
+            "start": 46105,
+            "end": 46114,
+            "type": "code"
+        },
+        {
+            "start": 46115,
+            "end": 46125,
+            "type": "code"
+        },
+        {
+            "start": 46126,
+            "end": 46129,
+            "type": "code"
+        },
+        {
+            "start": 46131,
+            "end": 46144,
+            "type": "code"
+        },
+        {
+            "start": 46145,
+            "end": 46145,
+            "type": "code"
+        },
+        {
+            "start": 46147,
+            "end": 46160,
+            "type": "code"
+        },
+        {
+            "start": 46161,
+            "end": 46161,
+            "type": "code"
+        },
+        {
+            "start": 46164,
+            "end": 46170,
+            "type": "code"
+        },
+        {
+            "start": 46173,
+            "end": 46176,
+            "type": "code"
+        },
+        {
+            "start": 46178,
+            "end": 46181,
+            "type": "code"
+        },
+        {
+            "start": 46183,
+            "end": 46192,
+            "type": "code"
+        },
+        {
+            "start": 46194,
+            "end": 46204,
+            "type": "code"
+        },
+        {
+            "start": 46205,
+            "end": 46216,
+            "type": "code"
+        },
+        {
+            "start": 46217,
+            "end": 46227,
+            "type": "code"
+        },
+        {
+            "start": 46229,
+            "end": 46242,
+            "type": "code"
+        },
+        {
+            "start": 46243,
+            "end": 46246,
+            "type": "code"
+        },
+        {
+            "start": 46248,
+            "end": 46251,
+            "type": "code"
+        },
+        {
+            "start": 46253,
+            "end": 46265,
+            "type": "code"
+        },
+        {
+            "start": 46267,
+            "end": 46272,
+            "type": "code"
+        },
+        {
+            "start": 46273,
+            "end": 46275,
+            "type": "code"
+        },
+        {
+            "start": 46278,
+            "end": 46288,
+            "type": "code"
+        },
+        {
+            "start": 46289,
+            "end": 46309,
+            "type": "code"
+        },
+        {
+            "start": 46310,
+            "end": 46316,
+            "type": "code"
+        },
+        {
+            "start": 46317,
+            "end": 46321,
+            "type": "code"
+        },
+        {
+            "start": 46322,
+            "end": 46328,
+            "type": "code"
+        },
+        {
+            "start": 46329,
+            "end": 46332,
+            "type": "code"
+        },
+        {
+            "start": 46333,
+            "end": 46348,
+            "type": "code"
+        },
+        {
+            "start": 46352,
+            "end": 46370,
+            "type": "code"
+        },
+        {
+            "start": 46372,
+            "end": 46381,
+            "type": "code"
+        },
+        {
+            "start": 46382,
+            "end": 46390,
+            "type": "code"
+        },
+        {
+            "start": 46392,
+            "end": 46403,
+            "type": "code"
+        },
+        {
+            "start": 46404,
+            "end": 46411,
+            "type": "code"
+        },
+        {
+            "start": 46412,
+            "end": 46418,
+            "type": "code"
+        },
+        {
+            "start": 46421,
+            "end": 46437,
+            "type": "code"
+        },
+        {
+            "start": 46438,
+            "end": 46472,
+            "type": "code"
+        },
+        {
+            "start": 46475,
+            "end": 46481,
+            "type": "db"
+        },
+        {
+            "start": 46483,
+            "end": 46483,
+            "type": "code"
+        },
+        {
+            "start": 46486,
+            "end": 46499,
+            "type": "code"
+        },
+        {
+            "start": 46500,
+            "end": 46502,
+            "type": "code"
+        },
+        {
+            "start": 46505,
+            "end": 46508,
+            "type": "code"
+        },
+        {
+            "start": 46511,
+            "end": 46514,
+            "type": "code"
+        },
+        {
+            "start": 46517,
+            "end": 46520,
+            "type": "code"
+        },
+        {
+            "start": 46522,
+            "end": 46525,
+            "type": "code"
+        },
+        {
+            "start": 46527,
+            "end": 46530,
+            "type": "code"
+        },
+        {
+            "start": 46532,
+            "end": 46541,
+            "type": "code"
+        },
+        {
+            "start": 46543,
+            "end": 46556,
+            "type": "code"
+        },
+        {
+            "start": 46558,
+            "end": 46560,
+            "type": "code"
+        },
+        {
+            "start": 46563,
+            "end": 46581,
+            "type": "code"
+        },
+        {
+            "start": 46583,
+            "end": 46590,
+            "type": "code"
+        },
+        {
+            "start": 46591,
+            "end": 46628,
+            "type": "code"
+        },
+        {
+            "start": 46630,
+            "end": 46651,
+            "type": "code"
+        },
+        {
+            "start": 46652,
+            "end": 46668,
+            "type": "code"
+        },
+        {
+            "start": 46671,
+            "end": 46683,
+            "type": "code"
+        },
+        {
+            "start": 46685,
+            "end": 46687,
+            "type": "code"
+        },
+        {
+            "start": 46689,
+            "end": 46692,
+            "type": "code"
+        },
+        {
+            "start": 46696,
+            "end": 46699,
+            "type": "code"
+        },
+        {
+            "start": 46702,
+            "end": 46708,
+            "type": "code"
+        },
+        {
+            "start": 46710,
+            "end": 46712,
+            "type": "code"
+        },
+        {
+            "start": 46714,
+            "end": 46721,
+            "type": "code"
+        },
+        {
+            "start": 46723,
+            "end": 46748,
+            "type": "code"
+        },
+        {
+            "start": 46751,
+            "end": 46751,
+            "type": "code"
+        },
+        {
+            "start": 46754,
+            "end": 46766,
+            "type": "code"
+        },
+        {
+            "start": 46769,
+            "end": 46775,
+            "type": "code"
+        },
+        {
+            "start": 46777,
+            "end": 46780,
+            "type": "code"
+        },
+        {
+            "start": 46783,
+            "end": 46810,
+            "type": "code"
+        },
+        {
+            "start": 46811,
+            "end": 46813,
+            "type": "code"
+        },
+        {
+            "start": 46814,
+            "end": 46829,
+            "type": "code"
+        },
+        {
+            "start": 46831,
+            "end": 46838,
+            "type": "code"
+        },
+        {
+            "start": 46841,
+            "end": 46866,
+            "type": "code"
+        },
+        {
+            "start": 46870,
+            "end": 46870,
+            "type": "code"
+        },
+        {
+            "start": 46874,
+            "end": 46877,
+            "type": "code"
+        },
+        {
+            "start": 46880,
+            "end": 46884,
+            "type": "code"
+        },
+        {
+            "start": 46886,
+            "end": 46892,
+            "type": "code"
+        },
+        {
+            "start": 46896,
+            "end": 46900,
+            "type": "code"
+        },
+        {
+            "start": 46902,
+            "end": 46906,
+            "type": "code"
+        },
+        {
+            "start": 46908,
+            "end": 46919,
+            "type": "code"
+        },
+        {
+            "start": 46921,
+            "end": 46944,
+            "type": "code"
+        },
+        {
+            "start": 46947,
+            "end": 46953,
+            "type": "code"
+        },
+        {
+            "start": 46956,
+            "end": 46975,
+            "type": "code"
+        },
+        {
+            "start": 46979,
+            "end": 46983,
+            "type": "code"
+        },
+        {
+            "start": 46984,
+            "end": 46988,
+            "type": "code"
+        },
+        {
+            "start": 46990,
+            "end": 46996,
+            "type": "code"
+        },
+        {
+            "start": 47000,
+            "end": 47004,
+            "type": "code"
+        },
+        {
+            "start": 47005,
+            "end": 47009,
+            "type": "code"
+        },
+        {
+            "start": 47011,
+            "end": 47014,
+            "type": "code"
+        },
+        {
+            "start": 47017,
+            "end": 47052,
+            "type": "code"
+        },
+        {
+            "start": 47053,
+            "end": 47062,
+            "type": "code"
+        },
+        {
+            "start": 47065,
+            "end": 47065,
+            "type": "code"
+        },
+        {
+            "start": 47068,
+            "end": 47077,
+            "type": "code"
+        },
+        {
+            "start": 47079,
+            "end": 47082,
+            "type": "code"
+        },
+        {
+            "start": 47085,
+            "end": 47100,
+            "type": "code"
+        },
+        {
+            "start": 47102,
+            "end": 47117,
+            "type": "code"
+        },
+        {
+            "start": 47119,
+            "end": 47134,
+            "type": "code"
+        },
+        {
+            "start": 47136,
+            "end": 47149,
+            "type": "code"
+        },
+        {
+            "start": 47151,
+            "end": 47159,
+            "type": "code"
+        },
+        {
+            "start": 47162,
+            "end": 47165,
+            "type": "code"
+        },
+        {
+            "start": 47167,
+            "end": 47187,
+            "type": "code"
+        },
+        {
+            "start": 47190,
+            "end": 47193,
+            "type": "code"
+        },
+        {
+            "start": 47196,
+            "end": 47204,
+            "type": "code"
+        },
+        {
+            "start": 47205,
+            "end": 47219,
+            "type": "code"
+        },
+        {
+            "start": 47222,
+            "end": 47247,
+            "type": "code"
+        },
+        {
+            "start": 47250,
+            "end": 47250,
+            "type": "code"
+        },
+        {
+            "start": 47252,
+            "end": 47271,
+            "type": "code"
+        },
+        {
+            "start": 47273,
+            "end": 47301,
+            "type": "code"
+        },
+        {
+            "start": 47304,
+            "end": 47320,
+            "type": "db"
+        },
+        {
+            "start": 47322,
+            "end": 47379,
+            "type": "code"
+        },
+        {
+            "start": 47382,
+            "end": 47382,
+            "type": "code"
+        },
+        {
+            "start": 47385,
+            "end": 47393,
+            "type": "code"
+        },
+        {
+            "start": 47395,
+            "end": 47402,
+            "type": "code"
+        },
+        {
+            "start": 47404,
+            "end": 47424,
+            "type": "code"
+        },
+        {
+            "start": 47426,
+            "end": 47426,
+            "type": "code"
+        },
+        {
+            "start": 47429,
+            "end": 47452,
+            "type": "code"
+        },
+        {
+            "start": 47454,
+            "end": 47454,
+            "type": "code"
+        },
+        {
+            "start": 47458,
+            "end": 47458,
+            "type": "code"
+        },
+        {
+            "start": 47461,
+            "end": 47473,
+            "type": "code"
+        },
+        {
+            "start": 47475,
+            "end": 47487,
+            "type": "code"
+        },
+        {
+            "start": 47489,
+            "end": 47492,
+            "type": "code"
+        },
+        {
+            "start": 47493,
+            "end": 47498,
+            "type": "code"
+        },
+        {
+            "start": 47500,
+            "end": 47511,
+            "type": "code"
+        },
+        {
+            "start": 47512,
+            "end": 47515,
+            "type": "code"
+        },
+        {
+            "start": 47516,
+            "end": 47516,
+            "type": "code"
+        },
+        {
+            "start": 47519,
+            "end": 47522,
+            "type": "code"
+        },
+        {
+            "start": 47525,
+            "end": 47561,
+            "type": "code"
+        },
+        {
+            "start": 47564,
+            "end": 47573,
+            "type": "code"
+        },
+        {
+            "start": 47576,
+            "end": 47582,
+            "type": "db"
+        },
+        {
+            "start": 47584,
+            "end": 47592,
+            "type": "code"
+        },
+        {
+            "start": 47595,
+            "end": 47610,
+            "type": "code"
+        },
+        {
+            "start": 47611,
+            "end": 47622,
+            "type": "code"
+        },
+        {
+            "start": 47624,
+            "end": 47635,
+            "type": "code"
+        },
+        {
+            "start": 47637,
+            "end": 47648,
+            "type": "code"
+        },
+        {
+            "start": 47650,
+            "end": 47654,
+            "type": "code"
+        },
+        {
+            "start": 47657,
+            "end": 47736,
+            "type": "code"
+        },
+        {
+            "start": 47737,
+            "end": 47748,
+            "type": "code"
+        },
+        {
+            "start": 47751,
+            "end": 47768,
+            "type": "code"
+        },
+        {
+            "start": 47771,
+            "end": 47771,
+            "type": "code"
+        },
+        {
+            "start": 47774,
+            "end": 47786,
+            "type": "code"
+        },
+        {
+            "start": 47787,
+            "end": 47823,
+            "type": "code"
+        },
+        {
+            "start": 47826,
+            "end": 47826,
+            "type": "db"
+        },
+        {
+            "start": 47832,
+            "end": 47842,
+            "type": "db"
+        },
+        {
+            "start": 47844,
+            "end": 47944,
+            "type": "db"
+        },
+        {
+            "start": 47948,
+            "end": 47948,
+            "type": "db"
+        },
+        {
+            "start": 47954,
+            "end": 47962,
+            "type": "db"
+        },
+        {
+            "start": 47966,
+            "end": 48049,
+            "type": "db"
+        },
+        {
+            "start": 48055,
+            "end": 48063,
+            "type": "db"
+        },
+        {
+            "start": 48071,
+            "end": 48071,
+            "type": "db"
+        },
+        {
+            "start": 48079,
+            "end": 48087,
+            "type": "db"
+        },
+        {
+            "start": 48088,
+            "end": 48088,
+            "type": "db"
+        },
+        {
+            "start": 48096,
+            "end": 48096,
+            "type": "db"
+        },
+        {
+            "start": 48104,
+            "end": 48112,
+            "type": "db"
+        },
+        {
+            "start": 48114,
+            "end": 48122,
+            "type": "db"
+        },
+        {
+            "start": 48125,
+            "end": 48125,
+            "type": "db"
+        },
+        {
+            "start": 48133,
+            "end": 48141,
+            "type": "db"
+        },
+        {
+            "start": 48144,
+            "end": 48149,
+            "type": "code"
+        },
+        {
+            "start": 48152,
+            "end": 48154,
+            "type": "code"
+        },
+        {
+            "start": 48155,
+            "end": 48158,
+            "type": "code"
+        },
+        {
+            "start": 48159,
+            "end": 48183,
+            "type": "code"
+        },
+        {
+            "start": 48184,
+            "end": 48222,
+            "type": "code"
+        },
+        {
+            "start": 48225,
+            "end": 48227,
+            "type": "code"
+        },
+        {
+            "start": 48230,
+            "end": 48249,
+            "type": "code"
+        },
+        {
+            "start": 48250,
+            "end": 48288,
+            "type": "code"
+        },
+        {
+            "start": 48291,
+            "end": 48299,
+            "type": "code"
+        },
+        {
+            "start": 48302,
+            "end": 48309,
+            "type": "code"
+        },
+        {
+            "start": 48310,
+            "end": 48317,
+            "type": "code"
+        },
+        {
+            "start": 48320,
+            "end": 48329,
+            "type": "code"
+        },
+        {
+            "start": 48330,
+            "end": 48356,
+            "type": "code"
+        },
+        {
+            "start": 48359,
+            "end": 48359,
+            "type": "db"
+        },
+        {
+            "start": 48364,
+            "end": 48388,
+            "type": "db"
+        },
+        {
+            "start": 48396,
+            "end": 48403,
+            "type": "code"
+        },
+        {
+            "start": 48405,
+            "end": 48416,
+            "type": "code"
+        },
+        {
+            "start": 48419,
+            "end": 48444,
+            "type": "code"
+        },
+        {
+            "start": 48446,
+            "end": 48452,
+            "type": "code"
+        },
+        {
+            "start": 48454,
+            "end": 48460,
+            "type": "code"
+        },
+        {
+            "start": 48462,
+            "end": 48466,
+            "type": "code"
+        },
+        {
+            "start": 48468,
+            "end": 48489,
+            "type": "code"
+        },
+        {
+            "start": 48492,
+            "end": 48514,
+            "type": "code"
+        },
+        {
+            "start": 48517,
+            "end": 48519,
+            "type": "code"
+        },
+        {
+            "start": 48521,
+            "end": 48545,
+            "type": "code"
+        },
+        {
+            "start": 48546,
+            "end": 48546,
+            "type": "db"
+        },
+        {
+            "start": 48554,
+            "end": 48568,
+            "type": "db"
+        },
+        {
+            "start": 48570,
+            "end": 48684,
+            "type": "db"
+        },
+        {
+            "start": 48689,
+            "end": 48707,
+            "type": "code"
+        },
+        {
+            "start": 48709,
+            "end": 48713,
+            "type": "code"
+        },
+        {
+            "start": 48716,
+            "end": 48725,
+            "type": "code"
+        },
+        {
+            "start": 48726,
+            "end": 48734,
+            "type": "code"
+        },
+        {
+            "start": 48735,
+            "end": 48752,
+            "type": "code"
+        },
+        {
+            "start": 48754,
+            "end": 48766,
+            "type": "code"
+        },
+        {
+            "start": 48767,
+            "end": 48783,
+            "type": "code"
+        },
+        {
+            "start": 48785,
+            "end": 48802,
+            "type": "code"
+        },
+        {
+            "start": 48803,
+            "end": 48804,
+            "type": "code"
+        },
+        {
+            "start": 48806,
+            "end": 48808,
+            "type": "code"
+        },
+        {
+            "start": 48810,
+            "end": 48811,
+            "type": "code"
+        },
+        {
+            "start": 48813,
+            "end": 48813,
+            "type": "code"
+        },
+        {
+            "start": 48815,
+            "end": 48818,
+            "type": "code"
+        },
+        {
+            "start": 48819,
+            "end": 48829,
+            "type": "code"
+        },
+        {
+            "start": 48831,
+            "end": 48865,
+            "type": "code"
+        },
+        {
+            "start": 48868,
+            "end": 48893,
+            "type": "code"
+        },
+        {
+            "start": 48894,
+            "end": 48910,
+            "type": "code"
+        },
+        {
+            "start": 48913,
+            "end": 48926,
+            "type": "code"
+        },
+        {
+            "start": 48929,
+            "end": 48937,
+            "type": "code"
+        },
+        {
+            "start": 48939,
+            "end": 48942,
+            "type": "code"
+        },
+        {
+            "start": 48945,
+            "end": 48948,
+            "type": "code"
+        },
+        {
+            "start": 48951,
+            "end": 48957,
+            "type": "code"
+        },
+        {
+            "start": 48959,
+            "end": 48962,
+            "type": "code"
+        },
+        {
+            "start": 48965,
+            "end": 48971,
+            "type": "code"
+        },
+        {
+            "start": 48974,
+            "end": 48982,
+            "type": "code"
+        },
+        {
+            "start": 48985,
+            "end": 49038,
+            "type": "code"
+        },
+        {
+            "start": 49041,
+            "end": 49106,
+            "type": "code"
+        },
+        {
+            "start": 49107,
+            "end": 49107,
+            "type": "db"
+        },
+        {
+            "start": 49115,
+            "end": 49139,
+            "type": "db"
+        },
+        {
+            "start": 49147,
+            "end": 49162,
+            "type": "code"
+        },
+        {
+            "start": 49163,
+            "end": 49165,
+            "type": "code"
+        },
+        {
+            "start": 49166,
+            "end": 49214,
+            "type": "code"
+        },
+        {
+            "start": 49217,
+            "end": 49259,
+            "type": "code"
+        },
+        {
+            "start": 49263,
+            "end": 49290,
+            "type": "code"
+        },
+        {
+            "start": 49292,
+            "end": 49296,
+            "type": "code"
+        },
+        {
+            "start": 49299,
+            "end": 49307,
+            "type": "code"
+        },
+        {
+            "start": 49309,
+            "end": 49320,
+            "type": "code"
+        },
+        {
+            "start": 49321,
+            "end": 49329,
+            "type": "code"
+        },
+        {
+            "start": 49330,
+            "end": 49370,
+            "type": "code"
+        },
+        {
+            "start": 49373,
+            "end": 49412,
+            "type": "code"
+        },
+        {
+            "start": 49414,
+            "end": 49447,
+            "type": "code"
+        },
+        {
+            "start": 49451,
+            "end": 49470,
+            "type": "code"
+        },
+        {
+            "start": 49473,
+            "end": 49520,
+            "type": "code"
+        },
+        {
+            "start": 49522,
+            "end": 49529,
+            "type": "code"
+        },
+        {
+            "start": 49530,
+            "end": 49566,
+            "type": "code"
+        },
+        {
+            "start": 49567,
+            "end": 49568,
+            "type": "code"
+        },
+        {
+            "start": 49569,
+            "end": 49578,
+            "type": "code"
+        },
+        {
+            "start": 49579,
+            "end": 49643,
+            "type": "code"
+        },
+        {
+            "start": 49646,
+            "end": 49646,
+            "type": "code"
+        },
+        {
+            "start": 49649,
+            "end": 49664,
+            "type": "code"
+        },
+        {
+            "start": 49666,
+            "end": 49681,
+            "type": "code"
+        },
+        {
+            "start": 49683,
+            "end": 49696,
+            "type": "code"
+        },
+        {
+            "start": 49698,
+            "end": 49707,
+            "type": "code"
+        },
+        {
+            "start": 49708,
+            "end": 49708,
+            "type": "code"
+        },
+        {
+            "start": 49711,
+            "end": 49711,
+            "type": "code"
+        },
+        {
+            "start": 49714,
+            "end": 49717,
+            "type": "code"
+        },
+        {
+            "start": 49720,
+            "end": 49731,
+            "type": "code"
+        },
+        {
+            "start": 49733,
+            "end": 49762,
+            "type": "code"
+        },
+        {
+            "start": 49765,
+            "end": 49777,
+            "type": "code"
+        },
+        {
+            "start": 49780,
+            "end": 49786,
+            "type": "code"
+        },
+        {
+            "start": 49789,
+            "end": 49796,
+            "type": "db"
+        },
+        {
+            "start": 49803,
+            "end": 49818,
+            "type": "code"
+        },
+        {
+            "start": 49819,
+            "end": 49826,
+            "type": "code"
+        },
+        {
+            "start": 49829,
+            "end": 49829,
+            "type": "code"
+        },
+        {
+            "start": 49831,
+            "end": 49834,
+            "type": "code"
+        },
+        {
+            "start": 49837,
+            "end": 49856,
+            "type": "code"
+        },
+        {
+            "start": 49859,
+            "end": 49865,
+            "type": "code"
+        },
+        {
+            "start": 49867,
+            "end": 49867,
+            "type": "code"
+        },
+        {
+            "start": 49868,
+            "end": 49882,
+            "type": "code"
+        },
+        {
+            "start": 49884,
+            "end": 49899,
+            "type": "code"
+        },
+        {
+            "start": 49902,
+            "end": 49909,
+            "type": "code"
+        },
+        {
+            "start": 49913,
+            "end": 49925,
+            "type": "code"
+        },
+        {
+            "start": 49926,
+            "end": 49973,
+            "type": "code"
+        },
+        {
+            "start": 49975,
+            "end": 49990,
+            "type": "code"
+        },
+        {
+            "start": 49993,
+            "end": 50005,
+            "type": "code"
+        },
+        {
+            "start": 50007,
+            "end": 50023,
+            "type": "code"
+        },
+        {
+            "start": 50025,
+            "end": 50036,
+            "type": "code"
+        },
+        {
+            "start": 50039,
+            "end": 50065,
+            "type": "code"
+        },
+        {
+            "start": 50068,
+            "end": 50068,
+            "type": "code"
+        },
+        {
+            "start": 50071,
+            "end": 50081,
+            "type": "code"
+        },
+        {
+            "start": 50084,
+            "end": 50112,
+            "type": "code"
+        },
+        {
+            "start": 50115,
+            "end": 50172,
+            "type": "code"
+        },
+        {
+            "start": 50175,
+            "end": 50200,
+            "type": "code"
+        },
+        {
+            "start": 50201,
+            "end": 50223,
+            "type": "code"
+        },
+        {
+            "start": 50226,
+            "end": 50237,
+            "type": "code"
+        },
+        {
+            "start": 50240,
+            "end": 50248,
+            "type": "db"
+        },
+        {
+            "start": 50253,
+            "end": 50277,
+            "type": "db"
+        },
+        {
+            "start": 50285,
+            "end": 50301,
+            "type": "code"
+        },
+        {
+            "start": 50302,
+            "end": 50312,
+            "type": "code"
+        },
+        {
+            "start": 50313,
+            "end": 50345,
+            "type": "code"
+        },
+        {
+            "start": 50346,
+            "end": 50355,
+            "type": "code"
+        },
+        {
+            "start": 50358,
+            "end": 50368,
+            "type": "code"
+        },
+        {
+            "start": 50371,
+            "end": 50371,
+            "type": "code"
+        },
+        {
+            "start": 50374,
+            "end": 50384,
+            "type": "code"
+        },
+        {
+            "start": 50387,
+            "end": 50390,
+            "type": "code"
+        },
+        {
+            "start": 50392,
+            "end": 50395,
+            "type": "code"
+        },
+        {
+            "start": 50397,
+            "end": 50397,
+            "type": "code"
+        },
+        {
+            "start": 50400,
+            "end": 50400,
+            "type": "code"
+        },
+        {
+            "start": 50403,
+            "end": 50406,
+            "type": "code"
+        },
+        {
+            "start": 50408,
+            "end": 50411,
+            "type": "code"
+        },
+        {
+            "start": 50413,
+            "end": 50416,
+            "type": "code"
+        },
+        {
+            "start": 50418,
+            "end": 50421,
+            "type": "code"
+        },
+        {
+            "start": 50423,
+            "end": 50426,
+            "type": "code"
+        },
+        {
+            "start": 50428,
+            "end": 50431,
+            "type": "code"
+        },
+        {
+            "start": 50433,
+            "end": 50436,
+            "type": "code"
+        },
+        {
+            "start": 50438,
+            "end": 50441,
+            "type": "code"
+        },
+        {
+            "start": 50443,
+            "end": 50446,
+            "type": "code"
+        },
+        {
+            "start": 50448,
+            "end": 50451,
+            "type": "code"
+        },
+        {
+            "start": 50453,
+            "end": 50453,
+            "type": "code"
+        },
+        {
+            "start": 50456,
+            "end": 50457,
+            "type": "code"
+        },
+        {
+            "start": 50458,
+            "end": 50468,
+            "type": "code"
+        },
+        {
+            "start": 50469,
+            "end": 50477,
+            "type": "code"
+        },
+        {
+            "start": 50480,
+            "end": 50545,
+            "type": "code"
+        },
+        {
+            "start": 50546,
+            "end": 50562,
+            "type": "code"
+        },
+        {
+            "start": 50563,
+            "end": 50575,
+            "type": "code"
+        },
+        {
+            "start": 50577,
+            "end": 50577,
+            "type": "code"
+        },
+        {
+            "start": 50581,
+            "end": 50614,
+            "type": "code"
+        },
+        {
+            "start": 50615,
+            "end": 50631,
+            "type": "code"
+        },
+        {
+            "start": 50632,
+            "end": 50651,
+            "type": "code"
+        },
+        {
+            "start": 50653,
+            "end": 50682,
+            "type": "code"
+        },
+        {
+            "start": 50685,
+            "end": 50688,
+            "type": "code"
+        },
+        {
+            "start": 50691,
+            "end": 50698,
+            "type": "code"
+        },
+        {
+            "start": 50700,
+            "end": 50708,
+            "type": "code"
+        },
+        {
+            "start": 50710,
+            "end": 50720,
+            "type": "code"
+        },
+        {
+            "start": 50724,
+            "end": 50728,
+            "type": "code"
+        },
+        {
+            "start": 50729,
+            "end": 50733,
+            "type": "code"
+        },
+        {
+            "start": 50735,
+            "end": 50742,
+            "type": "code"
+        },
+        {
+            "start": 50746,
+            "end": 50750,
+            "type": "code"
+        },
+        {
+            "start": 50751,
+            "end": 50755,
+            "type": "code"
+        },
+        {
+            "start": 50757,
+            "end": 50765,
+            "type": "code"
+        },
+        {
+            "start": 50766,
+            "end": 50780,
+            "type": "db"
+        },
+        {
+            "start": 50782,
+            "end": 50819,
+            "type": "code"
+        },
+        {
+            "start": 50821,
+            "end": 50829,
+            "type": "code"
+        },
+        {
+            "start": 50833,
+            "end": 50833,
+            "type": "code"
+        },
+        {
+            "start": 50834,
+            "end": 50842,
+            "type": "code"
+        },
+        {
+            "start": 50845,
+            "end": 50860,
+            "type": "code"
+        },
+        {
+            "start": 50861,
+            "end": 50875,
+            "type": "code"
+        },
+        {
+            "start": 50877,
+            "end": 50909,
+            "type": "code"
+        },
+        {
+            "start": 50912,
+            "end": 50920,
+            "type": "code"
+        },
+        {
+            "start": 50922,
+            "end": 50942,
+            "type": "code"
+        },
+        {
+            "start": 50944,
+            "end": 50947,
+            "type": "code"
+        },
+        {
+            "start": 50950,
+            "end": 50977,
+            "type": "code"
+        },
+        {
+            "start": 50978,
+            "end": 50984,
+            "type": "code"
+        },
+        {
+            "start": 50987,
+            "end": 50993,
+            "type": "code"
+        },
+        {
+            "start": 50994,
+            "end": 50997,
+            "type": "code"
+        },
+        {
+            "start": 50999,
+            "end": 51002,
+            "type": "code"
+        },
+        {
+            "start": 51004,
+            "end": 51017,
+            "type": "code"
+        },
+        {
+            "start": 51020,
+            "end": 51037,
+            "type": "code"
+        },
+        {
+            "start": 51040,
+            "end": 51049,
+            "type": "code"
+        },
+        {
+            "start": 51052,
+            "end": 51075,
+            "type": "code"
+        },
+        {
+            "start": 51077,
+            "end": 51087,
+            "type": "code"
+        },
+        {
+            "start": 51089,
+            "end": 51110,
+            "type": "code"
+        },
+        {
+            "start": 51113,
+            "end": 51119,
+            "type": "db"
+        },
+        {
+            "start": 51121,
+            "end": 51133,
+            "type": "code"
+        },
+        {
+            "start": 51135,
+            "end": 51138,
+            "type": "code"
+        },
+        {
+            "start": 51140,
+            "end": 51152,
+            "type": "code"
+        },
+        {
+            "start": 51154,
+            "end": 51154,
+            "type": "code"
+        },
+        {
+            "start": 51157,
+            "end": 51157,
+            "type": "code"
+        },
+        {
+            "start": 51158,
+            "end": 51162,
+            "type": "code"
+        },
+        {
+            "start": 51163,
+            "end": 51170,
+            "type": "code"
+        },
+        {
+            "start": 51172,
+            "end": 51189,
+            "type": "code"
+        },
+        {
+            "start": 51193,
+            "end": 51197,
+            "type": "code"
+        },
+        {
+            "start": 51198,
+            "end": 51206,
+            "type": "code"
+        },
+        {
+            "start": 51208,
+            "end": 51218,
+            "type": "code"
+        },
+        {
+            "start": 51220,
+            "end": 51230,
+            "type": "code"
+        },
+        {
+            "start": 51232,
+            "end": 51234,
+            "type": "code"
+        },
+        {
+            "start": 51235,
+            "end": 51238,
+            "type": "code"
+        },
+        {
+            "start": 51240,
+            "end": 51240,
+            "type": "code"
+        },
+        {
+            "start": 51243,
+            "end": 51259,
+            "type": "code"
+        },
+        {
+            "start": 51262,
+            "end": 51283,
+            "type": "code"
+        },
+        {
+            "start": 51285,
+            "end": 51303,
+            "type": "code"
+        },
+        {
+            "start": 51306,
+            "end": 51306,
+            "type": "code"
+        },
+        {
+            "start": 51309,
+            "end": 51320,
+            "type": "code"
+        },
+        {
+            "start": 51322,
+            "end": 51343,
+            "type": "code"
+        },
+        {
+            "start": 51345,
+            "end": 51355,
+            "type": "code"
+        },
+        {
+            "start": 51357,
+            "end": 51358,
+            "type": "code"
+        },
+        {
+            "start": 51359,
+            "end": 51388,
+            "type": "code"
+        },
+        {
+            "start": 51390,
+            "end": 51404,
+            "type": "code"
+        },
+        {
+            "start": 51405,
+            "end": 51408,
+            "type": "code"
+        },
+        {
+            "start": 51410,
+            "end": 51412,
+            "type": "code"
+        },
+        {
+            "start": 51413,
+            "end": 51415,
+            "type": "code"
+        },
+        {
+            "start": 51417,
+            "end": 51422,
+            "type": "code"
+        },
+        {
+            "start": 51424,
+            "end": 51427,
+            "type": "code"
+        },
+        {
+            "start": 51429,
+            "end": 51431,
+            "type": "code"
+        },
+        {
+            "start": 51433,
+            "end": 51437,
+            "type": "code"
+        },
+        {
+            "start": 51439,
+            "end": 51441,
+            "type": "code"
+        },
+        {
+            "start": 51442,
+            "end": 51452,
+            "type": "code"
+        },
+        {
+            "start": 51453,
+            "end": 51476,
+            "type": "code"
+        },
+        {
+            "start": 51477,
+            "end": 51485,
+            "type": "code"
+        },
+        {
+            "start": 51487,
+            "end": 51493,
+            "type": "code"
+        },
+        {
+            "start": 51495,
+            "end": 51500,
+            "type": "code"
+        },
+        {
+            "start": 51503,
+            "end": 51519,
+            "type": "code"
+        },
+        {
+            "start": 51520,
+            "end": 51526,
+            "type": "code"
+        },
+        {
+            "start": 51528,
+            "end": 51560,
+            "type": "code"
+        },
+        {
+            "start": 51561,
+            "end": 51576,
+            "type": "code"
+        },
+        {
+            "start": 51578,
+            "end": 51582,
+            "type": "code"
+        },
+        {
+            "start": 51583,
+            "end": 51594,
+            "type": "code"
+        },
+        {
+            "start": 51595,
+            "end": 51603,
+            "type": "code"
+        },
+        {
+            "start": 51604,
+            "end": 51615,
+            "type": "code"
+        },
+        {
+            "start": 51617,
+            "end": 51623,
+            "type": "code"
+        },
+        {
+            "start": 51627,
+            "end": 51642,
+            "type": "code"
+        },
+        {
+            "start": 51644,
+            "end": 51648,
+            "type": "code"
+        },
+        {
+            "start": 51649,
+            "end": 51658,
+            "type": "code"
+        },
+        {
+            "start": 51660,
+            "end": 51660,
+            "type": "code"
+        },
+        {
+            "start": 51661,
+            "end": 51695,
+            "type": "code"
+        },
+        {
+            "start": 51699,
+            "end": 51706,
+            "type": "code"
+        },
+        {
+            "start": 51707,
+            "end": 51732,
+            "type": "code"
+        },
+        {
+            "start": 51735,
+            "end": 51739,
+            "type": "code"
+        },
+        {
+            "start": 51742,
+            "end": 51761,
+            "type": "code"
+        },
+        {
+            "start": 51762,
+            "end": 51768,
+            "type": "db"
+        },
+        {
+            "start": 51770,
+            "end": 51773,
+            "type": "code"
+        },
+        {
+            "start": 51775,
+            "end": 51778,
+            "type": "code"
+        },
+        {
+            "start": 51779,
+            "end": 51784,
+            "type": "code"
+        },
+        {
+            "start": 51786,
+            "end": 51789,
+            "type": "code"
+        },
+        {
+            "start": 51791,
+            "end": 51794,
+            "type": "code"
+        },
+        {
+            "start": 51795,
+            "end": 51800,
+            "type": "code"
+        },
+        {
+            "start": 51802,
+            "end": 51805,
+            "type": "code"
+        },
+        {
+            "start": 51806,
+            "end": 51823,
+            "type": "code"
+        },
+        {
+            "start": 51824,
+            "end": 51846,
+            "type": "code"
+        },
+        {
+            "start": 51849,
+            "end": 51855,
+            "type": "code"
+        },
+        {
+            "start": 51856,
+            "end": 51857,
+            "type": "code"
+        },
+        {
+            "start": 51858,
+            "end": 51864,
+            "type": "db"
+        },
+        {
+            "start": 51866,
+            "end": 51890,
+            "type": "code"
+        },
+        {
+            "start": 51891,
+            "end": 51897,
+            "type": "code"
+        },
+        {
+            "start": 51898,
+            "end": 51952,
+            "type": "code"
+        },
+        {
+            "start": 51955,
+            "end": 51980,
+            "type": "code"
+        },
+        {
+            "start": 51982,
+            "end": 52007,
+            "type": "code"
+        },
+        {
+            "start": 52009,
+            "end": 52034,
+            "type": "code"
+        },
+        {
+            "start": 52037,
+            "end": 52071,
+            "type": "code"
+        },
+        {
+            "start": 52074,
+            "end": 52088,
+            "type": "code"
+        },
+        {
+            "start": 52091,
+            "end": 52105,
+            "type": "code"
+        },
+        {
+            "start": 52108,
+            "end": 52121,
+            "type": "code"
+        },
+        {
+            "start": 52122,
+            "end": 52126,
+            "type": "code"
+        },
+        {
+            "start": 52128,
+            "end": 52141,
+            "type": "code"
+        },
+        {
+            "start": 52143,
+            "end": 52182,
+            "type": "code"
+        },
+        {
+            "start": 52185,
+            "end": 52191,
+            "type": "code"
+        },
+        {
+            "start": 52193,
+            "end": 52200,
+            "type": "code"
+        },
+        {
+            "start": 52201,
+            "end": 52205,
+            "type": "code"
+        },
+        {
+            "start": 52207,
+            "end": 52220,
+            "type": "code"
+        },
+        {
+            "start": 52222,
+            "end": 52261,
+            "type": "code"
+        },
+        {
+            "start": 52264,
+            "end": 52270,
+            "type": "code"
+        },
+        {
+            "start": 52272,
+            "end": 52279,
+            "type": "code"
+        },
+        {
+            "start": 52280,
+            "end": 52284,
+            "type": "code"
+        },
+        {
+            "start": 52286,
+            "end": 52299,
+            "type": "code"
+        },
+        {
+            "start": 52301,
+            "end": 52350,
+            "type": "code"
+        },
+        {
+            "start": 52353,
+            "end": 52362,
+            "type": "code"
+        },
+        {
+            "start": 52365,
+            "end": 52371,
+            "type": "code"
+        },
+        {
+            "start": 52373,
+            "end": 52380,
+            "type": "code"
+        },
+        {
+            "start": 52381,
+            "end": 52398,
+            "type": "code"
+        },
+        {
+            "start": 52400,
+            "end": 52401,
+            "type": "code"
+        },
+        {
+            "start": 52402,
+            "end": 52419,
+            "type": "code"
+        },
+        {
+            "start": 52421,
+            "end": 52422,
+            "type": "code"
+        },
+        {
+            "start": 52423,
+            "end": 52435,
+            "type": "code"
+        },
+        {
+            "start": 52438,
+            "end": 52439,
+            "type": "code"
+        },
+        {
+            "start": 52440,
+            "end": 52443,
+            "type": "code"
+        },
+        {
+            "start": 52445,
+            "end": 52459,
+            "type": "code"
+        },
+        {
+            "start": 52460,
+            "end": 52468,
+            "type": "code"
+        },
+        {
+            "start": 52470,
+            "end": 52485,
+            "type": "code"
+        },
+        {
+            "start": 52487,
+            "end": 52487,
+            "type": "code"
+        },
+        {
+            "start": 52488,
+            "end": 52502,
+            "type": "code"
+        },
+        {
+            "start": 52503,
+            "end": 52511,
+            "type": "code"
+        },
+        {
+            "start": 52513,
+            "end": 52528,
+            "type": "code"
+        },
+        {
+            "start": 52530,
+            "end": 52530,
+            "type": "code"
+        },
+        {
+            "start": 52531,
+            "end": 52546,
+            "type": "code"
+        },
+        {
+            "start": 52547,
+            "end": 52556,
+            "type": "code"
+        },
+        {
+            "start": 52557,
+            "end": 52587,
+            "type": "code"
+        },
+        {
+            "start": 52588,
+            "end": 52601,
+            "type": "code"
+        },
+        {
+            "start": 52602,
+            "end": 52612,
+            "type": "code"
+        },
+        {
+            "start": 52615,
+            "end": 52632,
+            "type": "code"
+        },
+        {
+            "start": 52633,
+            "end": 52634,
+            "type": "code"
+        },
+        {
+            "start": 52635,
+            "end": 52658,
+            "type": "code"
+        },
+        {
+            "start": 52659,
+            "end": 52667,
+            "type": "code"
+        },
+        {
+            "start": 52668,
+            "end": 52670,
+            "type": "code"
+        },
+        {
+            "start": 52674,
+            "end": 52683,
+            "type": "code"
+        },
+        {
+            "start": 52684,
+            "end": 52689,
+            "type": "code"
+        },
+        {
+            "start": 52691,
+            "end": 52696,
+            "type": "code"
+        },
+        {
+            "start": 52698,
+            "end": 52701,
+            "type": "code"
+        },
+        {
+            "start": 52703,
+            "end": 52703,
+            "type": "code"
+        },
+        {
+            "start": 52706,
+            "end": 52716,
+            "type": "code"
+        },
+        {
+            "start": 52719,
+            "end": 52754,
+            "type": "code"
+        },
+        {
+            "start": 52756,
+            "end": 52767,
+            "type": "code"
+        },
+        {
+            "start": 52770,
+            "end": 52772,
+            "type": "code"
+        },
+        {
+            "start": 52775,
+            "end": 52786,
+            "type": "code"
+        },
+        {
+            "start": 52787,
+            "end": 52792,
+            "type": "code"
+        },
+        {
+            "start": 52794,
+            "end": 52798,
+            "type": "code"
+        },
+        {
+            "start": 52800,
+            "end": 52807,
+            "type": "code"
+        },
+        {
+            "start": 52809,
+            "end": 52833,
+            "type": "code"
+        },
+        {
+            "start": 52834,
+            "end": 52848,
+            "type": "code"
+        },
+        {
+            "start": 52850,
+            "end": 52863,
+            "type": "code"
+        },
+        {
+            "start": 52864,
+            "end": 52874,
+            "type": "code"
+        },
+        {
+            "start": 52875,
+            "end": 52915,
+            "type": "db"
+        },
+        {
+            "start": 52923,
+            "end": 52929,
+            "type": "code"
+        },
+        {
+            "start": 52931,
+            "end": 52931,
+            "type": "code"
+        },
+        {
+            "start": 52934,
+            "end": 52953,
+            "type": "code"
+        },
+        {
+            "start": 52955,
+            "end": 53012,
+            "type": "code"
+        },
+        {
+            "start": 53013,
+            "end": 53013,
+            "type": "code"
+        },
+        {
+            "start": 53014,
+            "end": 53047,
+            "type": "code"
+        },
+        {
+            "start": 53049,
+            "end": 53051,
+            "type": "code"
+        },
+        {
+            "start": 53052,
+            "end": 53085,
+            "type": "code"
+        },
+        {
+            "start": 53087,
+            "end": 53089,
+            "type": "code"
+        },
+        {
+            "start": 53090,
+            "end": 53094,
+            "type": "code"
+        },
+        {
+            "start": 53097,
+            "end": 53149,
+            "type": "db"
+        },
+        {
+            "start": 53151,
+            "end": 53151,
+            "type": "code"
+        },
+        {
+            "start": 53154,
+            "end": 53154,
+            "type": "code"
+        },
+        {
+            "start": 53157,
+            "end": 53162,
+            "type": "code"
+        },
+        {
+            "start": 53165,
+            "end": 53174,
+            "type": "code"
+        },
+        {
+            "start": 53176,
+            "end": 53195,
+            "type": "code"
+        },
+        {
+            "start": 53198,
+            "end": 53198,
+            "type": "code"
+        },
+        {
+            "start": 53201,
+            "end": 53215,
+            "type": "code"
+        },
+        {
+            "start": 53217,
+            "end": 53230,
+            "type": "code"
+        },
+        {
+            "start": 53232,
+            "end": 53241,
+            "type": "code"
+        },
+        {
+            "start": 53245,
+            "end": 53245,
+            "type": "code"
+        },
+        {
+            "start": 53248,
+            "end": 53248,
+            "type": "code"
+        },
+        {
+            "start": 53251,
+            "end": 53266,
+            "type": "code"
+        },
+        {
+            "start": 53269,
+            "end": 53273,
+            "type": "code"
+        },
+        {
+            "start": 53274,
+            "end": 53281,
+            "type": "db"
+        },
+        {
+            "start": 53282,
+            "end": 53308,
+            "type": "code"
+        },
+        {
+            "start": 53310,
+            "end": 53316,
+            "type": "code"
+        },
+        {
+            "start": 53318,
+            "end": 53338,
+            "type": "code"
+        },
+        {
+            "start": 53340,
+            "end": 53344,
+            "type": "code"
+        },
+        {
+            "start": 53346,
+            "end": 53350,
+            "type": "code"
+        },
+        {
+            "start": 53352,
+            "end": 53356,
+            "type": "code"
+        },
+        {
+            "start": 53358,
+            "end": 53362,
+            "type": "code"
+        },
+        {
+            "start": 53364,
+            "end": 53364,
+            "type": "code"
+        },
+        {
+            "start": 53367,
+            "end": 53375,
+            "type": "code"
+        },
+        {
+            "start": 53377,
+            "end": 53381,
+            "type": "code"
+        },
+        {
+            "start": 53383,
+            "end": 53387,
+            "type": "code"
+        },
+        {
+            "start": 53389,
+            "end": 53393,
+            "type": "code"
+        },
+        {
+            "start": 53395,
+            "end": 53399,
+            "type": "code"
+        },
+        {
+            "start": 53401,
+            "end": 53401,
+            "type": "code"
+        },
+        {
+            "start": 53404,
+            "end": 53415,
+            "type": "code"
+        },
+        {
+            "start": 53417,
+            "end": 53426,
+            "type": "code"
+        },
+        {
+            "start": 53428,
+            "end": 53432,
+            "type": "code"
+        },
+        {
+            "start": 53434,
+            "end": 53438,
+            "type": "code"
+        },
+        {
+            "start": 53440,
+            "end": 53446,
+            "type": "code"
+        },
+        {
+            "start": 53448,
+            "end": 53474,
+            "type": "code"
+        },
+        {
+            "start": 53476,
+            "end": 53480,
+            "type": "code"
+        },
+        {
+            "start": 53482,
+            "end": 53486,
+            "type": "code"
+        },
+        {
+            "start": 53488,
+            "end": 53492,
+            "type": "code"
+        },
+        {
+            "start": 53494,
+            "end": 53501,
+            "type": "code"
+        },
+        {
+            "start": 53503,
+            "end": 53510,
+            "type": "code"
+        },
+        {
+            "start": 53512,
+            "end": 53519,
+            "type": "code"
+        },
+        {
+            "start": 53521,
+            "end": 53539,
+            "type": "code"
+        },
+        {
+            "start": 53541,
+            "end": 53545,
+            "type": "code"
+        },
+        {
+            "start": 53546,
+            "end": 53600,
+            "type": "code"
+        },
+        {
+            "start": 53601,
+            "end": 53601,
+            "type": "db"
+        },
+        {
+            "start": 53609,
+            "end": 53609,
+            "type": "db"
+        },
+        {
+            "start": 53613,
+            "end": 53613,
+            "type": "db"
+        },
+        {
+            "start": 53617,
+            "end": 53625,
+            "type": "db"
+        },
+        {
+            "start": 53633,
+            "end": 53633,
+            "type": "db"
+        },
+        {
+            "start": 53641,
+            "end": 53641,
+            "type": "db"
+        },
+        {
+            "start": 53649,
+            "end": 53657,
+            "type": "db"
+        },
+        {
+            "start": 53665,
+            "end": 53673,
+            "type": "db"
+        },
+        {
+            "start": 53681,
+            "end": 53729,
+            "type": "code"
+        },
+        {
+            "start": 53730,
+            "end": 53730,
+            "type": "db"
+        },
+        {
+            "start": 53734,
+            "end": 53740,
+            "type": "code"
+        },
+        {
+            "start": 53743,
+            "end": 53784,
+            "type": "code"
+        },
+        {
+            "start": 53785,
+            "end": 53814,
+            "type": "code"
+        },
+        {
+            "start": 53815,
+            "end": 53835,
+            "type": "code"
+        },
+        {
+            "start": 53836,
+            "end": 53844,
+            "type": "code"
+        },
+        {
+            "start": 53845,
+            "end": 53883,
+            "type": "code"
+        },
+        {
+            "start": 53886,
+            "end": 53906,
+            "type": "db"
+        },
+        {
+            "start": 53910,
+            "end": 53964,
+            "type": "code"
+        },
+        {
+            "start": 53967,
+            "end": 53995,
+            "type": "db"
+        },
+        {
+            "start": 53999,
+            "end": 54026,
+            "type": "code"
+        },
+        {
+            "start": 54029,
+            "end": 54038,
+            "type": "code"
+        },
+        {
+            "start": 54039,
+            "end": 54045,
+            "type": "code"
+        },
+        {
+            "start": 54048,
+            "end": 54078,
+            "type": "code"
+        },
+        {
+            "start": 54079,
+            "end": 54087,
+            "type": "code"
+        },
+        {
+            "start": 54090,
+            "end": 54090,
+            "type": "code"
+        },
+        {
+            "start": 54093,
+            "end": 54113,
+            "type": "code"
+        },
+        {
+            "start": 54114,
+            "end": 54125,
+            "type": "code"
+        },
+        {
+            "start": 54127,
+            "end": 54135,
+            "type": "code"
+        },
+        {
+            "start": 54138,
+            "end": 54141,
+            "type": "code"
+        },
+        {
+            "start": 54143,
+            "end": 54154,
+            "type": "code"
+        },
+        {
+            "start": 54156,
+            "end": 54163,
+            "type": "code"
+        },
+        {
+            "start": 54165,
+            "end": 54184,
+            "type": "code"
+        },
+        {
+            "start": 54185,
+            "end": 54196,
+            "type": "code"
+        },
+        {
+            "start": 54197,
+            "end": 54213,
+            "type": "code"
+        },
+        {
+            "start": 54214,
+            "end": 54220,
+            "type": "code"
+        },
+        {
+            "start": 54223,
+            "end": 54240,
+            "type": "code"
+        },
+        {
+            "start": 54242,
+            "end": 54254,
+            "type": "code"
+        },
+        {
+            "start": 54256,
+            "end": 54301,
+            "type": "code"
+        },
+        {
+            "start": 54302,
+            "end": 54321,
+            "type": "code"
+        },
+        {
+            "start": 54322,
+            "end": 54345,
+            "type": "code"
+        },
+        {
+            "start": 54348,
+            "end": 54352,
+            "type": "code"
+        },
+        {
+            "start": 54354,
+            "end": 54378,
+            "type": "code"
+        },
+        {
+            "start": 54379,
+            "end": 54379,
+            "type": "code"
+        },
+        {
+            "start": 54380,
+            "end": 54475,
+            "type": "code"
+        },
+        {
+            "start": 54477,
+            "end": 54504,
+            "type": "code"
+        },
+        {
+            "start": 54506,
+            "end": 54511,
+            "type": "code"
+        },
+        {
+            "start": 54514,
+            "end": 54520,
+            "type": "code"
+        },
+        {
+            "start": 54521,
+            "end": 54525,
+            "type": "code"
+        },
+        {
+            "start": 54527,
+            "end": 54531,
+            "type": "code"
+        },
+        {
+            "start": 54532,
+            "end": 54535,
+            "type": "code"
+        },
+        {
+            "start": 54536,
+            "end": 54536,
+            "type": "code"
+        },
+        {
+            "start": 54537,
+            "end": 54541,
+            "type": "code"
+        },
+        {
+            "start": 54542,
+            "end": 54552,
+            "type": "code"
+        },
+        {
+            "start": 54553,
+            "end": 54562,
+            "type": "code"
+        },
+        {
+            "start": 54565,
+            "end": 54572,
+            "type": "code"
+        },
+        {
+            "start": 54574,
+            "end": 54583,
+            "type": "code"
+        },
+        {
+            "start": 54586,
+            "end": 54586,
+            "type": "code"
+        },
+        {
+            "start": 54588,
+            "end": 54595,
+            "type": "code"
+        },
+        {
+            "start": 54596,
+            "end": 54602,
+            "type": "code"
+        },
+        {
+            "start": 54604,
+            "end": 54612,
+            "type": "code"
+        },
+        {
+            "start": 54614,
+            "end": 54621,
+            "type": "code"
+        },
+        {
+            "start": 54623,
+            "end": 54629,
+            "type": "code"
+        },
+        {
+            "start": 54631,
+            "end": 54637,
+            "type": "code"
+        },
+        {
+            "start": 54639,
+            "end": 54645,
+            "type": "code"
+        },
+        {
+            "start": 54648,
+            "end": 54650,
+            "type": "code"
+        },
+        {
+            "start": 54651,
+            "end": 54681,
+            "type": "code"
+        },
+        {
+            "start": 54682,
+            "end": 54686,
+            "type": "code"
+        },
+        {
+            "start": 54687,
+            "end": 54703,
+            "type": "code"
+        },
+        {
+            "start": 54706,
+            "end": 54744,
+            "type": "code"
+        },
+        {
+            "start": 54747,
+            "end": 54773,
+            "type": "code"
+        },
+        {
+            "start": 54774,
+            "end": 54792,
+            "type": "code"
+        },
+        {
+            "start": 54795,
+            "end": 54811,
+            "type": "code"
+        },
+        {
+            "start": 54812,
+            "end": 54827,
+            "type": "code"
+        },
+        {
+            "start": 54828,
+            "end": 54854,
+            "type": "code"
+        },
+        {
+            "start": 54857,
+            "end": 54860,
+            "type": "code"
+        },
+        {
+            "start": 54862,
+            "end": 54865,
+            "type": "code"
+        },
+        {
+            "start": 54867,
+            "end": 54883,
+            "type": "code"
+        },
+        {
+            "start": 54886,
+            "end": 54903,
+            "type": "code"
+        },
+        {
+            "start": 54905,
+            "end": 54907,
+            "type": "code"
+        },
+        {
+            "start": 54908,
+            "end": 54937,
+            "type": "code"
+        },
+        {
+            "start": 54938,
+            "end": 54941,
+            "type": "code"
+        },
+        {
+            "start": 54942,
+            "end": 54942,
+            "type": "code"
+        },
+        {
+            "start": 54944,
+            "end": 54949,
+            "type": "code"
+        },
+        {
+            "start": 54951,
+            "end": 54968,
+            "type": "code"
+        },
+        {
+            "start": 54971,
+            "end": 54972,
+            "type": "code"
+        },
+        {
+            "start": 54974,
+            "end": 54984,
+            "type": "code"
+        },
+        {
+            "start": 54985,
+            "end": 55022,
+            "type": "code"
+        },
+        {
+            "start": 55023,
+            "end": 55043,
+            "type": "code"
+        },
+        {
+            "start": 55044,
+            "end": 55055,
+            "type": "code"
+        },
+        {
+            "start": 55056,
+            "end": 55063,
+            "type": "code"
+        },
+        {
+            "start": 55064,
+            "end": 55098,
+            "type": "code"
+        },
+        {
+            "start": 55100,
+            "end": 55127,
+            "type": "code"
+        },
+        {
+            "start": 55130,
+            "end": 55149,
+            "type": "code"
+        },
+        {
+            "start": 55151,
+            "end": 55183,
+            "type": "code"
+        },
+        {
+            "start": 55184,
+            "end": 55207,
+            "type": "code"
+        },
+        {
+            "start": 55210,
+            "end": 55211,
+            "type": "code"
+        },
+        {
+            "start": 55212,
+            "end": 55294,
+            "type": "code"
+        },
+        {
+            "start": 55295,
+            "end": 55295,
+            "type": "code"
+        },
+        {
+            "start": 55296,
+            "end": 55312,
+            "type": "code"
+        },
+        {
+            "start": 55313,
+            "end": 55333,
+            "type": "code"
+        },
+        {
+            "start": 55334,
+            "end": 55367,
+            "type": "code"
+        },
+        {
+            "start": 55368,
+            "end": 55396,
+            "type": "code"
+        },
+        {
+            "start": 55397,
+            "end": 55434,
+            "type": "code"
+        },
+        {
+            "start": 55436,
+            "end": 55436,
+            "type": "code"
+        },
+        {
+            "start": 55437,
+            "end": 55456,
+            "type": "code"
+        },
+        {
+            "start": 55458,
+            "end": 55486,
+            "type": "code"
+        },
+        {
+            "start": 55487,
+            "end": 55500,
+            "type": "code"
+        },
+        {
+            "start": 55501,
+            "end": 55514,
+            "type": "code"
+        },
+        {
+            "start": 55516,
+            "end": 55517,
+            "type": "code"
+        },
+        {
+            "start": 55518,
+            "end": 55518,
+            "type": "db"
+        },
+        {
+            "start": 65535,
+            "end": 65535,
+            "type": "db"
+        }
+    ],
+    "comments": {
+        "6108": "'0'",
+        "6110": "'1'",
+        "6118": "'2'",
+        "6120": "'3'",
+        "6128": "'4'",
+        "6130": "'5'",
+        "6138": "'6'",
+        "6140": "'7'",
+        "6148": "'8'",
+        "6150": "'9'",
+        "6158": "'A'",
+        "6160": "'B'",
+        "6168": "'C'",
+        "6170": "'D'",
+        "6178": "'E'",
+        "6180": "'F'",
+        "6188": "'G'",
+        "6190": "'H'",
+        "6198": "'I'",
+        "61a0": "'J'",
+        "61a8": "'K'",
+        "61b0": "'L'",
+        "61b8": "'M'",
+        "61c0": "'N'",
+        "61c8": "'O'",
+        "61d0": "'P'",
+        "61d8": "'Q'",
+        "61e0": "'R'",
+        "61e8": "'S'",
+        "61f0": "'T'",
+        "61f8": "'U'",
+        "6200": "'V'",
+        "6208": "'W'",
+        "6210": "'X'",
+        "6218": "'Y'",
+        "6220": "'Z'",
+        "6228": "'.'",
+        "6230": "'(c)'",
+        "6238": "' '",
+        "6240": "'%'",
+        "6248": "0",
+        "624b": "1",
+        "624e": "2",
+        "6251": "id=0",
+        "626b": "id=1",
+        "6280": "id=2",
+        "6287": "id=3",
+        "62a2": "id=4",
+        "62b6": "id=8",
+        "62d1": "id=9",
+        "62dd": "id=10",
+        "62f7": "id=11",
+        "62fe": "id=12",
+        "6316": "id=13",
+        "631d": "id=14",
+        "6329": "id=15",
+        "6346": "id=16",
+        "635f": "id=18",
+        "6378": "id=20",
+        "6393": "id=24",
+        "63a5": "id=29",
+        "63c1": "id=31",
+        "63d9": "id=32",
+        "63ec": "id=33",
+        "6409": "id=34",
+        "6424": "id=36",
+        "643d": "id=39",
+        "644d": "id=40",
+        "645e": "id=45",
+        "6476": "id=46",
+        "6488": "id=47",
+        "648f": "id=48",
+        "64a6": "id=52",
+        "64bf": "id=55",
+        "64cd": "id=56",
+        "64e7": "id=63",
+        "6501": "id=64",
+        "6515": "id=65",
+        "652d": "id=66",
+        "6543": "id=67",
+        "655f": "id=68",
+        "6567": "id=69",
+        "6585": "id=70",
+        "65a2": "id=71",
+        "65a9": "id=72",
+        "65c1": "id=79",
+        "65d7": "id=84",
+        "65ee": "id=87",
+        "6603": "id=88",
+        "660f": "id=94",
+        "6622": "id=95",
+        "6629": "id=100",
+        "663c": "id=103",
+        "664f": "id=104",
+        "6669": "id=106",
+        "666f": "id=107",
+        "6681": "id=108",
+        "669a": "id=109",
+        "66b2": "id=110",
+        "66ba": "id=111",
+        "66cf": "id=116",
+        "66e8": "id=117",
+        "66f7": "id=118",
+        "670e": "id=119",
+        "6716": "id=120",
+        "6730": "id=121",
+        "6747": "id=122",
+        "675e": "id=131",
+        "6764": "id=132",
+        "677c": "id=133",
+        "6796": "id=134",
+        "67a2": "id=135",
+        "67bb": "id=136",
+        "67cf": "id=137",
+        "67e4": "id=138",
+        "67fd": "id=139",
+        "6804": "id=140",
+        "681e": "id=141",
+        "6839": "id=142",
+        "6846": "id=143",
+        "684c": "id=147",
+        "6861": "id=151",
+        "6872": "id=152",
+        "688d": "id=155",
+        "68a5": "id=159",
+        "68be": "id=163",
+        "68db": "id=167",
+        "68e1": "id=168",
+        "68fa": "id=170",
+        "6913": "id=171",
+        "691a": "id=175",
+        "6929": "id=179",
+        "6930": "id=180",
+        "6944": "id=183",
+        "6953": "id=186",
+        "696d": "id=187",
+        "6979": "id=191",
+        "6997": "id=195",
+        "69ac": "id=199",
+        "69b8": "id=207",
+        "69c3": "id=208",
+        "69dd": "id=209",
+        "69ef": "id=210",
+        "6a05": "id=211",
+        "6a18": "id=214",
+        "6a2e": "id=215",
+        "6a3d": "id=216",
+        "6a44": "id=217",
+        "6a5f": "id=222",
+        "6a65": "id=223",
+        "6a7c": "id=224",
+        "6a8e": "id=226",
+        "6aa5": "id=227",
+        "6ac1": "id=230",
+        "6ac9": "id=231",
+        "6adb": "id=232",
+        "6af2": "id=233",
+        "6af9": "id=237",
+        "6b0e": "id=239",
+        "6b14": "id=240",
+        "6b30": "id=241",
+        "6b3b": "id=242",
+        "6b42": "id=243",
+        "6b5a": "id=246",
+        "6b6e": "id=247",
+        "6b84": "id=248",
+        "6b8c": "id=249",
+        "6ba0": "id=253",
+        "6bb2": "id=254",
+        "6bc5": "id=255",
+        "6bd1": "$00 - block 07 block",
+        "6bd3": "$01 - sprite b0 (fire) (unused)",
+        "6bd5": "$02 - sprite b2 (ball) [up/down]",
+        "6bd7": "$03 - block 06 rock",
+        "6bd9": "$04 - block 16 gargoyle",
+        "6bdb": "$05 - block 17 spike",
+        "6bdd": "$06 - sprite 55 (chest)",
+        "6bdf": "$07 - sprite 54 (table)",
+        "6be1": "$08 - sprite 96/90 (guard) [west/east]",
+        "6be3": "$09 - sprite 52 (ghost)",
+        "6be5": "$0A - sprite b5 (fire) [north/south]",
+        "6be7": "$0B - block 07 block high",
+        "6be9": "$0C - sprite b2 (ball) [up/down]",
+        "6beb": "$0D - sprite 1e/90 (Guard) [square circuit]",
+        "6bed": "$0E - block 36 [west/east]",
+        "6bef": "$0F - block 37 [north/south]",
+        "6bf1": "$10 - block 3e",
+        "6bf3": "$11 - block Spike - high!!!",
+        "6bf5": "$12 - sprite 3f (Spike Ball)",
+        "6bf7": "$13 - sprite 3f (Spike Ball) [falling]",
+        "6bf9": "$14 - sprite 56 Fire [west/east]",
+        "6bfb": "$15 - Block 5b",
+        "6bfd": "$16 - block 8f [Collapse]",
+        "6bff": "$17 - sprite b6 (Ball)",
+        "6c01": "$18 - sprite b2 (Ball)",
+        "6c03": "$19 - sprite a4 (Spell) [repel player]",
+        "6c05": "$1A - sprite 8 (Gate) [up/down]",
+        "6c07": "$1B - sprite 8 (Gate) [up/down]",
+        "6c09": "$1C - sprite b2 (Ball)",
+        "6ce2": "$00 - Arch north",
+        "6ce4": "$01 - arch east",
+        "6ce6": "$02 - arch south",
+        "6ce8": "$03 - arch west",
+        "6cea": "$04 - Tree arch north",
+        "6cec": "$05 - Tree arch east",
+        "6cee": "$06 - Tree arch south",
+        "6cf0": "$07 - Tree arch west",
+        "6cf2": "$08 - Gate",
+        "6cf4": "$09 - Gate",
+        "6cf6": "$0A - Gate",
+        "6cf8": "$0B - Gate",
+        "6cfa": "$0C - walls size 0",
+        "6cfc": "$0D - walls size 1",
+        "6cfe": "$0E - walls size 2",
+        "6d00": "$0F - trees size 0",
+        "6d02": "$10 - trees size 1",
+        "6d04": "$11 - trees size 2",
+        "6d06": "$12 - Wizard",
+        "6d08": "$13 - Pot",
+        "6d0a": "$14 - High Arch east",
+        "6d0c": "$15 - High Arch south",
+        "6d0e": "$16 - High Arch east base",
+        "6d10": "$17 - High Arch south base",
+        "af6c": "location to clear",
+        "af6f": "# bytes to clear",
+        "af72": "FRAMES system variable (LSB)",
+        "af82": "# bytes to clear",
+        "af8f": "plyr_spr_1_scratchpad",
+        "af92": "5 lives to start",
+        "af9d": "seed_1 += seed_2",
+        "af9e": "update seed",
+        "af9f": "colour is bright yellow on black",
+        "afa8": "play tune",
+        "afab": "randomise order of required objects",
+        "afae": "randomise player start location",
+        "afb4": "randomise special object locations",
+        "afc3": "start of table",
+        "afd1": "set return address",
+        "afdd": "word offset",
+        "afde": "get ptr jump entry",
+        "afe2": "HL=jump address",
+        "afe3": "go",
+        "afeb": "update seed #3",
+        "aff1": "next sprite to render",
+        "aff6": "end of table",
+        "affa": "past end of table?",
+        "affc": "yes, exit",
+        "affe": "loop",
+        "b013": "update special objects table next time",
+        "b01b": "builds a list of screen objects",
+        "b01e": "renders above list",
+        "b024": "any blocks rising?",
+        "b025": "yes, play audio",
+        "b02d": "calculate delay loop value",
+        "b042": "rendered before?",
+        "b043": "yes, skip",
+        "b045": "reset flag",
+        "b049": "attribute",
+        "b04c": "set screen colour",
+        "b04f": "inventory",
+        "b06e": "copy to display",
+        "b075": "clear",
+        "b07c": "player sprite half",
+        "b07f": "player other sprite half",
+        "b082": "both null? yes, lose a life",
+        "b088": "max #objects in draw table",
+        "b08a": "object size",
+        "b08d": "offset to flags",
+        "b092": "next entry",
+        "b093": "loop until done",
+        "b096": "No Update",
+        "b098": "(unused)",
+        "b09a": "stone arch (near side)",
+        "b09c": "stone arch (far side)",
+        "b09e": "tree arch (near side)",
+        "b0a0": "tree arch (far side)",
+        "b0a2": "rock",
+        "b0a4": "block",
+        "b0a6": "portcullis (stationary)",
+        "b0a8": "portcullis (moving)",
+        "b0aa": "bricks",
+        "b0ac": "more bricks",
+        "b0ae": "even more bricks",
+        "b0b6": "human legs",
+        "b0c2": "gargoyle",
+        "b0c4": "spikes",
+        "b0d2": "guard (moving NSEW) (top half)",
+        "b0d6": "player (top half)",
+        "b0f6": "wulf legs",
+        "b102": "block (moving EW)",
+        "b104": "block (moving NS)",
+        "b112": "another block",
+        "b114": "spiked ball",
+        "b116": "player (wulf top half)",
+        "b136": "ghost",
+        "b13e": "table",
+        "b140": "chest",
+        "b142": "fire (EW)",
+        "b144": "fire (EW)",
+        "b146": "sun",
+        "b148": "moon",
+        "b14a": "frame (left)",
+        "b14c": "block (dropping)",
+        "b14e": "human/wulf transform",
+        "b156": "diamond",
+        "b158": "poison",
+        "b15a": "boot",
+        "b15c": "chalice",
+        "b15e": "cup",
+        "b160": "bottle",
+        "b162": "crystal ball",
+        "b164": "extra life",
+        "b166": "special object (diamond)",
+        "b168": "\" (poison)",
+        "b16a": "\" (boot)",
+        "b16c": "\" (chalice)",
+        "b16e": "\" (cup)",
+        "b170": "\" (bottle)",
+        "b172": "\" (crytsal ball)",
+        "b174": "final sparkles in cauldron",
+        "b176": "death sparkles",
+        "b184": "last death sparkle",
+        "b186": "player appears sparkles",
+        "b194": "last player appears sparkle",
+        "b196": "tree wall",
+        "b19c": "sparkles in the cauldron room at end of game",
+        "b1b0": "cauldron (bottom)",
+        "b1b2": "cauldron (top)",
+        "b1b4": "block (collapsing)",
+        "b1b6": "guard & wizard (bottom half)",
+        "b1c2": "guard (EW) (top half)",
+        "b1d2": "wizard (top half)",
+        "b1d6": "cauldron bubbles",
+        "b1de": "repel spell",
+        "b1e6": "diamond",
+        "b1e8": "poison",
+        "b1ea": "boot",
+        "b1ec": "chalice",
+        "b1ee": "cup",
+        "b1f0": "bottle",
+        "b1f2": "crystal ball",
+        "b1f4": "extra life",
+        "b1f6": "fire (stationary) (not used)",
+        "b1f8": "fire (stationary) (not used)",
+        "b1fa": "ball up/down",
+        "b1fc": "ball up/down",
+        "b1fe": "fire (NS)",
+        "b200": "fire (NS)",
+        "b202": "ball (bouncing around)",
+        "b206": "death sparkles",
+        "b208": "last obj in cauldron sparkle",
+        "b20c": "last obj in cauldron sparkle",
+        "b2c6": "done?",
+        "b2c8": "yes, exit",
+        "b2cf": "audio data byte",
+        "b2d0": "done?",
+        "b2d2": "yes, return",
+        "b2da": "note",
+        "b2e1": "HL=2A",
+        "b2e2": "HL=3A",
+        "b2e5": "frequency table",
+        "b2e8": "ptr to entry",
+        "b2e9": "loop cnt LSB",
+        "b2eb": "loop cnt MSB",
+        "b2ed": "duration LSB",
+        "b2f0": "note & duration MSB",
+        "b2f5": "duration MSB",
+        "b2f8": "HL,DE=duration LSB",
+        "b2fd": "calc 16-bit duration (HL)",
+        "b3f1": "??? table",
+        "b3f4": "ptr entry",
+        "b403": "sprite index",
+        "b40a": "location in ROM",
+        "b419": "player sprite graphic no.",
+        "b425": "bits 6:2 only",
+        "b441": "' '",
+        "b451": "Z",
+        "b45d": "X",
+        "b462": "Y",
+        "b47e": "'U'",
+        "b4b0": "even?",
+        "b4b2": "no, exit",
+        "b4ca": "Z",
+        "b4d7": "Y",
+        "b4ed": "EAR output",
+        "b4ef": "enable",
+        "b4f5": "MIC output",
+        "b4f6": "enable (disable EAR)",
+        "b506": "max objects",
+        "b508": "dX=0",
+        "b50a": "dY=0",
+        "b50b": "dZ=0",
+        "b50c": "ignore this object",
+        "b513": "no, skip",
+        "b518": "no, skip",
+        "b51d": "no, skip",
+        "b522": "no, skip",
+        "b529": "reset ignore flag",
+        "b52d": "C flag set indicates intersection",
+        "b531": "next entry",
+        "b533": "loop through object table",
+        "b538": "graphic no.",
+        "b53b": "null?",
+        "b53c": "yes, exit",
+        "b53d": "flags",
+        "b541": "test bit 1",
+        "b54b": "random 4-7",
+        "b569": "Z",
+        "b56c": "<164?",
+        "b56e": "no, go",
+        "b570": "dZ=3",
+        "b574": "X",
+        "b57a": "X bit7->bit0",
+        "b57b": "Y",
+        "b57e": "Y bit7",
+        "b581": "bit0->bit1, bit7->bit1",
+        "b585": "jump table",
+        "b58b": "+4, -4",
+        "b58d": "+4, +4",
+        "b58f": "-4, -4",
+        "b591": "-4, +4",
+        "b596": "dX",
+        "b599": "dY",
+        "b59f": "rnd 0-3",
+        "b5a1": ">0, skip",
+        "b5a3": "=1",
+        "b5a6": "set graphic no.",
+        "b5c7": "object X",
+        "b5cd": "abs(delta x)",
+        "b5d1": "no, skip",
+        "b5d3": "plyr_spr_1 Y",
+        "b5d6": "object Y",
+        "b5dc": "abs(delta y)",
+        "b5e0": "yes, exit",
+        "b5e7": "ignore object in 3D calculations",
+        "b5eb": "dZ=1",
+        "b5ef": "dX,dY=4",
+        "b5f7": "select upper address",
+        "b5f9": "read status",
+        "b5fb": "positive logic",
+        "b5fc": "mask off undefined bits",
+        "b602": "dX",
+        "b605": "dY",
+        "b609": "dZ",
+        "b60c": "tmp store",
+        "b613": "preserve old dX",
+        "b616": "preserve old dY",
+        "b619": "plyr graphic_no",
+        "b61e": "wulf?",
+        "b620": "jr nc,___",
+        "b622": "yes, skip",
+        "b624": "jr,c___",
+        "b629": "self-modifying code",
+        "b62c": "plyr_spr_1 screen",
+        "b640": "no, skip",
+        "b642": "new dZ",
+        "b645": "old dZ",
+        "b648": ">=0?",
+        "b649": "yes, skip",
+        "b655": "plyr_spr_1 Y",
+        "b658": "<objY?",
+        "b65f": "towards player",
+        "b664": "new dX=0",
+        "b671": "< objX?",
+        "b678": "towards player",
+        "b67d": "new dY=0",
+        "b686": "triggered?",
+        "b68a": "no, exit",
+        "b68b": "reset triggered",
+        "b68f": "dZ=0",
+        "b696": "Z OOB?",
+        "b69a": "yes, skip",
+        "b6a5": "triggered?",
+        "b6a9": "no, return",
+        "b6aa": "graphic_no = sparkles",
+        "b6b4": "IX+2,IX+10 (Y,dY)",
+        "b6bc": "IX+1,IX+9 (X,dX)",
+        "b6c0": "IX+2/1",
+        "b6c4": "IX+10/9",
+        "b6c7": "adj(-8,-16)",
+        "b6f2": "pre-load dZ=1 (no falling)",
+        "b6fc": "dX",
+        "b6ff": "dX & dY both 0?",
+        "b702": "yes, exit",
+        "b706": "dX",
+        "b709": "dX<dY?",
+        "b70c": "yes, go",
+        "b70e": "dX<0?",
+        "b710": "yes, go",
+        "b712": "graphic_no",
+        "b72a": "no, go",
+        "b72c": "graphic_no",
+        "b73f": "E or W?",
+        "b745": "E, skip",
+        "b74c": "and for botton half",
+        "b755": "X OOB?",
+        "b759": "no, skip",
+        "b75e": "toggle direction",
+        "b766": "copy to bottom half",
+        "b76c": "dX",
+        "b76f": "dY - both zero?",
+        "b772": "yes, exit",
+        "b773": "dX",
+        "b776": "dX<dY?",
+        "b779": "yes, go",
+        "b77b": "dX<0?",
+        "b77d": "yes, go",
+        "b77f": "sprite 31/159",
+        "b792": "no, go",
+        "b794": "sprite 31/139",
+        "b7a6": "adj(-7,-12)",
+        "b7b4": "is this one dropping?",
+        "b7b8": "yes, go",
+        "b7be": "is another ball already dropping?",
+        "b7bf": "yes, exit",
+        "b7c3": "1-in-16 chance",
+        "b7c6": "flag this one as dropping",
+        "b7ca": "flag a spike ball dropping",
+        "b7d0": "Z OOB? (hit the floor?)",
+        "b7d4": "yes, go",
+        "b7e3": "flag no spiked balls dropping",
+        "b7f0": "pre-load dZ=1",
+        "b7f4": "moving east?",
+        "b7fa": "yes, skip",
+        "b807": "X OOB?",
+        "b812": "dZ=1",
+        "b816": "moving north?",
+        "b81c": "yes, skip",
+        "b829": "Y OOB?",
+        "b831": "toggle bit 1/2",
+        "b84b": "'@'",
+        "b84d": "randomise hflip",
+        "b85f": "fatal if you hit it, it hits you",
+        "b86b": "bouncing?",
+        "b86c": "yes, skip",
+        "b86e": "Z",
+        "b871": "calc bounce height",
+        "b87c": "dir=up?",
+        "b880": "yes, skip",
+        "b885": "Z OOB?",
+        "b889": "no, skip",
+        "b88b": "set dir=up",
+        "b89e": "Z < ball_bounce_height?",
+        "b8a1": "yes, go",
+        "b8a3": "set dir=down",
+        "b8a9": "plyr_spr_1 screen",
+        "b8ac": "cauldron room?",
+        "b8ae": "no, exit",
+        "b8af": "special_objs_here[1]",
+        "b8b2": "graphic no.",
+        "b8b3": "null?",
+        "b8b4": "no, return",
+        "b8ba": "source data",
+        "b8bd": "18 bytes to copy",
+        "b8c1": "save destination",
+        "b8c3": "copy",
+        "b8e0": "null?",
+        "b8e1": "no, skip",
+        "b8e4": "ignore in 3D calcs",
+        "b8ee": "Z",
+        "b8f3": "dZ=2",
+        "b8f9": "dZ=1",
+        "b8fd": "plyr_spr_1 (legs) graphic_no",
+        "b900": "'0'",
+        "b902": "wulf?",
+        "b904": "yes, go",
+        "b906": "graphic_no",
+        "b913": "show next object required",
+        "b91d": "don't ignore in 3D calcs",
+        "b926": "graphic_no (sparkles)",
+        "b92f": "object screen",
+        "b932": "cauldron room?",
+        "b934": "yes, go",
+        "b939": "near arch?",
+        "b93b": "no, go",
+        "b93d": "dX,dY=1",
+        "b94e": "object screen",
+        "b951": "cauldron room?",
+        "b953": "no, skip",
+        "b955": "plyr_spr_1 graphic_no",
+        "b95a": "'@'",
+        "b965": "plyr_spr_1 X",
+        "b968": "object X",
+        "b96b": "-plyrX",
+        "b96c": "plyr_spr_1 Y",
+        "b96d": "1or4",
+        "b96e": "plyr E? yes, go",
+        "b976": "object Y",
+        "b979": "-plyrY",
+        "b97a": "plyrZ",
+        "b97b": "1or4",
+        "b97c": "plyr N? yes, go",
+        "b985": "graphic_no",
+        "b988": "toggle next/prev sprite",
+        "b990": "mask off low 2 bits",
+        "b995": "inc low 2 bits",
+        "b997": "mask them back in",
+        "b9ae": "dX",
+        "b9b1": "next obj dX",
+        "b9b4": "dY",
+        "b9b7": "next obj dY",
+        "b9ba": "X",
+        "b9bd": "copy to next obj X",
+        "b9c0": "Y",
+        "b9c3": "copy to next obj Y",
+        "b9cc": "jump table",
+        "b9d2": "direction (N/S/E/W)",
+        "b9e0": "dY=0, dX=-2",
+        "b9e3": "X OOB?",
+        "b9e7": "no, exit",
+        "b9e8": "dY=2, dX=0",
+        "b9f0": "relevant bits",
+        "b9f6": "inc lowest 2 bits (mod 4)",
+        "b9fb": "dY=+2, dX=0",
+        "b9fe": "Y OOB?",
+        "ba02": "no, exit",
+        "ba03": "dY=0, dX=+2",
+        "ba0b": "X OOB?",
+        "ba0f": "no, exit",
+        "ba10": "dY=-2, dX=0",
+        "ba15": "dY=-2, dX=0",
+        "ba18": "Y OOB?",
+        "ba1c": "no, exit",
+        "ba1d": "dY=0, dX=-2",
+        "ba2f": "game over status screen",
+        "ba33": "game over status screen",
+        "ba3e": "video buffer address",
+        "ba44": "1 BCD digit pair",
+        "ba64": "ptr to rating text entry",
+        "ba67": "DE=addr of rating string",
+        "ba72": "less than 10?",
+        "ba74": "yes, skip",
+        "ba76": "convert to BCD",
+        "ba78": "store BCD",
+        "ba7c": "1 BCD digit pair",
+        "ba8b": "wait for key release",
+        "ba93": "how long to wait",
+        "baa6": "loop B times",
+        "bc10": "zero room count",
+        "bc12": "B=8 bits/byte",
+        "bc1e": "room count",
+        "bc22": "done all screens?",
+        "bc23": "no, loop",
+        "bc26": "-1? don't count 1st room?",
+        "bc27": "store for ratings calculations",
+        "bc2d": "x2",
+        "bc31": "0.64102 * (128 + 14*2) = 99.999%",
+        "bc3d": "calculate percentage complete (BCD)",
+        "bc3f": "$A410*156 = $63FFD8+$28 = $640000",
+        "bc45": "fix rounding to 100%",
+        "bc46": "store least significant 2 BCD digits",
+        "bc4e": "store most significant BCD digit",
+        "bc57": "1 pair = 2 digits",
+        "bc5a": "100%?",
+        "bc5b": "no, skip",
+        "bc5d": "2 pair = 4 digits",
+        "bc62": "skip over leading zero",
+        "bc66": "(120,7)",
+        "bc71": "attribute memory",
+        "bc7e": "sprite index",
+        "bc82": "clear flags",
+        "bc86": "pixel X",
+        "bc8a": "pixel Y",
+        "bca3": "ptr number",
+        "bca6": "1 byte (2 BCD digits)",
+        "bca8": "screen buffer location",
+        "bcbb": "high digit",
+        "bcc1": "low digit",
+        "bcc6": "next byte address",
+        "bcc7": "loop through all bytes",
+        "bcca": "attribute",
+        "bcd2": "bright on",
+        "bcda": "set print routine font",
+        "bce0": "screen location",
+        "bd13": "# menu entries",
+        "bd17": "next menu colour entry",
+        "bd18": "loop until done",
+        "bd2c": "1,2,3,4,5",
+        "bd31": "store keybd status",
+        "bd38": "'1' (keyboard)?",
+        "bd3a": "no, skip",
+        "bd3c": "mask off (bits 2,1)",
+        "bd40": "no, skip",
+        "bd42": "mask off (bits 2,1)",
+        "bd44": "set bit 1",
+        "bd48": "no, skip",
+        "bd4a": "mask off (bits 2,1)",
+        "bd4c": "set bit 2",
+        "bd50": "no, skip",
+        "bd52": "set bits 1,2",
+        "bd5a": "'5' (directional control)?",
+        "bd5c": "no, skip",
+        "bd5e": "was pressed last time?",
+        "bd60": "yes, skip",
+        "bd62": "set debounce",
+        "bd67": "toggle directional",
+        "bd6f": "changed input method?",
+        "bd70": "yes",
+        "bd73": "0,9,8,7,6",
+        "bd78": "'0' (Start Game)?",
+        "bd7a": "yes, exit",
+        "bd7e": "remember when BASIC games did this?",
+        "bd87": "continue",
+        "bd90": "keybd/joystick bits only",
+        "bd9c": "directional only",
+        "be31": "save Y,X",
+        "be38": "BC = Y,X",
+        "be3e": "HL = bitmap buffer address",
+        "be52": "HL = bitmap buffer address",
+        "be53": "attribute",
+        "be55": "ptr first character",
+        "be57": "HL = Y,X",
+        "be5d": "HL = attribute memory address",
+        "be60": "next character",
+        "be61": "done?",
+        "be63": "yes, skip",
+        "be66": "display a character",
+        "be6d": "store attribute",
+        "be6e": "next attribute addrsess",
+        "be70": "loop until message done",
+        "be75": "display a character",
+        "be7c": "store attribute",
+        "be83": "HL = character",
+        "be87": "calculate offset into font data",
+        "be8c": "calculate address of font data",
+        "be8d": "DE = font data",
+        "be8f": "# bytes (lines) to display",
+        "be92": "store in video/buffer memory",
+        "be93": "next font data byte",
+        "be95": "next video/buffer line",
+        "be9a": "loop until done character",
+        "bea0": "video/buffer address for next character",
+        "beb6": "select param set 2",
+        "bebd": "8 lines to display",
+        "bebf": "select param set 1",
+        "bec0": "get attribute",
+        "bec1": "store",
+        "bec4": "next attribute",
+        "bec5": "select param set 2",
+        "bec6": "number to display",
+        "bec7": "get X",
+        "becc": "H = Y",
+        "becd": "L = X",
+        "bed3": "loop through list of messages",
+        "bed8": "show border?",
+        "bed9": "no, return",
+        "beed": "pixel X",
+        "bef0": "add offset",
+        "bef1": "store new pixel X",
+        "bef4": "pixel Y",
+        "bef7": "add offset",
+        "bef8": "store new pixel Y",
+        "befb": "loop though all sprites",
+        "bf08": "next sprite",
+        "bf0b": "make a sound?",
+        "bf18": "player graphic_no",
+        "bf1b": "set as object graphic_no",
+        "bf25": "ignore in 3D calcs",
+        "bf2e": "graphic_no",
+        "bf3d": "zap graphic_no in special_objs_tbl",
+        "bf48": "anything changed?",
+        "bf49": "no, return",
+        "bf4a": "clear changed flag",
+        "bf54": "3 objects max",
+        "bf5e": "(~b+3)",
+        "bf64": "=(~b+3)*8",
+        "bf67": "(~b+3)*16",
+        "bf69": "=(~b+3)*24",
+        "bf6a": "=(~b+3)*24+16",
+        "bf6c": "pixel X",
+        "bf6f": "pixel Y",
+        "bf73": "pixel X",
+        "bf76": "pixel Y",
+        "bf79": "ptr object",
+        "bf7f": "width=3, height=24",
+        "bf82": "fill byte = 0",
+        "bf83": "wipe 24x24 pixel area",
+        "bf86": "ptr object",
+        "bf87": "object (sprite index)",
+        "bf88": "null?",
+        "bf89": "yes, skip",
+        "bf8b": "sprite index",
+        "bf94": "pixel Y",
+        "bf9f": "lines=24, bytes=3",
+        "bfa5": "ptr object",
+        "bfa8": "ptr object",
+        "bfa9": "object (sprite index)",
+        "bfb3": "get fill byte entry",
+        "bfb4": "pixel X",
+        "bfb7": "pixel Y",
+        "bfc1": "fill byte",
+        "bfc2": "width=3, height=3",
+        "bfc8": "ptr object",
+        "bfc9": "object count",
+        "bfcd": "next entry (4 bytes)",
+        "bfce": "loop through all objects",
+        "bfff": "keybd/joystick bits only",
+        "c004": "keybd? yes, skip",
+        "c006": "directional?",
+        "c011": "still registered as pressed?",
+        "c012": "yes, go",
+        "c015": "actually pressed?",
+        "c018": "no, exit",
+        "c019": "out of bounds?",
+        "c01c": "yes, exit",
+        "c01d": "jumping?",
+        "c021": "yes, exit",
+        "c022": "Z OOB?",
+        "c026": "???",
+        "c02b": "Z",
+        "c02f": "Z+12",
+        "c037": "restore original Z",
+        "c03c": "we can't drop anything",
+        "c04e": "width",
+        "c052": "width+4",
+        "c057": "depth",
+        "c05b": "depth+4",
+        "c061": "height",
+        "c065": "height+4",
+        "c072": "yes, go",
+        "c075": "entry size",
+        "c078": "next entry",
+        "c083": "plyr_spr_1 screen",
+        "c086": "cauldron room?",
+        "c088": "no, skip",
+        "c08a": "only check 1st special object",
+        "c090": "entry size",
+        "c096": "null?",
+        "c097": "yes, skip",
+        "c099": "next entry",
+        "c09b": "loop",
+        "c09e": "height",
+        "c0a2": "depth",
+        "c0a5": "width",
+        "c0ac": "yes, exit",
+        "c0ad": "clear flag",
+        "c0c3": "graphic_no",
+        "c0c6": "plyr_spr_1 screen",
+        "c0c9": "cauldron room?",
+        "c0cb": "no, skip",
+        "c0cd": "plyr_spr_1 Z",
+        "c0d4": "graphic_no",
+        "c0e9": "copy x,y,z coordinates of player",
+        "c0eb": "Z",
+        "c0f0": "update Z",
+        "c0f3": "Z of next sprite",
+        "c0f8": "update Z of next sprite",
+        "c10a": "depth=5",
+        "c10e": "height=12",
+        "c115": "flags7",
+        "c118": "scrn",
+        "c124": "set ptr to obj_tbl entry",
+        "c127": "flag just dropped",
+        "c12e": "3 entries (@4 bytes) to shift",
+        "c134": "shift down by 1 entry",
+        "c13b": "zap extra slot",
+        "c148": "graphic_no",
+        "c14d": "flags7",
+        "c155": "ptr graphic object",
+        "c159": "zap special_objs_tbl.graphic_no",
+        "c15c": "store ptr",
+        "c164": "object_carried[2].graphic_no",
+        "c169": "empty slot?",
+        "c172": "graphic no.",
+        "c175": "special objects base no.",
+        "c177": "special object?",
+        "c179": "no, exit",
+        "c18a": "Z",
+        "c18d": "Z-4",
+        "c1a1": "dX",
+        "c1a4": "dY",
+        "c1a7": "dZ",
+        "c1b0": "iy=extra life object",
+        "c1b2": "ix = player",
+        "c1b6": "width",
+        "c1b9": "depth",
+        "c1bf": "restore width",
+        "c1c2": "restore depth",
+        "c1c7": "restore ix (extra life object)",
+        "c1c9": "not on/near, skip",
+        "c1cb": "graphic_no",
+        "c1d8": "zap ptr object table entry",
+        "c1dd": "extra life!",
+        "c1f4": "X",
+        "c205": "Y",
+        "c216": "X",
+        "c219": "centre of X-axis?",
+        "c21b": "no, skip",
+        "c21d": "centre of Y-axis?",
+        "c220": "yes, skip",
+        "c23a": "Z",
+        "c23f": "ignore in 3D calcs",
+        "c24c": "graphic no.",
+        "c24f": "convert to secial object index",
+        "c251": "same as required?",
+        "c252": "no, skip",
+        "c25e": "got all objects?",
+        "c260": "no, skip",
+        "c26c": "ptr object table",
+        "c26f": "zap graphic no.",
+        "c291": "just dropped?",
+        "c295": "no, skip",
+        "c2a5": "cycle 16 times",
+        "c2aa": "size",
+        "c2d3": "special_objs_here[1]",
+        "c2d7": "entry size",
+        "c2da": "wipe 11 objects in the room (1 special, 7 bg, 3 fg)",
+        "c2e3": "set graphic no. = INVALID",
+        "c2e7": "next entry",
+        "c2f1": "block?",
+        "c2f3": "no, skip",
+        "c2f5": "set to twinkly sprite",
+        "c2ff": "end of table?",
+        "c301": "no, loop",
+        "c311": "already jumping?",
+        "c315": "yes, exit",
+        "c318": "graphic_no",
+        "c31e": "transform count",
+        "c324": "' '",
+        "c34c": "1-in-4 chance?",
+        "c34e": "no, return",
+        "c352": "copy of graphic_no",
+        "c360": "leg sprite (92-95)",
+        "c362": "same as current?",
+        "c365": "no, skip",
+        "c367": "change",
+        "c36f": "toggle hflip",
+        "c37a": "' '",
+        "c37c": "graphic_no",
+        "c381": "graphic_no (top half)",
+        "c391": "dY_adj",
+        "c3a1": "pixel X",
+        "c3a9": "pixel X",
+        "c3b0": "pixel X",
+        "c3bc": "ptr entry",
+        "c3bf": "get entry",
+        "c3c0": "pixel Y",
+        "c3c6": "(184,0)",
+        "c3d2": "display sun/moon",
+        "c3d9": "clear flags",
+        "c3dd": "sun/moon frame left",
+        "c3e1": "pixel X",
+        "c3e5": "pixel Y",
+        "c3ec": "pixel X",
+        "c3f0": "sun/moon frame right",
+        "c3f9": "(184,0)",
+        "c402": "toggle sun/moon",
+        "c40a": "pixel X",
+        "c429": "(120,0)",
+        "c471": "sprite index",
+        "c475": "pixel X",
+        "c479": "pixel Y",
+        "c48e": "object graphic no.",
+        "c48f": "HL=ptr Start X position",
+        "c492": "DE=ptr Start X position",
+        "c496": "HL=ptr Current X",
+        "c497": "DE = ptr Current X",
+        "c49b": "copy Start X,Y,Z,screen to Current",
+        "c49e": "save ptr next Current",
+        "c49f": "end of object table",
+        "c4a3": "done table?",
+        "c4a7": "no, loop",
+        "c4bf": "no, return",
+        "c4d3": "-2, -8",
+        "c4d8": "-4, -12",
+        "c4dd": "-6, -12",
+        "c4e3": "-8, -16",
+        "c4ed": "-2, -12",
+        "c4f2": "-4, -8",
+        "c4f7": "-8, -12",
+        "c4fc": "-7, -12",
+        "c501": "-12, -12",
+        "c50b": "+7, -12",
+        "c510": "+3, -12",
+        "c51b": "next location",
+        "c51c": "loop for 1 line",
+        "c51f": "next line",
+        "c521": "done all lines?",
+        "c522": "no, loop",
+        "c52d": "current screen",
+        "c533": "null?",
+        "c534": "yes, skip",
+        "c536": "object current screen",
+        "c539": "same as (player) current screen?",
+        "c53a": "no, skip",
+        "c540": "ptr special_object_tbl entry",
+        "c541": "get graphic no.",
+        "c543": "store in objs_here",
+        "c548": "ptr current X, Y, Z",
+        "c549": "3 entries (bytes) to copy",
+        "c54c": "copy to objs_here",
+        "c54f": "width = 5",
+        "c552": "depth = 5",
+        "c555": "height = 12",
+        "c558": "flag DRAW & MOVEABLE",
+        "c55c": "get current screen",
+        "c55e": "store in objs_here",
+        "c565": "ptr special_object_tbl entry",
+        "c56a": "store",
+        "c575": "ptr next special_object_tbl entry",
+        "c57a": "end of object table",
+        "c57e": "past end of table?",
+        "c580": "no, loop",
+        "c582": "DE=objs_here entry",
+        "c587": "past end of table (max=2)",
+        "c589": "yes, exit",
+        "c58c": "zero next entry",
+        "c58f": "next entry",
+        "c598": "null?",
+        "c599": "yes, skip",
+        "c59e": "DE=ptr object table entry",
+        "c5a1": "get graphic no.",
+        "c5a4": "store",
+        "c5ac": "HL=object in 'here' table",
+        "c5ad": "ptr x",
+        "c5ae": "3 bytes",
+        "c5b1": "copy x, y, z",
+        "c5b3": "screen",
+        "c5b6": "store as current",
+        "c5ba": "next entry in 'here' table",
+        "c5bf": "end of table",
+        "c5c3": "past end of table?",
+        "c5c5": "no, loop",
+        "c5ce": "dX",
+        "c5d1": "moving X/Y?",
+        "c5d4": "no, skip",
+        "c5d9": "OOB X/Y?",
+        "c5db": "no, continue as-is",
+        "c5e2": "rnd(4-7)= +/-3or4",
+        "c5e7": "set dX",
+        "c5ef": "rnd(4-7)= +/-3or4",
+        "c5f4": "dY",
+        "c603": "dX",
+        "c60a": "abs()",
+        "c60d": "dY",
+        "c614": "abs()",
+        "c617": "yes, go",
+        "c619": "dX",
+        "c61c": "negative?",
+        "c61d": "yes, skip",
+        "c620": "sprite=80/81",
+        "c632": "negative?",
+        "c633": "yes, skip",
+        "c636": "sprite=82/83",
+        "c64b": "ptr entry",
+        "c64c": "get entry",
+        "c665": "moving?",
+        "c666": "yes, exit",
+        "c66a": "objZ = room height?",
+        "c66d": "yes, skip",
+        "c671": "objZ <= room height+31?",
+        "c674": "yes, skip",
+        "c679": "moved less than 4 times?",
+        "c67b": "yes, move immediately",
+        "c680": "1in32 chance?",
+        "c682": "no, return",
+        "c683": "arbitrarily large count",
+        "c689": "graphic_no=9",
+        "c68d": "dZ=-1 (down)",
+        "c692": "flags",
+        "c695": "set WIPE & DRAW",
+        "c6b0": "1in32 chance?",
+        "c6b2": "yes, exit",
+        "c6b3": "graphic_no=9",
+        "c6b7": "dZ=1 (up)",
+        "c6c0": "fatal if it hits player",
+        "c6c7": "entering screen?",
+        "c6c9": "yes, exit",
+        "c6ca": "dZ",
+        "c6cd": "up?",
+        "c6ce": "yes, go",
+        "c6d1": "accelerate speed?",
+        "c6d7": "out of bounds?",
+        "c6db": "no, go",
+        "c6e4": "graphic_no=8",
+        "c6f9": "objZ < room height+31?",
+        "c6fc": "yes, go",
+        "c700": "dec dZ?",
+        "c706": "X",
+        "c709": "dX",
+        "c70c": "X+=dX",
+        "c70f": "Y",
+        "c712": "dY",
+        "c715": "y+=dY",
+        "c718": "Z",
+        "c71b": "dZ",
+        "c71e": "Z+=dZ",
+        "c726": "yes, go",
+        "c728": "-3, -9",
+        "c72b": "pixel_x adjust",
+        "c72e": "pixel_y adjust",
+        "c740": "yes, go",
+        "c742": "graphic no.",
+        "c745": "tree arch?",
+        "c747": "yes, exit",
+        "c749": "-3, -7",
+        "c74f": "Y",
+        "c752": "add 13",
+        "c754": "dY?=Y+13",
+        "c757": "X",
+        "c75a": "dX?=X",
+        "c75d": "+6, +15",
+        "c763": "dZ?=Z",
+        "c772": "X",
+        "c777": "dX",
+        "c77a": "Y",
+        "c77d": "dY",
+        "c780": "+15, +6",
+        "c78c": "entry size",
+        "c78f": "player, special objects only",
+        "c794": "null?",
+        "c795": "yes, skip",
+        "c7a6": "index into table based on sprite dir",
+        "c7b4": "Y",
+        "c7c7": "X",
+        "c7df": "entry size",
+        "c7e2": "player and special objects only",
+        "c7e7": "null?",
+        "c7e8": "yes, skip",
+        "c7ea": "auto-adjust?",
+        "c7ee": "no, skip",
+        "c7f3": "no, skip",
+        "c7f5": "flag near arch",
+        "c7fb": "loop through table",
+        "c7fe": "centre_x",
+        "c801": "sub X",
+        "c80a": "centre_y",
+        "c80d": "sub Y",
+        "c816": "centre_z",
+        "c819": "sub Z",
+        "c82f": "no, skip",
+        "c837": "set dead top half",
+        "c859": "does the moving",
+        "c85c": "reset fudge",
+        "c860": "flags12",
+        "c863": "entering room?",
+        "c865": "no, skip",
+        "c867": "dec entering room counter",
+        "c86d": "dZ",
+        "c870": "<0?",
+        "c871": "yes, go",
+        "c875": "dZ=0",
+        "c87d": "room_size_X",
+        "c87e": "sub width",
+        "c882": "room_size_Y",
+        "c883": "sub depth",
+        "c887": "X",
+        "c892": "OOB",
+        "c893": "Y",
+        "c8a3": "joystick/keyboard bits only",
+        "c8a5": "keybd? yes, skip",
+        "c8a7": "directional?",
+        "c8ab": "flags12",
+        "c8ae": "entering screen?",
+        "c8b0": "yes, exit",
+        "c8b1": "Z OOB?",
+        "c8b5": "no, exit",
+        "c8b6": "joystick left?",
+        "c8b8": "yes, skip",
+        "c8ba": "joystick up?",
+        "c8bc": "yes, skip",
+        "c8c0": "yes, go",
+        "c8c2": "joystick down?",
+        "c8c4": "yes, go",
+        "c8c6": "joystick left?",
+        "c8c8": "yes, go",
+        "c8d0": "N?",
+        "c8dc": "E?",
+        "c8e3": "S?",
+        "c8ec": "W?",
+        "c8f5": "too soon to turn again?",
+        "c8f7": "no, skip",
+        "c8f9": "dec delay counter",
+        "c8fe": "left or right?",
+        "c900": "no, return",
+        "c901": "flags12",
+        "c904": "entering screen?",
+        "c906": "yes, exit",
+        "c907": "already jumping?",
+        "c90b": "yes, exit",
+        "c90c": "forward?",
+        "c90e": "yes, skip",
+        "c918": "init turning delay counter",
+        "c91d": "right?",
+        "c921": "hflip?",
+        "c925": "yes, skip",
+        "c932": "toggle hflip",
+        "c937": "graphic_no",
+        "c93a": "top half",
+        "c93c": "set sprite for top half",
+        "c944": "yes, go",
+        "c948": "jump?",
+        "c94a": "no, exit",
+        "c94b": "flags12",
+        "c94e": "entering screen?",
+        "c950": "yes, exit",
+        "c951": "already jumping?",
+        "c955": "yes, exit",
+        "c956": "dZ",
+        "c95a": "return if was <-1",
+        "c95b": "flag jumping",
+        "c95f": "dZ=8?",
+        "c969": "flags12",
+        "c96c": "entering sccreen?",
+        "c96e": "yes, skip",
+        "c970": "already jumping?",
+        "c974": "yes, skip",
+        "c976": "forward?",
+        "c978": "no, go",
+        "c983": "next sprite",
+        "c986": "wrap?",
+        "c988": "no, skip",
+        "c990": "update sprite",
+        "c9a7": "dZ=2",
+        "c9af": "yes, skip",
+        "c9b1": "flags12",
+        "c9b4": "entering screen?",
+        "c9b6": "yes, skip",
+        "c9b8": "forward?",
+        "c9ba": "no, skip",
+        "c9c8": "jump?",
+        "c9ca": "yes, skip",
+        "c9ce": "dZ",
+        "c9e2": "Z OOB?",
+        "c9e6": "no, go",
+        "c9ef": "clear jumping flag",
+        "c9f4": "dX=0",
+        "c9f7": "dY=0",
+        "c9fb": "dX",
+        "c9fe": "dX_adjust",
+        "ca04": "dY",
+        "ca07": "dY_adj",
+        "ca0e": "zap adjustment",
+        "ca11": "zap adjustment",
+        "ca1e": "flags",
+        "ca23": "hflip",
+        "ca26": "graphic no.",
+        "ca2b": "bits 4,3",
+        "ca2f": "1=hflip, 0=graphic no & 8",
+        "ca32": "dX -= 3",
+        "ca34": "dX += 3",
+        "ca36": "dY += 3",
+        "ca38": "dY -= 3",
+        "ca3a": "dX",
+        "ca3d": "-3",
+        "ca46": "+3",
+        "ca4a": "dY",
+        "ca4d": "+3",
+        "ca53": "dY",
+        "ca56": "-3",
+        "ca61": "Z+=dZ",
+        "ca62": ">= room height?",
+        "ca63": "yes, return",
+        "ca68": "Z+dZ",
+        "ca6c": "new dZ",
+        "ca6d": "check again",
+        "ca70": "flags12",
+        "ca73": "entering room?",
+        "ca75": "yes, exit",
+        "ca76": "near an arch?",
+        "ca7a": "no, return",
+        "ca7b": "reset flag",
+        "ca89": "zero?",
+        "ca8a": "yes, exit",
+        "ca8b": "skip if >0",
+        "ca9d": "room_size_X",
+        "ca9f": "X",
+        "caa2": "+dX",
+        "caa5": "+width",
+        "caaa": "X",
+        "caae": "screen",
+        "cab2": "screen to the west",
+        "cab7": "high nibble - don't change row",
+        "cab9": "same row - wraps???",
+        "cabd": "flags12",
+        "cac0": "init enter room counter",
+        "cac2": "save",
+        "cac5": "graphic no.",
+        "caca": "wulf?",
+        "cacc": "WHY is wulf handled differently???",
+        "cadc": "graphic no.",
+        "cae2": "graphic no.",
+        "cae8": "sparkly transform #1",
+        "caea": "graphic no.",
+        "caed": "graphic no.",
+        "caf7": "room_size_X + 128",
+        "caf8": "X",
+        "cafb": "+dX",
+        "cafe": "-width",
+        "cb03": "X",
+        "cb07": "screen",
+        "cb0b": "screen to the east",
+        "cb0f": "room_size_Y",
+        "cb13": "Y",
+        "cb16": "+dY",
+        "cb19": "-depth",
+        "cb1e": "Y",
+        "cb22": "screen",
+        "cb25": "screen to the north",
+        "cb2c": "room_size_Y",
+        "cb2e": "Y",
+        "cb31": "+dY",
+        "cb34": "+depth",
+        "cb39": "Y",
+        "cb3d": "screen",
+        "cb40": "screen to the south",
+        "cb51": "clear X,Y,Z OOB",
+        "cb59": "dZ",
+        "cb5c": "zero?",
+        "cb5e": "yes, skip",
+        "cb63": "new dZ",
+        "cb64": "zero?",
+        "cb65": "yes, skip",
+        "cb6a": "dX",
+        "cb6d": "zero?",
+        "cb6f": "yes, skip",
+        "cb74": "new dX",
+        "cb75": "zero?",
+        "cb76": "yes, skip",
+        "cb7e": "zero?",
+        "cb80": "yes, skip",
+        "cb85": "new dY",
+        "cb86": "zero?",
+        "cb87": "yes, skip",
+        "cb8f": "new dY",
+        "cb92": "new dZ",
+        "cb9e": "max objects",
+        "cba3": "ignored, skip",
+        "cbb4": "set X OOB",
+        "cbbc": "bit 7->6",
+        "cbbe": "obj2 destroyed?",
+        "cbc5": "bit 5->6",
+        "cbc7": "obj1 destroyed?",
+        "cbcd": "moveable?",
+        "cbd1": "no, skip",
+        "cbd6": "copy dX",
+        "cbe4": "next entry",
+        "cbed": "max objects",
+        "cbf2": "next entry",
+        "cbf7": "next entry",
+        "cbfc": "next entry",
+        "cc01": "next entry",
+        "cc03": "set Y OOB",
+        "cc0b": "bit 7->6",
+        "cc0d": "obj2 destroyed?",
+        "cc14": "bit 5->6",
+        "cc16": "obj1 destroyed?",
+        "cc1c": "moveable?",
+        "cc20": "no, skip",
+        "cc25": "copy dY",
+        "cc33": "next entry",
+        "cc35": "loop through table",
+        "cc3c": "max objects",
+        "cc41": "next entry",
+        "cc46": "next entry",
+        "cc4b": "next entry",
+        "cc50": "next entry",
+        "cc52": "set Z OOB",
+        "cc5a": "bit 7->6",
+        "cc5c": "obj2 destroyed?",
+        "cc63": "bit 5->6",
+        "cc65": "obj1 destroyed?",
+        "cc6b": "triggered (falling, collapsing blocks)",
+        "cc6f": "moveable?",
+        "cc73": "no, skip",
+        "cc75": "dX",
+        "cc78": "zero?",
+        "cc79": "no, skip",
+        "cc7e": "copy dX",
+        "cc84": "moving along Y?",
+        "cc85": "yes, skip",
+        "cc8a": "copy dY",
+        "cc98": "next entry",
+        "cc9a": "loop through table",
+        "cc9d": "objW (width)",
+        "cca0": "thisW",
+        "cca3": "objW+thisW",
+        "cca4": "obj X",
+        "cca7": "new dX",
+        "cca8": "objX + newdX - thisX",
+        "ccae": "abs()",
+        "ccb1": "C flag set indicates intersection",
+        "ccb2": "objD (depth)",
+        "ccb5": "thisD",
+        "ccb8": "(objD+thisD)",
+        "ccb9": "objY",
+        "ccbd": "(objY+new dY-thisY)",
+        "ccc3": "abs()",
+        "ccc6": "C flag set indicates intersection",
+        "ccc7": "objZ",
+        "cccb": "(objZ+new dZ-thisZ)",
+        "ccd1": "abs()",
+        "ccd3": "objH (height)",
+        "ccd7": "C flag set indicates intersection",
+        "ccdd": "flags12",
+        "cce0": "entering room?",
+        "cce2": "yes, exit",
+        "cce3": "near an arch?",
+        "cce7": "yes, exit",
+        "ccef": "+dX",
+        "ccf9": "< room width?",
+        "ccfa": "yes, skip",
+        "ccfc": "set X OOB",
+        "cd00": "dX",
+        "cd04": "new dX",
+        "cd05": "check again",
+        "cd08": "flags12",
+        "cd0b": "entering room?",
+        "cd0d": "yes, exit",
+        "cd0e": "near and arch?",
+        "cd12": "yes, exit",
+        "cd1a": "+dY",
+        "cd24": "< room depth?",
+        "cd25": "yes, skip",
+        "cd27": "set Y OOB",
+        "cd2b": "dY",
+        "cd2f": "new dY",
+        "cd30": "check again",
+        "cd39": "pixel X",
+        "cd3c": "bit offset",
+        "cd3e": "ptr sprite data (width)",
+        "cd3f": "ptr height",
+        "cd45": "sprite data width (bytes)",
+        "cd49": "sprite data height",
+        "cd54": "max objects",
+        "cd56": "pixelX",
+        "cd5c": "byte address",
+        "cd5f": "old pixelX",
+        "cd65": "bytes address",
+        "cd6d": "byte address",
+        "cd6e": "+ data width (bytes)",
+        "cd72": "old byte address",
+        "cd73": "+ old data width bytes",
+        "cd7c": "pixel Y",
+        "cd7f": "old pixelY",
+        "cd84": "old pixelY",
+        "cd88": "pixel Y",
+        "cd8b": "+ data height (lines)",
+        "cd8f": "old pixelY",
+        "cd92": "+ old data height (lines)",
+        "cd9a": "combined height (lines)",
+        "cd9e": "null?",
+        "cd9f": "yes, skip",
+        "cda1": "DRAW flag already set?",
+        "cda5": "yes, skip",
+        "cda7": "pixel X",
+        "cdad": "byte address of pixel",
+        "cdaf": "< left extremity (to the left)?",
+        "cdb0": "yes, go",
+        "cdb2": "< right extermity (overlapping)?",
+        "cdb5": "pixel Y",
+        "cdb8": "< lowest Y (below)?",
+        "cdb9": "yes, go",
+        "cdbb": "< height (overlapping)?",
+        "cdbe": "set DRAW flag",
+        "cdc3": "entry size",
+        "cdc6": "next entry",
+        "cdce": "data width (bytes)",
+        "cdd5": "data height (lines)",
+        "cdf1": "DE=top",
+        "cdf2": "-32",
+        "cdf6": "HL=bottom",
+        "cdf7": "IY=player bottom half",
+        "cdf9": "DE=top+1",
+        "cdfa": "HL=bottom+1",
+        "cdfe": "copy x,y,z,w,d,h,flags",
+        "ce00": "height (top)",
+        "ce04": "ignore in 3D calcs",
+        "ce08": "flags13",
+        "ce0b": "look around counter",
+        "ce0d": "maybe look around again?",
+        "ce0f": "dec look around counter",
+        "ce17": "one way?",
+        "ce19": "yes, go",
+        "ce1b": "other way?",
+        "ce1d": "yes, go",
+        "ce1f": "straight ahead",
+        "ce24": "graphic_no (top half)",
+        "ce2a": "directly above",
+        "ce2c": "store in top half",
+        "ce38": "look one way",
+        "ce45": "look the other way",
+        "ce49": "data width (bytes)",
+        "ce4f": "data height (lines)",
+        "ce55": "pixel X",
+        "ce5b": "pixel Y",
+        "ce64": "max 40 objects in list",
+        "ce66": "object size = 32 bytes",
+        "ce69": "base of object table",
+        "ce70": "init object index",
+        "ce75": "null?",
+        "ce76": "yes, skip",
+        "ce78": "draw flag set?",
+        "ce7c": "no, skip",
+        "ce7e": "add object index to list",
+        "ce7f": "ptr next list address",
+        "ce81": "ptr next object in table",
+        "ce83": "loop through all objects",
+        "ce87": "flag end of list",
+        "cec8": "end of list?",
+        "ceca": "yes, exit",
+        "cecd": "already rendered?",
+        "cecf": "yes, skip",
+        "ced1": "ret=HL",
+        "ced9": "IX=ptr graphic object table entry #1",
+        "cedd": "end of list?",
+        "ceee": "HL,IY=ptr graphic object table entry #2",
+        "cef2": "IX,BC=ptr graphic object table entry #1",
+        "cef4": "same objects?",
+        "cef6": "yes, loop",
+        "cefa": "Z2",
+        "cefd": "add height(H2)",
+        "cf00": "Z2+H2",
+        "cf01": "Z1",
+        "cf04": "Z1-(Z2+H2)",
+        "cf05": "no overlap (C+=0)",
+        "cf07": "Z1",
+        "cf0a": "add H1",
+        "cf0e": "Z2",
+        "cf11": "Z2-(Z1+H1)",
+        "cf12": "overlap (C+=1)",
+        "cf14": "no overlap (C+=2)",
+        "cf19": "add depth (D2)",
+        "cf1d": "Y1",
+        "cf20": "sub D1",
+        "cf23": "Y1-D1-(Y2+d2)",
+        "cf24": "no overlap (C+=0)",
+        "cf26": "Y1",
+        "cf29": "add D1",
+        "cf2d": "Y2",
+        "cf30": "sub D2",
+        "cf33": "Y2-D2-(Y1+D1)",
+        "cf35": "overlap (C+=3)",
+        "cf37": "no overlap (C+=6)",
+        "cf3f": "add width (W2)",
+        "cf43": "X1",
+        "cf46": "sub W1",
+        "cf49": "X1-W1-(X2+W2)",
+        "cf4a": "no overlap (C+=0)",
+        "cf4c": "X1",
+        "cf4f": "add W1",
+        "cf53": "X2",
+        "cf56": "sub W2",
+        "cf59": "X2-W2-(X1+W1)",
+        "cf5b": "overlap (C+=9)",
+        "cf5d": "no overlap (c+=18)",
+        "cf63": "jump table",
+        "cf69": "continue_1",
+        "cf6b": "continue_1",
+        "cf6d": "continue_1",
+        "cf6f": "d_3467121516",
+        "cf71": "d_3467121516",
+        "cf73": "continue_1",
+        "cf75": "d_3467121516",
+        "cf77": "d_3467121516",
+        "cf79": "continue_1",
+        "cf7b": "continue_1",
+        "cf7d": "continue_2",
+        "cf7f": "continue_2",
+        "cf81": "d_3467121516",
+        "cf83": "objs_coincide",
+        "cf85": "continue_2",
+        "cf87": "d_3467121516",
+        "cf89": "d_3467121516",
+        "cf8b": "continue_1",
+        "cf8d": "continue_1",
+        "cf8f": "continue_2",
+        "cf91": "continue_2",
+        "cf93": "continue_1",
+        "cf95": "continue_2",
+        "cf97": "continue_2",
+        "cf99": "continue_1",
+        "cf9b": "continue_1",
+        "cf9d": "continue_1",
+        "cfa8": "ptr obj#2",
+        "cfa9": "index",
+        "cfae": "empty entry?",
+        "cfb0": "yes, go",
+        "cfb2": "already listed?",
+        "cfb3": "yes, go",
+        "cfb5": "next entry",
+        "cfb6": "loop",
+        "cfb9": "add to list",
+        "cfba": "next entry",
+        "cfbd": "flag empty",
+        "cfc0": "obj#2=obj#1",
+        "cfc2": "object following obj#2",
+        "cfc5": "set to object following #1",
+        "cfcb": "go again",
+        "cfd3": "end of list?",
+        "cfd5": "yes, exit",
+        "cfd8": "what we're looking for?",
+        "cfd9": "no, loop",
+        "cfdd": "obj#2=obj#1",
+        "cfe6": "special object?",
+        "cfe8": "no, skip",
+        "cfea": "set to twinkle sprite",
+        "cff5": "special object?",
+        "cff7": "no, skip",
+        "cff9": "set to twinkle sprite",
+        "d004": "flag as rendered",
+        "d008": "set entry to empty",
+        "d00f": "render object to video buffer",
+        "d012": "restart processing again",
+        "d033": "keybd/joystick bits only",
+        "d040": "read joystick",
+        "d044": "5 bits to read",
+        "d047": "reverse bit order",
+        "d049": "loop thru all bits",
+        "d04d": "store joystick reading",
+        "d04e": "0,9,8,7,6",
+        "d053": "add joystick bits",
+        "d056": "0/left???",
+        "d07b": "right?",
+        "d07f": "flag RIGHT",
+        "d085": "flag LEFT",
+        "d08b": "flag PICKUP/DROP",
+        "d091": "flag FORWARD",
+        "d097": "flag JUMP",
+        "d09e": "row 3",
+        "d0a3": "'5'?",
+        "d0a9": "'\u00ef'",
+        "d0ae": "'0'?",
+        "d0d9": "row 7",
+        "d0de": "SYM SHIFT? (right)",
+        "d0e0": "no, skip",
+        "d0e2": "flag RIGHT",
+        "d0e6": "no, skip",
+        "d0e8": "flag LEFT",
+        "d0ec": "no, skip",
+        "d0ee": "flag RIGHT",
+        "d0f4": "flag LEFT",
+        "d0fd": "flag FORWARD",
+        "d106": "flag JUMP",
+        "d10f": "flag PICKUP/DROP",
+        "d116": "Z,X,C,V,SYMSHIFT,M,N,B",
+        "d123": "flag PICKUP/DROP (directional)",
+        "d133": "1st 2 entries",
+        "d136": "copy scratchpad back to object table",
+        "d13f": "decrement life",
+        "d140": "any left? no, exit",
+        "d143": "sprite index",
+        "d149": "day/night?",
+        "d14c": "plyr graphic no",
+        "d151": "legs human/wulf?",
+        "d155": "top half playr graphic no",
+        "d15b": "top half human/wulf",
+        "d1c4": "graphic_no (player top half)",
+        "d1c6": "plyr_spr_1_scratchpad (byte 16)",
+        "d1c9": "graphic_no (player bottom half)",
+        "d1cb": "plyr_spr_2_scratchpad (byte 16)",
+        "d1d1": "random 0-3",
+        "d1d9": "offset to random entry",
+        "d1da": "start location",
+        "d1e9": "1st screen of the game?",
+        "d1ea": "yes, skip updating special objects",
+        "d1ec": "save state in special_objs_tbl",
+        "d1f5": "find special objects in new room",
+        "d1fb": "flag not moving",
+        "d208": "flag rendering of status information",
+        "d20d": "plyr_spr_1 screen",
+        "d220": "/8 (byte offset)",
+        "d22b": "SET 0,(HL)",
+        "d22d": "self-modifying code",
+        "d233": "offset to room flag",
+        "d234": "D235=flag as visited?",
+        "d237": "sprite index",
+        "d239": "store sprite index",
+        "d23c": "flags",
+        "d23e": "store flags",
+        "d241": "X",
+        "d243": "pixel X",
+        "d246": "Y",
+        "d248": "pixel Y",
+        "d24c": "copy to scratchpad",
+        "d25f": "x+=16,y-=8",
+        "d262": "5 sprites",
+        "d270": "x+=16,y+=8",
+        "d273": "5 sprites",
+        "d2ac": "X+=8, Y+=0",
+        "d2af": "24 times",
+        "d2b7": "24 times",
+        "d2bf": "X+=0, Y+=1",
+        "d2c2": "128 times",
+        "d2ca": "128 times",
+        "d2f3": "1 bytes, 3 lines",
+        "d2fc": "1 byte, 3 lines",
+        "d302": "'B'",
+        "d307": "6 bytes, 4 lines",
+        "d30d": "graphic_no",
+        "d310": "sun?",
+        "d312": "attribute",
+        "d314": "yes, skip",
+        "d31a": "4 bytes, 2 lines",
+        "d32c": "X",
+        "d32f": "0?",
+        "d330": "yes, go",
+        "d332": "-1?",
+        "d333": "yes, go",
+        "d335": "Y",
+        "d338": "0?",
+        "d339": "yes, go",
+        "d33b": "-1?",
+        "d33c": "yes, go",
+        "d344": "128",
+        "d346": "sub (room_size_Y-2)",
+        "d347": "sub depth",
+        "d351": "set draw_plyr_spr_2",
+        "d355": "plyr_spr_1 X",
+        "d358": "set plyr_spr_2 X",
+        "d35b": "plyr_spr_1 Y",
+        "d35e": "set plyr_spr_2 Y",
+        "d367": "room_size_Y-2",
+        "d36a": "add depth",
+        "d376": "sub (room_size_X-2)",
+        "d377": "sub width",
+        "d384": "room_size_X-2",
+        "d385": "add 128",
+        "d387": "add width",
+        "d390": "2 object entries",
+        "d393": "max 4 arches/location",
+        "d398": "arch?",
+        "d39a": "no, return",
+        "d39b": "X",
+        "d39e": "(X+Y)=pixelY",
+        "d3a1": "match?",
+        "d3a2": "yes, adjust player",
+        "d3a4": "next object sprite pair",
+        "d3a6": "loop through all arches",
+        "d3a9": "arch Z",
+        "d3ac": "set player_sprite_1 Z",
+        "d3b1": "set player_sprite_2 Z",
+        "d3b9": "HL=A",
+        "d3bb": "x2",
+        "d3bc": "x4",
+        "d3bd": "x8",
+        "d3be": "x16",
+        "d3bf": "x32",
+        "d3c0": "base of graphical object table",
+        "d3c3": "get table entry",
+        "d3c9": "end of location table",
+        "d3d1": "same as player (current) screen?",
+        "d3d4": "yes, exit",
+        "d3d6": "get entry size",
+        "d3d7": "ptr next entry",
+        "d3db": "end of location table?",
+        "d3dd": "yes, exit",
+        "d3e0": "loop",
+        "d3e6": "done?",
+        "d3e8": "yes, exit",
+        "d3e9": "32 bytes to clear",
+        "d3f2": "get attributes",
+        "d3f3": "mask off unused bits",
+        "d3f5": "bright ON",
+        "d3f7": "store",
+        "d3fb": "DE=attributes",
+        "d3fc": "get attributes",
+        "d3fd": "ptr background type",
+        "d401": "get room size",
+        "d403": "C=room size",
+        "d405": "A=room size x3",
+        "d409": "ptr entry",
+        "d40c": "room size X",
+        "d411": "room size Y",
+        "d416": "room size Z",
+        "d41b": "adjust entry size",
+        "d41f": "next entry",
+        "d420": "done all background types?",
+        "d422": "yes, exit",
+        "d429": "word offset",
+        "d42d": "ptr entry",
+        "d431": "HL=ptr to background object",
+        "d435": "copy to graphic_object_tbl",
+        "d437": "player (current) screen",
+        "d43a": "store",
+        "d43e": "8+1+23 = 32 bytes/entry",
+        "d442": "done object?",
+        "d443": "no, loop",
+        "d447": "done location? no, loop",
+        "d44f": "graphic object table",
+        "d450": "IY = graphic object table",
+        "d453": "count",
+        "d455": "adjust to 1-8",
+        "d456": "C = count",
+        "d457": "block/count",
+        "d459": "adjust bytes remaining",
+        "d45a": "location (x/y/z)",
+        "d45f": "block x2",
+        "d464": "ptr entry",
+        "d46a": "HL=ptr object",
+        "d471": "width",
+        "d476": "depth",
+        "d47b": "height",
+        "d480": "flags",
+        "d48b": "offsets",
+        "d48f": "x1 in bit3",
+        "d491": "E=x1*8",
+        "d492": "location (x/y/z)",
+        "d497": "x*16",
+        "d499": "x*16+x1*8",
+        "d49a": "x*16+x1*8+72",
+        "d49c": "store X",
+        "d49f": "offsets",
+        "d4a2": "y1 in bit3",
+        "d4a4": "E=y1*8",
+        "d4a5": "location (x/y/z)",
+        "d4a7": "Y*16",
+        "d4a9": "Y*16+Y1*8",
+        "d4aa": "Y*16+Y1*8+72",
+        "d4ac": "store Y",
+        "d4af": "location (x/y/z)",
+        "d4b2": "z",
+        "d4b5": "z*4",
+        "d4b7": "z*8",
+        "d4b8": "z*12",
+        "d4b9": "z*12+z1*4+rubbish",
+        "d4bb": "mask off rubbish bits",
+        "d4c1": "z*12+z1*4+room_size_Z",
+        "d4c2": "store Z",
+        "d4cb": "9+23=32 bytes/entry",
+        "d4d6": "next entry",
+        "d4d7": "done?",
+        "d4d8": "no, loop",
+        "d4df": "done count blocks?",
+        "d4e0": "yes, exit loop",
+        "d50e": "SPACE,SYMSHIFT,M,N,B",
+        "d513": "SPACE?",
+        "d515": "no, exit",
+        "d516": "any other key?",
+        "d518": "yes, exit",
+        "d51e": "SPACE?",
+        "d520": "yes, loop",
+        "d52a": "SPACE?",
+        "d52c": "no, loop",
+        "d533": "SPACE?",
+        "d535": "no, loop",
+        "d53d": "next location",
+        "d540": "done?",
+        "d541": "no, loop",
+        "d547": "# bytes to clear",
+        "d54c": "colour data",
+        "d54f": "# bytes to clear",
+        "d552": "bright yellow on black",
+        "d556": "colour data",
+        "d559": "# bytes to clear",
+        "d55c": "attribute to set",
+        "d55d": "fill",
+        "d55f": "border colour BLACK, activate MIC",
+        "d560": "ULA",
+        "d567": "# bytes to clear",
+        "d56a": "screen buffer",
+        "d56f": "screen buffer",
+        "d572": "last line of attribute memory",
+        "d575": "B=32 bytes, C=192 lines",
+        "d57c": "copy to destination",
+        "d57d": "wipe source byte",
+        "d57f": "next source location",
+        "d580": "next destination location",
+        "d581": "loop for a line",
+        "d583": "source - start of line",
+        "d587": "next line",
+        "d588": "last line of attribute memory",
+        "d599": "add 2K",
+        "d59b": "dec line counter",
+        "d59c": "loop through all lines",
+        "d5a0": "zero count of wiped objects",
+        "d5a8": "initial rendering?",
+        "d5a9": "yes, no need to wipe anything",
+        "d5af": "temp storage",
+        "d5b5": "object index",
+        "d5b6": "next list entry",
+        "d5b7": "store",
+        "d5ba": "end of list?",
+        "d5bc": "yes, skip",
+        "d5c5": "wipe flag?",
+        "d5c9": "no, go",
+        "d5cb": "clear wipe flag",
+        "d5cf": "pixel X",
+        "d5d2": "old pixel X",
+        "d5d8": "old pixel X",
+        "d5e1": "old pixel X byte address",
+        "d5e3": "old data width (bytes)",
+        "d5e7": "pixel X",
+        "d5ed": "pixel X byte address",
+        "d5ef": "data width (bytes)",
+        "d5fa": "old/pixel X byte address",
+        "d5ff": "H=number of bytes to wipe",
+        "d600": "pixel Y",
+        "d603": "pixel Y < old pixel Y?",
+        "d606": "yes, go",
+        "d608": "old pixel Y",
+        "d60e": "old data height (lines)",
+        "d612": "pixel Y",
+        "d615": "data height (lines)",
+        "d61f": "off bottom of screen?",
+        "d621": "yes, go",
+        "d62f": "in BC",
+        "d637": "swap HL & BC",
+        "d641": "screen buffer address",
+        "d642": "wipe sprite",
+        "d662": "add the number of wipes",
+        "d66a": "done all wipes?",
+        "d66b": "yes, exit",
+        "d66e": "source",
+        "d66f": "destination",
+        "d672": "lines",
+        "d673": "bytes/line",
+        "d677": "loop",
+        "d687": "next line",
+        "d69b": "no, loop",
+        "d6bc": "8 bits",
+        "d6c0": "reverse bits",
+        "d6c2": "loop all bits",
+        "d6c4": "store",
+        "d6c5": "next index/location",
+        "d6c6": "loop 256 bytes",
+        "d6c9": "X",
+        "d6cc": "add Y",
+        "d6d1": "add pixel_x_adj",
+        "d6d4": "pixel X",
+        "d6d7": "Y",
+        "d6da": "subtract X",
+        "d6e1": "Z",
+        "d6e6": "pixel_y_adj",
+        "d6e9": "pixel Y",
+        "d6ec": "bottom line of screen?",
+        "d6ef": "sprite index",
+        "d6f4": "word offset",
+        "d6f8": "sprite table entry",
+        "d6fb": "DE = sprite address",
+        "d6fc": "width",
+        "d6fd": "null sprite?",
+        "d6fe": "no, skip",
+        "d702": "exit from caller",
+        "d704": "graphic no.",
+        "d707": "flagged as ???",
+        "d709": "no, continue",
+        "d70b": "set to null",
+        "d717": "off bottom of screen, skip",
+        "d71b": "pixel X",
+        "d71e": "bit offset?",
+        "d720": "no, skip",
+        "d72e": "width_bytes",
+        "d748": "height_lines",
+        "d74e": "off bottom of screen?",
+        "d750": "no, skip",
+        "d754": "+height_lines",
+        "d757": "store height_lines",
+        "d75d": "pixel Y",
+        "d76a": "height_lines",
+        "d773": "width_bytes",
+        "d81e": "bitmap buffer",
+        "d821": "calculate bitmap memory address",
+        "d823": "BC = bitmap memory address",
+        "d866": "width",
+        "d867": "same Vflip as stored?",
+        "d86c": "yes, skip",
+        "d86e": "width",
+        "d86f": "toggle Vflip",
+        "d871": "store updated flag",
+        "d872": "*2",
+        "d875": "B = width x 2 (data+mask)",
+        "d877": "height",
+        "d879": "sprite data",
+        "d87c": "DE = width x 2",
+        "d87e": "HL = width x 2 x height",
+        "d881": "sprite data",
+        "d882": "skip sprite data (including mask bytes)",
+        "d883": "DE=end of sprite data, HL=sprite data",
+        "d884": "width x 2",
+        "d885": "HL=sprite data + width x 2",
+        "d888": "last byte of sprite data",
+        "d889": "(height+1) x width x 2 - 1",
+        "d88a": "height / 2",
+        "d88e": "sprite data from start",
+        "d88f": "store end data at start",
+        "d891": "store start data at end",
+        "d892": "next start byte",
+        "d893": "next end byte",
+        "d894": "flip sprite and mask data for line pair",
+        "d89c": "next line",
+        "d89f": "done all lines?",
+        "d8a0": "no, loop",
+        "d8a4": "width (bytes)",
+        "d8a5": "same Hflip as stored?",
+        "d8aa": "yes, skip",
+        "d8ac": "width",
+        "d8ad": "toggle Hflip flag",
+        "d8af": "store updated flag",
+        "d8b0": "width",
+        "d8b5": "height",
+        "d8b7": "sprite data",
+        "d8b8": "HL=sprite data",
+        "d8bb": "HL'=sprite data",
+        "d8c0": "sprite data byte"
+    },
+    "stats": {
+        "labels": 896,
+        "regions": 897,
+        "comments": 1995,
+        "anchors": 0
+    }
+}

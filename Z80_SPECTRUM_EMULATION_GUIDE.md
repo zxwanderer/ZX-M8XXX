@@ -1343,9 +1343,42 @@ The TR-DOS ROM initialization at address 0 properly sets up all system variables
 - **UnrealSpeccy**: Injects synthetic `boot.B` file into disk image if none exists
 - **Spectaculator**: Auto-loads first BASIC program from disk
 
+**WD1793 Emulation (Instant-Completion Model):**
+
+Most emulators use an instant-completion model for the WD1793 — sector data is buffered immediately when a command is issued, and bytes are transferred via port $7F reads/writes. No timing simulation is needed for most games.
+
+Key implementation details:
+
+- **Read Sector**: Load all 256 bytes into a buffer. Assert DRQ. CPU reads bytes one at a time from port $7F. After all bytes consumed, clear BUSY/DRQ and assert INTRQ.
+- **Multi-sector (m=1)**: After each sector is consumed, auto-advance the sector register and load the next sector. Continue until sector > 16 (past last sector on track), then assert INTRQ.
+- **Read Address ($C0)**: Returns 6-byte ID field (track, side, sector, size, CRC1, CRC2). Must return the physical head position (`headTrack`), NOT the track register value — these can differ when the track register is written directly without a seek.
+- **System register ($FF)**: Bit 7 = INTRQ, bit 6 = DRQ. Bit 4 of write = side select (active-low: 1=side 0, 0=side 1). Bits 0-1 = drive select.
+- **INTRQ clearing**: Do NOT clear INTRQ on status register ($1F) read. In instant-completion models, clearing on read causes TR-DOS to miss INTRQ when it reads status before polling the system register. Clear INTRQ only when a new command is issued.
+
+**Lost Data simulation (critical for some games):**
+
+On real WD1793, data bytes arrive at the disk rotation rate (~32µs per byte at 250 kbit/s). If the CPU doesn't read a byte from port $7F before the next byte arrives, the byte is "lost" (LOST_DATA flag set in status). After all 256 bytes have passed by (whether read or lost), the sector is complete and INTRQ fires.
+
+Some TR-DOS routines issue a Read Sector command and then enter an INTRQ polling loop that checks ONLY the system register ($FF) for INTRQ — they never read data from port $7F. Example (TR-DOS $3D9C):
+```
+loop: PUSH HL
+      RST $20       ; break check
+      POP HL
+      IN A,($FF)    ; check INTRQ
+      AND $80
+      JR Z,loop     ; keep polling
+      RET
+```
+
+Without Lost Data simulation, INTRQ never fires in an instant-completion model because the controller waits forever for the CPU to read the buffered bytes. The emulator hangs.
+
+**Implementation approach:** Track consecutive system register ($FF) reads without any port $7F data reads. After a threshold (e.g., 2+ consecutive $FF reads without a $7F read), auto-complete the current sector: advance `dataPos` to end, set LOST_DATA flag, and either advance to next sector (multi-sector) or clear BUSY and assert INTRQ. Reset the counter on every port $7F data read and when a new command is issued.
+
 **TRD Disk Format:**
 - 80 tracks, 2 sides, 16 sectors/track, 256 bytes/sector
 - Total: 640KB (655360 bytes)
+- Interleaved layout: track 0 side 0, track 0 side 1, track 1 side 0, track 1 side 1, ...
+- Offset formula: `(track * 2 + side) * 16 * 256 + (sector - 1) * 256`
 - First track contains directory (sectors 0-7, 128 entries × 16 bytes) and disk info (sector 8)
 
 ### 13.9 Adding New Machine Support

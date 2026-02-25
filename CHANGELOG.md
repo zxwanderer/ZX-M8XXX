@@ -2,6 +2,56 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.31
+- **Fix WD1793 Lost Data simulation**: Games that issue Read Sector and only poll the system register ($FF) for INTRQ — without reading data from port $7F — now work correctly. On real WD1793 hardware, data bytes arrive at disk rotation speed and are "lost" if not read; after all bytes pass, INTRQ fires. M8XXX's instant-completion model lacked this, causing infinite loops in games like Merged on Pentagon 128.
+  - Tracks consecutive system register polls without data reads (`_sysReadsSinceData` counter)
+  - After 2+ consecutive $FF reads without a $7F read, remaining sector bytes are auto-completed with LOST_DATA flag
+  - Counter properly reset when new commands are issued, preventing false triggers during normal data-reading loops
+  - Works for both single-sector and multi-sector reads
+- **Fix WD1793 Read Address**: Read Address command ($C0) now returns the physical head position (`headTrack`) instead of the track register value. These can differ when the track register is updated without a seek.
+- **Fix WD1793 multi-sector read/write**: Multi-sector commands (m=1) now advance to the next sector after each sector is consumed via port $7F, continuing until past the last sector on the track.
+- **Fix WD1793 INTRQ timing**: INTRQ is no longer cleared on status register read. In the instant-completion model, clearing on read caused TR-DOS to miss INTRQ when it reads status before polling the system register. INTRQ is now only cleared when a new command is issued.
+- **Audio fallback for non-secure contexts**: When AudioWorklet is unavailable (plain HTTP), audio automatically falls back to ScriptProcessorNode. Enables sound on VPS or LAN deployments without HTTPS.
+- **UI: Late Timings moved to Machines tab**: Late Timings checkbox relocated from Settings → Display to Settings → Machines, near the Load ROMs button.
+- **UI: Fix register panel wrapping**: REGS and SYSTEM panels no longer wrap register items to new lines when the window is narrow. Each row (AF/BC/DE/HL, SP/PC/I/IM/IFF, etc.) stays on a single line.
+- **UI: Landscape layout improvements**: Wider right panel (memory/hex dump), tab container shifts left at zoom x2/x3, wider Breakpoints/Labels panel.
+
+## v0.9.30
+- **Cross-game signature matching**: Signature packs can now match code across different games sharing the same engine. Per-anchor offset voting resolves procedures relocated to different addresses. Each label is mapped using its nearest matched anchor's offset.
+- **Z80 address operand masking**: Anchor fingerprints automatically mask 16-bit address operands (CALL nn, JP nn, LD rr,nn, LD (nn),A, etc.) so byte patterns match even when absolute addresses differ between game builds.
+- **Two-pass anchor matching**: Pass 1 matches anchors exactly (all bytes). Pass 2 applies address masks for anchors with no exact match. Exact matches receive double vote weight for offset disambiguation.
+- **Direct Apply button**: Apply all labels from a signature pack directly at offset 0, bypassing memory scanning. Useful when the target binary matches the source addresses exactly.
+- **ZIP import for signatures**: Import .zip files containing any combination of .asm, .a80, and .skool source files. All files are extracted and processed together, with INCLUDE directives resolved across the archive.
+- **Label count display**: Labels tab shows user-defined label count next to the Clear button.
+
+## v0.9.29
+- **Signature Packs**: Modular knowledge base for automatic label/region recognition. Engine signatures (AGD, Quill, etc.) and game-specific disassemblies stored as individual JSON pack files. Enable/disable packs via Settings → Signatures.
+- **Import formats**: .skool (SkoolKit) and .asm/.a80 (sjasmplus/pasmo/z80asm) with INCLUDE resolution. Multi-file ASM projects parsed as a single pack.
+- **GitHub browser**: Browse any GitHub repository for .skool/.asm files. Paste a repo URL, scan for source files, select and import. ASM files downloaded as batch for INCLUDE resolution across the project.
+- **Kempston Mouse Swap L/R**: Option to swap left/right mouse button bits (bit0↔bit1) for different hardware implementations. Settings → Input → Swap L/R.
+- **Trace register change detection**: Trace panel only shows registers that changed since the previous entry instead of repeating all values. Alt regs and Sys regs checkboxes now also control the live trace display.
+- **Debugger hotkeys (paused mode)**: 1-5 jump to left panel bookmarks, 6-9/0 jump to right panel bookmarks, Shift+digit sets bookmark, tilde (`) resumes emulation, PageUp/PageDown scrolls disassembly by page, Up/Down scrolls by line
+- **Breakpoint ΔT counter**: System registers panel shows accumulated T-states since last breakpoint fired. Accumulates through steps, runs, and all execution modes. Resets when any breakpoint fires (exec, watchpoint, port). Useful for cycle-exact timing measurement.
+- **Calls panel**: Runtime call stack tracking in the register area. Tracks CALL, RST, and INT pushes; removes entries on RET/RETI/RETN. Shows active subroutine chain with labels and INT markers. Click to navigate, right-click for context menu. Cleared on machine reset. Direct SP manipulation (LD SP,nn / LD SP,HL) resets the call stack. POP instructions are filtered out (only true RET pops entries).
+- **Assembler Debug labels**: The Debug button now injects assembler symbol labels into the debugger. Labels from compiled ASM source appear in disassembly, call stack, and other views. Skips internal labels (prefixed with `__`) and doesn't overwrite existing labels.
+- **System panel layout**: Reorganized register panels — SP/PC/I/IM/IFF on first row, T-st/ΔT on second row, R register on the flags row. Compact spacing between panels.
+- **Stack/Calls click navigation**: Clicking an address in the Stack or Calls panel navigates to that address. Priority: left disasm → right disasm → left memory → right memory. Right-click context menu still available for explicit panel choice.
+- **Zoom hotkey**: F1 cycles canvas zoom (x1 → x2 → x3 → x1).
+- **Overlay hotkey**: F10 cycles through overlay modes (Normal → Grid → Box → Screen → Reveal → Beam → BeamScreen → No Attr → No Bitmap → Normal...).
+- **Follow PC**: Disabled by default (was enabled)
+- **Fix**: `color-scheme` set globally (`dark`/`light`) via `<meta>` tag so native `<select>` dropdowns and other form controls match the active theme
+- **Fix**: Trace panel showing "undefined" for instruction text (used `instr.text` instead of `instr.mnemonic`)
+- **Fix**: Reveal overlay mode now correctly blends screen content over border — main canvas renders border-only (like Screen mode), overlay draws normal screen picture at 50% transparency so border effects are visible underneath
+- **Fix**: No Bitmap overlay uses diagonal X crosses instead of graveyard (+) crosses for clearer visual distinction
+- **Fix**: Flash-loaded tape blocks no longer produce loading sound — audio suppressed while `tapeFlashLoad` is active (turbo EAR-bit generation still works for real-time playback)
+- **Graphics Viewer**: Width increased from 24 to 32 columns (full screen width). Canvas now sizes to actual sprite width instead of fixed maximum, eliminating empty space at smaller widths.
+
+## v0.9.28
+- **Tools & Trace card layout**: Panels use card-based `.tools-group` boxes with `--bg-tertiary` background and `--border-primary` border. Side-by-side in landscape via `.tools-panel-row` flex wrapper, stacking in portrait.
+- **CSS**: Added `--border-primary` variable (`#3a3a5a` dark / `#b8b8c8` light`)
+- **Fix**: Panel tabs (`Breakpoints/Labels/Watches/Tools/Trace`) no longer exceed debug row width in landscape (`max-width: 1008px` in landscape media query)
+- **Port I/O source tagging**: Port log entries include `src` field identifying the source when PC is in ROM area: `TRDOS` (TR-DOS ROM active), `ROM:N` (ROM bank N), `RAM` (RAM mapped at 0x0000), or empty (PC in RAM). Exported in `Src` column.
+
 ## v0.9.27
 - **Port Trace Filter**: Whitelist filter for trace logging and Port I/O log
   - When empty, all ports are traced (default behavior); when ports are specified, only matching ports are recorded

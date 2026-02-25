@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ZX Spectrum System Tests v0.6.0</title>
+    <title>ZX Spectrum System Tests v0.6.2</title>
     <style>
         :root {
             --bg-primary: #1a1a2e;
@@ -81,6 +81,8 @@
     <div id="summary"></div>
     <div id="log"></div>
 
+    <script src="constants.js"></script>
+    <script src="machines.js"></script>
     <script src="memory.js"></script>
     <script src="z80.js"></script>
     <script src="ula.js"></script>
@@ -562,7 +564,7 @@
             assert(result.mnemonic === 'DEFB DDh', 'Disasm DD DD DD CB: second DD = DEFB DDh',
                 `got "${result.mnemonic}"`);
             result = disasm.disassemble(0x8002);
-            assert(result.mnemonic === 'BIT 0,(IX+5)', 'Disasm DD DD DD CB: third = BIT 0,(IX+5)',
+            assert(result.mnemonic === 'BIT 0,(IX+5h)', 'Disasm DD DD DD CB: third = BIT 0,(IX+5h)',
                 `got "${result.mnemonic}"`);
 
             // Test normal DD instruction (no chain) still works

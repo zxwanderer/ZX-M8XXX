@@ -1,6 +1,6 @@
 # ZX-M8XXX
 
-**Version 0.9.27** | [Changelog](CHANGELOG.md)
+**Version 0.9.31** | [Changelog](CHANGELOG.md)
 
 ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integrated debugger designed for reverse engineering and development. No build tools, no dependencies - just open `index.html` in your browser.
 
@@ -23,7 +23,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - ZIP archive support
 - RZX playback
 - Kempston Joystick (numpad) with extended buttons support
-- Kempston Mouse with wheel support
+- Kempston Mouse with wheel support and swappable L/R buttons
 - Hardware gamepad support (USB/Bluetooth via Gamepad API)
 - Keyboard: Ctrl=Caps Shift, Alt=Symbol Shift (works with any layout)
 
@@ -38,6 +38,8 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - Subroutine detection and marking
 - Code folding (collapse/expand subroutines and custom blocks)
 - Bookmarks for quick navigation
+- Runtime call stack tracking (CALL/RST/INT/RET)
+- Breakpoint ΔT counter (cycle-exact timing measurement)
 - Undo/Redo support
 - Pattern search with wildcards
 - Project save/load (complete session state)
@@ -49,7 +51,7 @@ ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with an integr
 - Search/replace across all files
 - Output: SAVEBIN, SAVESNA, SAVETAP
 - MD5 checksum verification
-- Debug injection at entry point
+- Debug injection at entry point (with label export to debugger)
 
 ### Tools
 - Graphics Viewer for sprite search
