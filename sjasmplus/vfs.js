@@ -1,7 +1,9 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Virtual Filesystem - Handles multi-file projects, INCLUDE, INCBIN
 
-const VFS = {
+import { ErrorCollector } from './errors.js';
+
+export const VFS = {
     files: {},        // path -> { content, binary }
     basePath: '',     // Current base path for relative includes
     includePaths: [], // Additional search paths
@@ -388,6 +390,3 @@ const VFS = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.VFS = VFS;
-}

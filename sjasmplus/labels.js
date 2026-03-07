@@ -1,7 +1,10 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Labels and Symbol Table - Handles global, local, temporary labels and modules
 
-const SymbolTable = {
+import { ErrorCollector } from './errors.js';
+import { hex16 } from '../core/utils.js';
+
+export const SymbolTable = {
     symbols: {},           // Global symbols: name -> { value, type, defined, used, line, file }
     modules: [],           // Module stack for MODULE/ENDMODULE
     localPrefix: '',       // Current label prefix for local labels
@@ -253,7 +256,7 @@ const SymbolTable = {
                     name,
                     value: sym.value,
                     type: sym.type,
-                    hex: sym.value.toString(16).toUpperCase().padStart(4, '0')
+                    hex: hex16(sym.value)
                 });
             }
         }
@@ -281,7 +284,7 @@ const SymbolTable = {
 };
 
 // EQU values (can be set and are constant)
-const EquTable = {
+export const EquTable = {
     values: {},
     
     reset() {
@@ -322,7 +325,3 @@ const EquTable = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.SymbolTable = SymbolTable;
-    window.EquTable = EquTable;
-}

@@ -1,7 +1,7 @@
 // sjasmplus-js - MD5 hash implementation
 // Based on RFC 1321
 
-const MD5 = {
+export const MD5 = {
     // Convert string/array to MD5 hex string
     hash(data) {
         let bytes;
@@ -110,6 +110,3 @@ const MD5 = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.MD5 = MD5;
-}

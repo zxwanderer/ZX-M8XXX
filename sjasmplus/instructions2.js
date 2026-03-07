@@ -1,6 +1,9 @@
 // sjasmplus-js v0.10.22 - Z80 Assembler for ZX Spectrum
 // Z80 Instruction Encoder - Part 2: LD and ALU instructions
 
+import { InstructionEncoder, Z80Asm } from './instructions.js';
+import { ErrorCollector } from './errors.js';
+
 // Add LD encoder to InstructionEncoder
 InstructionEncoder.encodeLD = function(dest, src, addr, syms) {
     // Uppercase for pattern matching only - preserve original for expression evaluation
@@ -331,6 +334,3 @@ InstructionEncoder.encodeINCDEC = function(op, ops, addr, syms) {
     ErrorCollector.error(`Invalid ${op} operand: ${ops[0]}`);
 };
 
-if (typeof window !== 'undefined') {
-    // Already exported
-}

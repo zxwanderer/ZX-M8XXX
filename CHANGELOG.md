@@ -2,6 +2,70 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.45
+- **Autofire**: New autofire feature in Settings → Input with named profiles. Configure key (Fire/Space/Enter/Caps Shift/Sym Shift/0-9/A-Z), repeat rate (1–50 Hz), and hold duration (30%–70% or constant Hold). Toggle with Ctrl+F or checkbox. Multiple profiles for different games — click to switch, + to add, rename/delete. Fire option uses Kempston joystick fire bit. Profiles persist in localStorage; autofire always starts off and stops on machine reset.
+
+## v0.9.44
+- **Run BASIC from TRD/SCL disk**: New "Run first BASIC" and "Run last BASIC" options in the Boot File dropdown (Settings → Media). When a disk is loaded with auto-load enabled, boots TR-DOS and types `RUN "filename"` to execute the selected BASIC program. Boot files named "boot" are skipped unless they're the only BASIC file on disk. The existing boot file on disk is temporarily hidden during TR-DOS init to prevent auto-run, then restored.
+- **Breakpoint UX improvements**: Wider click hit zone for breakpoint dots in disasm view. Disabled breakpoints now show a visible `×` indicator (was nearly invisible). Light theme breakpoint line background lightened to `#fde0d8`.
+- **Memory search hex fix**: "Last char 7-bit" and "Case insensitive" options now only apply to text searches. Previously they were applied to hex/decimal searches too, causing false matches (e.g. searching `CD 01` would match `CD 81` because `0x81 & 0x7F = 0x01`).
+- **Poke manager project load fix**: Pokes saved in projects now correctly toggle memory on enable/disable. The project save format (object patches) was incompatible with the loader (expected array patches); loader now handles both formats.
+- **Graphics Viewer improvements**: Canvas rendering switched from thousands of `fillRect` calls to atomic `ImageData`/`putImageData` for tear-free updates. Added "Emulator is running — memory is changing" warning overlay when viewing graphics while emulator is running.
+- **Code quality**: Removed init-scope spectrum captures in 6 UI modules (use `getSpectrum()` at point of use). Consolidated 17 duplicate DI parameter wrappers (`readMemory`/`getMemoryInfo`/`getRamBank`) into 3 shared wrappers. Standardized localStorage key prefixes to `zxm8_`.
+
+## v0.9.43
+- **ULAplus border color fix**: Border now uses CLUT 0 PAPER entries 8-15 indexed by port $FE border color (was hardcoded to entry 8). Also fixed border flush trigger to cover all border-relevant palette entries (8-15), so mid-frame border color changes via ULAplus palette writes render correctly.
+- **Scorpion ZS 256 boot fix**: Fixed three paging bugs that prevented the Scorpion from booting:
+  - Port 0x7FFD decode changed from loose 128K-style `(port & 0x8002) === 0` to +3-style `(port & 0xC002) === 0x4000` — prevents 1FFD writes (A14=0) from incorrectly triggering the 7FFD handler
+  - RAM page calculation: restored 1FFD bit 4 contribution — `page = ((1FFD & 0x10) >> 1) | (7FFD & 0x07)` gives pages 0-15, per FUSE/ZXMAK2/UnrealSpeccy
+  - ROM bank selection in `writeScorpion1FFD`: when 1FFD bit 1 is cleared, ROM 0/1 is now determined from the stored 7FFD bit 4 value (matching FUSE's `(last_byte & 0x10) >> 4`), not from `currentRomBank & 1` which gave incorrect results when transitioning from ROM 2
+- **ES Module Extraction Round 4**: Extracted 4 more modules from `index.html` following the init-function DI pattern:
+  - `ui/disk-activity.js` — Disk activity LED indicator and track/sector status display
+  - `ui/memory-view.js` — Right + left panel hex dump, inline byte editor, mouse selection, scroll wheel
+  - `ui/right-disasm-view.js` — Right panel disassembly view (never auto-follows PC)
+  - `ui/debugger-display.js` — Register rendering, left panel disassembly view, sub-panel update dispatch
+- **`panel-navigator.js` late-binding**: Changed `updateMemoryView`/`updateLeftMemoryView` DI params to getter pattern (`getUpdateMemoryView`/`getUpdateLeftMemoryView`) to resolve circular init dependency with memory-view module
+- **`updateDebugger()` thin wrapper**: Body extracted to `debugger-display.js` `renderDebugger()`; index.html retains a one-line delegating function for backward compatibility with all existing callers
+- **ES Module Extraction Round 5**: Extracted 4 more modules from `index.html`:
+  - `ui/step-controls.js` — Step/Run button handlers for both left and right panels
+  - `ui/disasm-navigation.js` — Disasm address nav, export dialog, scroll wheel, click handlers
+  - `ui/labels-panel.js` — Label filter, add, clear, export, import, list click/dblclick
+  - `ui/psg-player.js` — PSG player template download
+- **Right panel Run to Cursor fix**: Right panel "To Cursor" button now works correctly (was referencing undefined variable and nonexistent method)
+- **Hover-aware keyboard navigation**: Arrow keys and PageUp/PageDown now scroll whichever debugger panel the mouse is hovering over, supporting both disasm and memory views:
+  - Left/Right — scroll by 1 byte
+  - Up/Down — scroll by 1 line
+  - PageUp/PageDown — scroll by 1 page
+
+## v0.9.42
+- **Test Runner fix**: Fixed Pentagon TRD/SCL disk tests — `injectDiskRunCommand()` was lowercasing all filename characters, causing TR-DOS `RUN "test pc"` to fail (case-sensitive match against uppercase `TEST PC` on disk). Uppercase letters now typed with Caps Shift. Added `=` character support (Symbol Shift + L) for filenames like `=GLOBAL=`.
+- **Keyboard mapping**: PC Shift now maps to Caps Shift — Shift+letter produces uppercase in BASIC/TR-DOS, matching standard PC typing expectations. Shift+digit continues to produce symbols (!@#$%^&*) via the punctuation handler (Caps Shift temporarily suppressed to avoid Extended Mode). Ctrl is no longer mapped to Caps Shift — reserved for browser shortcuts (Ctrl+C/V/Z etc.). Alt remains Symbol Shift.
+
+## v0.9.41
+- **ES Module Extraction Round 3**: Extracted 3 more modules from `index.html` following the init-function DI pattern:
+  - `ui/bookmarks.js` — Bookmark management for left/right debugger panels
+  - `ui/input-settings.js` — Input & Mouse Settings (Kempston, gamepad, mouse capture, Beta Disk toggle)
+  - `ui/file-loader.js` — File loading, drag-drop, ZIP selection modal, media indicators, blank disk
+- **`display-settings.js` lazy getter**: Changed `handleLoadResult` DI param to `getHandleLoadResult` (late-binding getter) to resolve circular dependency with file-loader
+
+## v0.9.40
+- **ES Module Extraction Round 2**: Extracted 3 more modules from `index.html` following the init-function DI pattern:
+  - `ui/machine-selector.js` — Machine dropdown and settings checkboxes
+  - `ui/project-io.js` — Project save/load (saveProject, loadProject)
+  - `ui/keyboard-shortcuts.js` — Global keyboard shortcut handler
+- **`arrayToBase64` moved to `core/utils.js`**: Pure utility function now shared via import instead of duplicated in index.html scope
+
+## v0.9.39
+- **GFX tab moved to Utils**: Graphics Viewer is now a sub-tab under Utils (formerly top-level GFX tab). Lazy-loaded on first visit to reduce initial page load.
+- **Tools → Utils rename**: Renamed top-level "Tools" tab to "Utils" to avoid confusion with the debugger panel "Tools" tab.
+
+## v0.9.38
+- **File Reorganization**: Moved all root-level JS files into categorized subdirectories: `core/` (12 files — emulation engine), `debug/` (8 files — debugger managers), `tools/` (2 files — standalone engines), `lib/` (1 file — pako). Moved test HTML files, FUSE test data, and tests.json into `tests/`. Moved static data assets (palettes, keyboard image, ROM labels) into `data/`. All import paths updated across index.html, ui/*.js, and test HTML files.
+- **Heatmap Export**: Export automap data from the Memory Map heatmap view as a TSV text file. Columns: Address ($hex), Page (memory bank), Exec/Read/Write counts. Checkboxes to skip ROM and screen addresses.
+- **ES Modules**: Converted all JavaScript files to ES modules with proper import/export.
+  Inspired by dcorp80's modularization PR (github.com/Bedazzle/ZX-M8XXX/pull/1).
+- **Unified Load**: Removed separate "Load → Project" menu option. Project files (.zxproj, .json) are now loaded via Load → File or drag-and-drop, alongside snapshots and other formats.
+
 ## v0.9.37
 - **POKE Manager**: New "Pokes" tab in the debugger panel for managing named pokes (multi-address byte patches with on/off toggle) and memory value editors. Load poke definitions from external JSON files — patches use compact `[addr, normal, poke]` arrays with `$hex`, `0xhex`, or decimal formats. Each poke stores original and patched byte values — toggling a poke instantly writes to memory via checkbox, and disabling restores the original values. Memory editors provide live byte/word read and write with hex input. Poke state (entries, editors, enabled flags) persists in project save/load.
 - **POKE Manager CRUD**: Two-column layout with editors on the left and pokes on the right. Inline add/delete for both: poke add form accepts name, address, original value, and poke value — entering the same name adds a patch to the existing poke (multi-patch building). Editor add form accepts name, address, and byte/word type. Remove entries with × button (pokes restore original bytes if enabled). Master checkbox toggles all pokes on/off (indeterminate state when partially enabled). Editor values apply immediately on Enter or blur — accept `$hex`, `0xhex`, or decimal input. Single Read button refreshes all editors from memory. Save exports all pokes and editors to JSON. Load/Save/Clear buttons grouped at top right. Click game name label to edit.

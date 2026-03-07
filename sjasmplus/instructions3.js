@@ -1,6 +1,9 @@
 // sjasmplus-js v0.10.22 - Z80 Assembler for ZX Spectrum
 // Z80 Instruction Encoder - Part 3: Jumps, calls, and misc
 
+import { InstructionEncoder, Z80Asm } from './instructions.js';
+import { ErrorCollector } from './errors.js';
+
 // JP encoder
 InstructionEncoder.encodeJP = function(ops, addr, syms) {
     if (ops.length === 1) {
@@ -343,6 +346,3 @@ InstructionEncoder.encodeIM = function(ops, addr, syms) {
     return { bytes: [0xED, modes[val.value] || 0x46], size: 2, undefined: val.undefined };
 };
 
-if (typeof window !== 'undefined') {
-    // Already exported via InstructionEncoder
-}

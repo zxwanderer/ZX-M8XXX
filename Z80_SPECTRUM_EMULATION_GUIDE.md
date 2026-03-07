@@ -1225,25 +1225,30 @@ Total bank = bits 0-2 + (bits 6-7 >> 3) + (bit 5 in 1MB mode) = 0-63.
 ### 13.4 Scorpion ZS 256
 
 **Memory:**
-- 256KB RAM (16 banks)
-- 64KB ROM (4 banks)
-- PROF-ROM support
+- 256KB RAM (16 banks), 64KB ROM (4 banks: ROM0=128K BASIC, ROM1=48K BASIC, ROM2=Service Monitor, ROM3=TR-DOS)
+- TR-DOS built into ROM bank 3 (no separate ROM chip — `trdosInRom: true`)
 
-**Paging (port 0x1FFD):**
+**Port 0x7FFD** — decoded as `(port & 0xC002) === 0x4000` (+3-style, A14=1 required):
 ```
-Bit 0: RAM bank bit 3 (extension)
-Bit 1: Block 0 is RAM (not ROM)
-Bit 2: ROM bank bit 0
-Bit 4: Turbo mode (7 MHz)
+Bits 0-2: RAM bank low 3 bits
+Bit 3:    Screen bank (0=bank 5, 1=bank 7)
+Bit 4:    ROM bank select (when 1FFD bit 1 = 0): 0=ROM 0, 1=ROM 1
+Bit 5:    Paging lock (disable further paging changes)
 ```
 
-**Extended port 0x7FFD:**
+**Port 0x1FFD** — decoded as `(port & 0xF002) === 0x1000` (+3-style, A14=0 required):
 ```
-Bits 0-2: RAM bank (low 3 bits)
-Bit 3: Screen bank
-Bit 4: ROM bank high bit
-Bit 5: Paging lock
+Bit 0: RAM page 0 mapped over ROM at $0000-$3FFF (read/write)
+Bit 1: ROM 2 select — overrides 7FFD bit 4 when set (Service Monitor)
+Bit 2: RS-232C output
+Bit 4: RAM bank high bit — extends bank to pages 8-15
 ```
+
+**RAM bank formula:** `page = ((1FFD & 0x10) >> 1) | (7FFD & 0x07)` → 0-15
+
+**ROM selection (3-way, per FUSE):** 1FFD bit 1 set → ROM 2; unset → 7FFD bit 4 selects ROM 0/1.
+
+**Implementation note:** The last 7FFD value must be stored separately (`scorpionPort7FFD` / FUSE `last_byte`) for correct ROM bank fallback when 1FFD bit 1 is cleared. Using `currentRomBank & 1` gives incorrect results when transitioning from ROM 2 (bank 2 & 1 = 0, loses the 7FFD bit 4 state).
 
 ### 13.5 Timex Variants (TC2048, TC2068, TS2068)
 
@@ -1474,7 +1479,7 @@ paper_entry = clut × 16 + 8 + PAPER
 | 1 | Grayscale mode (1=on, 0=off) |
 
 **Border Behavior:**
-When ULAplus is enabled, the border color uses PAPER 0 from CLUT 0 (palette entry 8).
+When ULAplus is enabled, the border color uses CLUT 0 PAPER entries 8-15, indexed by the standard port $FE border color (bits 0-2). For example, border color 0 uses palette entry 8, border color 3 uses palette entry 11, and border color 7 uses palette entry 15. This means programs can change the ULAplus border appearance either by writing a new GRB value to the relevant palette entry, or by changing the port $FE border color to select a different entry.
 
 **Implementation:**
 

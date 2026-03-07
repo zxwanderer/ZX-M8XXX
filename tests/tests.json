@@ -1,0 +1,606 @@
+{
+    "tests": [
+        {
+            "id": "ula48",
+            "name": "ULA 48K Timing (early)",
+            "category": "video",
+            "file": "tests/ula.zip",
+            "zipEntry": "ula48.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 80, "screen": "tests/ula48.png" }
+            ]
+        },
+        {
+            "id": "ula128",
+            "name": "ULA 128K Timing (early)",
+            "category": "video",
+            "file": "tests/ula.zip",
+            "zipEntry": "ula128.tap",
+            "machine": "128k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 100, "screen": "tests/ula128.png" }
+            ]
+        },
+        {
+            "id": "p128",
+            "name": "Pentagon 128 Timing",
+            "category": "video",
+            "file": "tests/ula.zip",
+            "zipEntry": "pent128.tap",
+            "machine": "pentagon",
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 50, "screen": "tests/pent128.png" }
+            ]
+        },
+        {
+            "id": "scroll17",
+            "name": "Scroll 17",
+            "category": "video",
+            "file": "tests/scroll17.zip",
+            "zipEntry": "scroll17.tap",
+            "earlyTimings": true,
+            "machine": "128k",
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 100, "screen": "tests/scroll17_101.png" }
+            ]
+        },
+
+
+        {
+            "id": "ula+256",
+            "name": "ULA+ HAM256",
+            "category": "ulaplus",
+            "file": "tests/HAM256ViewerV0.3.tap.zip",
+            "zipEntry": "HAM256.tap",
+            "earlyTimings": true,
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 31, "screen": "tests/ula+256_31.png" }
+            ]
+        },
+
+        {
+            "id": "ula+rainbow",
+            "name": "ULA+ rainbow",
+            "category": "ulaplus",
+            "file": "tests/ULAplusDemo.tap.zip",
+            "zipEntry": "Multicolour.tap",
+            "earlyTimings": true,
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 80, "screen": "tests/ula+rainbow_80.png" }
+            ]
+        },
+
+        {
+            "id": "Nirvana_48",
+            "name": "Nirvana 48",
+            "category": "multicolor",
+            "file": "tests/desant.zip",
+            "zipEntry": "desant.tap",
+            "machine": "48k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 46, "screen": "tests/Nirvana_48_46.png" }
+            ]
+        },
+        {
+            "id": "Nirvana_128",
+            "name": "Nirvana 128",
+            "category": "multicolor",
+            "file": "tests/desant.zip",
+            "zipEntry": "desant.tap",
+            "machine": "128k",
+            "palette": "default",
+            "ulaplus": true,
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 46, "screen": "tests/Nirvana_128_46.png" }
+            ]
+        },
+
+        {
+            "id": "aquaplane",
+            "name": "Aquaplane 48K",
+            "category": "video",
+            "file": "tests/Aquaplane.zip",
+            "zipEntry": "Aquaplane.sna",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 86, "screen": "tests/aquaplane_87.png" }
+            ]
+        },
+
+        {
+            "id": "comet",
+            "name": "Comet game 48K",
+            "category": "video",
+            "file": "tests/CometGameThe.zip",
+            "zipEntry": "CometGameThe.sna",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 152, "screen": "tests/comet_153.png" }
+            ]
+        },
+
+        {
+            "id": "academy",
+            "name": "Academy 48K",
+            "category": "video",
+            "file": "tests/Academy.zip",
+            "zipEntry": "Academy.sna",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 168, "screen": "tests/academy_169.png" }
+            ]
+        },
+
+        {
+            "id": "venom",
+            "name": "Venom 48K",
+            "category": "video",
+            "file": "tests/Venom.zip",
+            "zipEntry": "Venom.sna",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 94, "screen": "tests/venom_94.png" }
+            ]
+        },
+
+        {
+            "id": "shock128",
+            "name": "Shock 128K",
+            "category": "multicolor",
+            "file": "tests/snapshot_128k_shock.szx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 80, "screen": "tests/shock128_81.png" }
+            ]
+        },
+
+        {
+            "id": "echology",
+            "name": "Echology",
+            "category": "multicolor",
+            "file": "tests/snapshot_128k_echo.szx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "",
+            "steps": [
+                { "frames": 210, "screen": "tests/echology_211.png" }
+            ]
+        },
+
+        {
+            "id": "eric",
+            "name": "Eric RZX",
+            "category": "rzx",
+            "file": "tests/ericfloaters.rzx",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "",
+            "source": "https://www.rzxarchive.co.uk/e.php",
+            "steps": [
+                { "frames": 2486, "screen": "tests/eric_2486.png" }
+            ]
+        },
+
+        {
+            "id": "cubix",
+            "name": "Cubix",
+            "category": "video",
+            "file": "tests/cubix_pentagon.zip",
+            "zipEntry": "cubix_pentagon.szx",
+            "machine": "pentagon",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "Gogin",
+            "source": "https://yrgb.ru/",
+            "steps": [
+                { "frames": 276, "screen": "tests/cubix_276.png" }
+            ]
+        },
+
+        {
+            "id": "ZX-Diagnostics",
+            "name": "ZX-Diagnostics",
+            "category": "cpu",
+            "file": "tests/ZX-Diagnostics.tap.zip",
+            "zipEntry": "ZX-Diagnostics.tap",
+            "machine": "plus2a",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "Brendan Alford",
+            "source": "https://spectrumcomputing.co.uk/entry/44397/ZX-Spectrum/ZX_-Diagnostics",
+            "steps": [
+                { "frames": 45, "screen": "tests/ZX-Diagnostics_46.png" },
+                { "frames": 3219, "screen": "tests/ZX-Diagnostics_3219.png", "keys": "N" }
+            ]
+        },
+
+        {
+            "id": "systest_1.01r",
+            "name": "SYSTEM TEST V1.01R",
+            "category": "cpu",
+            "file": "tests/SYST101R.zip",
+            "zipEntry": "SYST101R.SCL",
+            "diskRun": "TEST PC",
+            "machine": "pentagon",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "Sovietsoft S.Petersburg 1993",
+            "source": "",
+            "steps": [
+                { "frames": 695, "screen": "tests/systest_1.01r_695.png" },
+                { "frames": 1096, "screen": "tests/systest_1.01r_1096.png", "keys": "ENTER" },
+                { "frames": 1301, "screen": "tests/systest_1.01r_1301.png", "keys": "ENTER" }
+            ]
+        },
+
+        {
+            "id": "global_test_1.0b",
+            "name": "Global test v1.0 beta",
+            "category": "cpu",
+            "file": "tests/GTEST1_0.ZIP",
+            "zipEntry": "GTEST1_0.SCL",
+            "diskRun": "=GLOBAL=",
+            "machine": "pentagon",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "POLTERGEIST from Samara",
+            "source": "",
+            "steps": [
+                { "frames": 500, "screen": "tests/global_test_1.0b_412.png", "keys": "SPACE,200ms,SPACE,500ms,Q,Q,Q,SPACE" },
+                { "frames": 1875, "screen": "tests/global_test_1.0b_1875.png", "keys": "SPACE" }
+            ]
+        },
+
+        {
+            "id": "Another Universal Memory Test",
+            "name": "Another Universal Memory Test",
+            "category": "cpu",
+            "file": "tests/AUMT.zip",
+            "zipEntry": "AUMT.SCL",
+            "diskRun": "AUMT",
+            "machine": "pentagon1024",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "DDp",
+            "source": "",
+            "steps": [
+                { "frames": 67, "screen": "tests/Another Universal Memory Test_67.png"},
+                { "frames": 240, "screen": "tests/Another Universal Memory Test_240.png", "keys": "1" },
+                { "frames": 2480, "screen": "tests/Another Universal Memory Test_2480.png", "keys": "ENTER"}
+            ]
+        },
+
+        {
+            "id": "TactMeterV1.0",
+            "name": "TactMeterV1.0",
+            "category": "cpu",
+            "file": "tests/TactMeterV1.0.tap.zip",
+            "zipEntry": "TM.TAP",
+            "machine": "scorpion",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "Вячеслав Струнов",
+            "source": "https://zxart.ee/eng/software/system-software/programming/testy/tact-meter/",
+            "steps": [
+                { "frames": 71, "screen": "tests/TactMeterV1.0_71.png"}
+            ]
+        },
+
+
+        {
+            "id": "cpd-48k",
+            "name": "CPD-test 48k",
+            "category": "cpu",
+            "file": "tests/cpd-test08b.tap.zip",
+            "zipEntry": "cpd-test.tap",
+            "machine": "48k",
+            "palette": "default",
+            "enabled": true,
+            "author": "Michael Sapach",
+            "source": "",
+            "steps": [
+                { "frames": 988, "screen": "tests/cpd-48k.png" }
+            ]
+        },
+        {
+            "id": "cpd-128k",
+            "name": "CPD-test 128k",
+            "category": "cpu",
+            "file": "tests/cpd-test08b.tap.zip",
+            "zipEntry": "cpd-test.tap",
+            "machine": "128k",
+            "palette": "default",
+            "enabled": true,
+            "author": "Michael Sapach",
+            "source": "",
+            "steps": [
+                { "frames": 786, "screen": "tests/cpd-128k.png" }
+            ]
+        },
+
+        {
+            "id": "z80full",
+            "name": "Raxoft z80full",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80full.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": true,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 4405, "screen": "tests/z80full_1.png" },
+                { "frames": 9458, "screen": "tests/z80full_2.png", "keys": "ENTER" },
+                { "frames": 12133, "screen": "tests/z80full_3.png", "keys": "ENTER" },
+                { "frames": 15143, "screen": "tests/z80full_4.png", "keys": "ENTER" },
+                { "frames": 17310, "screen": "tests/z80full_5.png", "keys": "ENTER" },
+                { "frames": 18182, "screen": "tests/z80full_6.png", "keys": "ENTER" },
+                { "frames": 18671, "screen": "tests/z80full_7.png", "keys": "ENTER" },
+                { "frames": 19385, "screen": "tests/z80full_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "z80ccf",
+            "name": "Raxoft z80ccf",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80ccf.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 2350, "screen": "tests/z80ccf_1.png" },
+                { "frames": 5076, "screen": "tests/z80ccf_2.png", "keys": "ENTER" },
+                { "frames": 6610, "screen": "tests/z80ccf_3.png", "keys": "ENTER" },
+                { "frames": 8430, "screen": "tests/z80ccf_4.png", "keys": "ENTER" },
+                { "frames": 9884, "screen": "tests/z80ccf_5.png", "keys": "ENTER" },
+                { "frames": 10618, "screen": "tests/z80ccf_6.png", "keys": "ENTER" },
+                { "frames": 11064, "screen": "tests/z80ccf_7.png", "keys": "ENTER" },
+                { "frames": 11578, "screen": "tests/z80ccf_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "z80doc",
+            "name": "Raxoft z80doc",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80doc.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 4540, "screen": "tests/z80doc_1.png" },
+                { "frames": 9588, "screen": "tests/z80doc_2.png", "keys": "ENTER" },
+                { "frames": 12284, "screen": "tests/z80doc_3.png", "keys": "ENTER" },
+                { "frames": 15396, "screen": "tests/z80doc_4.png", "keys": "ENTER" },
+                { "frames": 17594, "screen": "tests/z80doc_5.png", "keys": "ENTER" },
+                { "frames": 18552, "screen": "tests/z80doc_6.png", "keys": "ENTER" },
+                { "frames": 19208, "screen": "tests/z80doc_7.png", "keys": "ENTER" },
+                { "frames": 19958, "screen": "tests/z80doc_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "z80docflags",
+            "name": "Raxoft z80docflags",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80docflags.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 2218, "screen": "tests/z80docflags_1.png" },
+                { "frames": 4906, "screen": "tests/z80docflags_2.png", "keys": "ENTER" },
+                { "frames": 6408, "screen": "tests/z80docflags_3.png", "keys": "ENTER" },
+                { "frames": 8132, "screen": "tests/z80docflags_4.png", "keys": "ENTER" },
+                { "frames": 9454, "screen": "tests/z80docflags_5.png", "keys": "ENTER" },
+                { "frames": 10130, "screen": "tests/z80docflags_6.png", "keys": "ENTER" },
+                { "frames": 10624, "screen": "tests/z80docflags_7.png", "keys": "ENTER" },
+                { "frames": 11248, "screen": "tests/z80docflags_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "z80flags",
+            "name": "Raxoft z80flags",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80flags.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 2130, "screen": "tests/z80flags_1.png" },
+                { "frames": 4654, "screen": "tests/z80flags_2.png", "keys": "ENTER" },
+                { "frames": 6009, "screen": "tests/z80flags_3.png", "keys": "ENTER" },
+                { "frames": 7533, "screen": "tests/z80flags_4.png", "keys": "ENTER" },
+                { "frames": 8751, "screen": "tests/z80flags_5.png", "keys": "ENTER" },
+                { "frames": 9320, "screen": "tests/z80flags_6.png", "keys": "ENTER" },
+                { "frames": 9661, "screen": "tests/z80flags_7.png", "keys": "ENTER" },
+                { "frames": 10102, "screen": "tests/z80flags_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "z80memptr",
+            "name": "Raxoft z80memptr",
+            "category": "cpu",
+            "file": "tests/raxoft.zip",
+			"zipEntry": "z80memptr.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Patrik Rak",
+            "source": "https://github.com/raxoft/z80test",
+            "steps": [
+                { "frames": 2189, "screen": "tests/z80memptr_1.png" },
+                { "frames": 4763, "screen": "tests/z80memptr_2.png", "keys": "ENTER" },
+                { "frames": 6113, "screen": "tests/z80memptr_3.png", "keys": "ENTER" },
+                { "frames": 7654, "screen": "tests/z80memptr_4.png", "keys": "ENTER" },
+                { "frames": 8842, "screen": "tests/z80memptr_5.png", "keys": "ENTER" },
+                { "frames": 9375, "screen": "tests/z80memptr_6.png", "keys": "ENTER" },
+                { "frames": 9732, "screen": "tests/z80memptr_7.png", "keys": "ENTER" },
+                { "frames": 10166, "screen": "tests/z80memptr_8.png", "keys": "ENTER" }
+            ]
+        },
+        {
+            "id": "zexall",
+            "name": "zexall",
+            "category": "cpu",
+            "file": "tests/zexall.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Frank D. Cringle",
+            "source": "https://mdfs.net/Software/Z80/Exerciser/",
+            "steps": [
+                { "frames": 100000, "screen": "tests/zexall_0.png" },
+                { "frames": 200000, "screen": "tests/zexall_0.png" },
+                { "frames": 300000, "screen": "tests/zexall_0.png" },
+                { "frames": 450583, "screen": "tests/zexall_1.png" },
+                { "frames": 500000, "screen": "tests/zexall_1.png" },
+                { "frames": 600000, "screen": "tests/zexall_2.png" },
+                { "frames": 700000, "screen": "tests/zexall_3.png" },
+                { "frames": 750000, "screen": "tests/zexall_4.png" }
+            ]
+        },
+
+        {
+            "id": "zexdoc",
+            "name": "zexdoc",
+            "category": "cpu",
+            "file": "tests/zexdoc.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Frank D. Cringle",
+            "source": "https://mdfs.net/Software/Z80/Exerciser/",
+            "steps": [
+                { "frames": 100000, "screen": "tests/zexdoc_1.png" },
+                { "frames": 200000, "screen": "tests/zexdoc_1.png" },
+                { "frames": 300000, "screen": "tests/zexdoc_1.png" },
+                { "frames": 400000, "screen": "tests/zexdoc_1.png" },
+                { "frames": 500000, "screen": "tests/zexdoc_2.png" },
+                { "frames": 600000, "screen": "tests/zexdoc_3.png" },
+                { "frames": 700000, "screen": "tests/zexdoc_4.png" },
+                { "frames": 750000, "screen": "tests/zexdoc_5.png" }
+            ]
+        },
+
+
+        {
+            "id": "halt2int early",
+            "name": "HALT2INT early",
+            "category": "cpu",
+            "file": "tests/halt2int.tap",
+            "machine": "48k",
+            "earlyTimings": true,
+            "palette": "default",
+            "enabled": false,
+            "author": "Woodmass, Mark",
+            "source": "https://github.com/redcode/Z80/wiki/HALT2INT",
+            "steps": [
+                { "frames": 100, "screen": "tests/halt2int_early.png" }
+            ]
+        },
+        {
+            "id": "halt2int late",
+            "name": "HALT2INT late",
+            "category": "cpu",
+            "file": "tests/halt2int.tap",
+            "machine": "48k",
+            "earlyTimings": false,
+            "palette": "default",
+            "enabled": false,
+            "author": "Woodmass, Mark",
+            "source": "https://github.com/redcode/Z80/wiki/HALT2INT",
+            "steps": [
+                { "frames": 100, "screen": "tests/halt2int_late.png" }
+            ]
+        }
+
+    ]
+}

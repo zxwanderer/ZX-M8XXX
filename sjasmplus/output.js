@@ -1,7 +1,7 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Output Formats - Generates raw binary, TAP, SNA, and TRD files
 
-const OutputFormats = {
+export const OutputFormats = {
 
     // ==================== TRD Format ====================
     
@@ -695,6 +695,3 @@ const OutputFormats = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.OutputFormats = OutputFormats;
-}

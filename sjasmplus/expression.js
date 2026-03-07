@@ -1,7 +1,11 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Expression parser - Evaluates arithmetic, bitwise, logical expressions
 
-const ExpressionParser = {
+import { TokenType, Lexer } from './lexer.js';
+import { ErrorCollector } from './errors.js';
+import { SymbolTable } from './labels.js';
+
+export const ExpressionParser = {
     tokens: [],
     pos: 0,
     symbols: null,      // Symbol table for label resolution
@@ -480,7 +484,7 @@ const ExpressionParser = {
 };
 
 // Helper function to parse expression from source string
-function parseExpression(source, symbols = {}, currentAddress = 0, sectionStart = 0) {
+export function parseExpression(source, symbols = {}, currentAddress = 0, sectionStart = 0) {
     ErrorCollector.reset();
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize().filter(t => 
@@ -489,7 +493,3 @@ function parseExpression(source, symbols = {}, currentAddress = 0, sectionStart 
     return ExpressionParser.evaluate(tokens, symbols, currentAddress, sectionStart);
 }
 
-if (typeof window !== 'undefined') {
-    window.ExpressionParser = ExpressionParser;
-    window.parseExpression = parseExpression;
-}

@@ -1,7 +1,10 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Parser - Parses assembly source lines into structured form
 
-const Parser = {
+import { Lexer, TokenType } from './lexer.js';
+import { ErrorCollector } from './errors.js';
+
+export const Parser = {
     tokens: [],
     pos: 0,
     line: 1,
@@ -448,7 +451,7 @@ const Parser = {
 };
 
 // Line types for clearer identification
-const LineType = {
+export const LineType = {
     INSTRUCTION: 'instruction',
     DIRECTIVE: 'directive',
     LABEL_ONLY: 'label_only',
@@ -456,7 +459,7 @@ const LineType = {
 };
 
 // Get line type
-function getLineType(parsed) {
+export function getLineType(parsed) {
     if (!parsed) return LineType.EMPTY;
     if (parsed.instruction) return LineType.INSTRUCTION;
     if (parsed.directive) return LineType.DIRECTIVE;
@@ -464,8 +467,3 @@ function getLineType(parsed) {
     return LineType.EMPTY;
 }
 
-if (typeof window !== 'undefined') {
-    window.Parser = Parser;
-    window.LineType = LineType;
-    window.getLineType = getLineType;
-}

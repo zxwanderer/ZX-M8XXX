@@ -1,7 +1,7 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Error handling module
 
-class AssemblerError extends Error {
+export class AssemblerError extends Error {
     constructor(message, line = null, file = null) {
         super(message);
         this.name = 'AssemblerError';
@@ -18,7 +18,7 @@ class AssemblerError extends Error {
     }
 }
 
-class AssemblerWarning {
+export class AssemblerWarning {
     constructor(message, line = null, file = null) {
         this.message = message;
         this.line = line;
@@ -34,7 +34,7 @@ class AssemblerWarning {
     }
 }
 
-const ErrorCollector = {
+export const ErrorCollector = {
     warnings: [],
     errors: [],
     errorCount: 0,
@@ -57,8 +57,3 @@ const ErrorCollector = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.AssemblerError = AssemblerError;
-    window.AssemblerWarning = AssemblerWarning;
-    window.ErrorCollector = ErrorCollector;
-}

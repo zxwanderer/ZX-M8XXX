@@ -1,7 +1,9 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Lexer - Tokenizes Z80 assembly source code
 
-const TokenType = {
+import { ErrorCollector } from './errors.js';
+
+export const TokenType = {
     // Identifiers and literals
     IDENTIFIER: 'IDENTIFIER',       // label, instruction, register
     NUMBER: 'NUMBER',               // numeric literal
@@ -51,7 +53,7 @@ const TokenType = {
     HASH_HASH: 'HASH_HASH',         // ##
 };
 
-class Token {
+export class Token {
     constructor(type, value, line, column) {
         this.type = type;
         this.value = value;
@@ -60,7 +62,7 @@ class Token {
     }
 }
 
-class Lexer {
+export class Lexer {
     constructor(source, filename = '<input>') {
         this.source = source || '';
         this.filename = filename;
@@ -607,8 +609,3 @@ class Lexer {
     }
 }
 
-if (typeof window !== 'undefined') {
-    window.TokenType = TokenType;
-    window.Token = Token;
-    window.Lexer = Lexer;
-}

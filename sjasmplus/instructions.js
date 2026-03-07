@@ -1,7 +1,10 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Z80 Instruction Encoder - Encodes Z80 assembly mnemonics to machine code
 
-const Z80Asm = {
+import { ErrorCollector, AssemblerError } from './errors.js';
+import { parseExpression } from './expression.js';
+
+export const Z80Asm = {
     // Register encoding for 8-bit registers
     R8: { B: 0, C: 1, D: 2, E: 3, H: 4, L: 5, '(HL)': 6, A: 7 },
     
@@ -124,7 +127,7 @@ const Z80Asm = {
 };
 
 // Instruction encoder
-const InstructionEncoder = {
+export const InstructionEncoder = {
     // Encode a single instruction
     // Returns { bytes: [...], size: n, undefined: bool }
     encode(mnemonic, operands, currentAddress, symbols) {
@@ -271,7 +274,3 @@ const InstructionEncoder = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.Z80Asm = Z80Asm;
-    window.InstructionEncoder = InstructionEncoder;
-}

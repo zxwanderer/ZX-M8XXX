@@ -1,7 +1,10 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Preprocessor - Handles conditionals, macros, repeats, structs, includes
 
-const Preprocessor = {
+import { ErrorCollector } from './errors.js';
+import { parseExpression } from './expression.js';
+
+export const Preprocessor = {
     macros: {},          // name -> { params, body, local }
     structs: {},         // name -> { fields, size }
     structStack: [],     // For nested struct definitions
@@ -353,6 +356,3 @@ const Preprocessor = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.Preprocessor = Preprocessor;
-}

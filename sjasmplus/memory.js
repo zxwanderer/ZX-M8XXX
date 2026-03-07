@@ -1,7 +1,9 @@
 // sjasmplus-js v0.10.19 - Z80 Assembler for ZX Spectrum
 // Memory Model - Handles DEVICE, SLOT, PAGE for ZX Spectrum memory banking
 
-const AsmMemory = {
+import { ErrorCollector } from './errors.js';
+
+export const AsmMemory = {
     // Source location tracking for error messages
     currentLine: null,
     currentFile: null,
@@ -301,6 +303,3 @@ const AsmMemory = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.AsmMemory = AsmMemory;
-}

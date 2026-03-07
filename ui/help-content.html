@@ -1,0 +1,1129 @@
+        <div class="fullhelp-content">
+            <div class="fullhelp-header">
+                <h3>ZX-M8XXX <span class="help-version">v0.9.45</span> Help</h3>
+                <button class="fullhelp-close" id="btnFullHelpClose">&times;</button>
+            </div>
+            <div class="fullhelp-body">
+                <div class="fullhelp-nav">
+                    <button class="fullhelp-nav-btn active" data-section="overview">Overview</button>
+                    <button class="fullhelp-nav-btn" data-section="files">Files</button>
+                    <button class="fullhelp-nav-btn" data-section="keyboard">Keyboard</button>
+                    <button class="fullhelp-nav-btn" data-section="assembler">Assembler</button>
+                    <button class="fullhelp-nav-btn" data-section="debugger">Debugger</button>
+                    <button class="fullhelp-nav-btn" data-section="breakpoints">Breakpoints</button>
+                    <button class="fullhelp-nav-btn" data-section="memory">Memory</button>
+                    <button class="fullhelp-nav-btn" data-section="labels">Labels</button>
+                    <button class="fullhelp-nav-btn" data-section="signatures">Signatures</button>
+                    <button class="fullhelp-nav-btn" data-section="regions">Regions</button>
+                    <button class="fullhelp-nav-btn" data-section="xrefs">XRefs</button>
+                    <button class="fullhelp-nav-btn" data-section="graphics">Graphics</button>
+                    <button class="fullhelp-nav-btn" data-section="tests">Tests</button>
+                    <button class="fullhelp-nav-btn" data-section="compare">Compare</button>
+                    <button class="fullhelp-nav-btn" data-section="explorer">Explorer</button>
+                    <button class="fullhelp-nav-btn" data-section="mapper">Mapper</button>
+                    <button class="fullhelp-nav-btn" data-section="pokes">Pokes</button>
+                    <button class="fullhelp-nav-btn" data-section="api">API</button>
+                    <button class="fullhelp-nav-btn" data-section="about">About</button>
+                </div>
+                <div class="fullhelp-section" id="help-overview">
+                    <h4>Overview</h4>
+                    <p>ZX-M8XXX (ZX Matrix) is a vanilla JavaScript ZX Spectrum emulator with integrated debugger for reverse engineering.</p>
+                    <h5>Features</h5>
+                    <ul>
+                        <li>Full Z80 CPU emulation (all documented + undocumented opcodes)</li>
+                        <li>48K, 128K, +2, +2A, +3, Pentagon, and Scorpion machine support</li>
+                        <li>Memory banking (128K/+2/+2A/Pentagon/Scorpion)</li>
+                        <li>ULA video generation with border</li>
+                        <li>ULAplus extended palette (64 colors, HAM256 raster effects)</li>
+                        <li>Memory contention emulation</li>
+                        <li>AY-3-8910 sound chip (stereo modes)</li>
+                        <li>PSG file export (record AY music)</li>
+                        <li>SNA/Z80/SZX snapshot loading/saving</li>
+                        <li>Quicksave/Quickload (F2/F5) - instant state save to browser storage</li>
+                        <li>TAP/TZX tape loading (instant or real-time with border stripes and sound)</li>
+                        <li>TRD/SCL disk images (TR-DOS)</li>
+                        <li>DSK disk images (+3 ВµPD765 FDC)</li>
+                        <li>ZIP archive support</li>
+                        <li>RZX playback (partial)</li>
+                        <li>Game Browser - search and download games from Spectrum Computing</li>
+                        <li>Fullscreen mode (F11) with crisp/fit/stretch options</li>
+                        <li>Automated test suite with screenshot comparison</li>
+                        <li>Compare tool for snapshots and binaries</li>
+                        <li>Explorer for file analysis (BASIC decoder, disassembly, hex dump)</li>
+                        <li>Game Mapper for capturing rooms and building navigable map grids</li>
+                    </ul>
+                    <h5>Quick Start</h5>
+                    <ol>
+                        <li>Place ROM files in <code>roms/</code> directory (48.rom, 128.rom, plus2.rom, plus2a.rom, plus3.rom, pentagon.rom, scorpion.rom, trdos.rom)</li>
+                        <li>Open index.html in a modern browser</li>
+                        <li>Use Load в†’ Web to browse and download games online</li>
+                        <li>Or Load в†’ File to load SNA/Z80/SZX snapshots, TAP/TZX tapes, TRD/SCL/DSK disks, or project files (.zxproj/.json)</li>
+                        <li>F2 = Quicksave, F5 = Quickload during gameplay</li>
+                    </ol>
+                </div>
+                <div class="fullhelp-section hidden" id="help-keyboard">
+                    <h4>Keyboard Mapping</h4>
+                    <table>
+                        <tr><th>PC Key</th><th>Spectrum Key</th></tr>
+                        <tr><td>A-Z, 0-9</td><td>Standard keys</td></tr>
+                        <tr><td>Shift</td><td>Caps Shift</td></tr>
+                        <tr><td>Alt</td><td>Symbol Shift</td></tr>
+                        <tr><td>Enter</td><td>Enter</td></tr>
+                        <tr><td>Space</td><td>Space / Break</td></tr>
+                        <tr><td>Backspace</td><td>Delete (Caps+0)</td></tr>
+                        <tr><td>Arrow Keys</td><td>Cursor (Caps+5/6/7/8)</td></tr>
+                    </table>
+                    <p style="font-size: 11px; color: var(--text-dim);">Shift+letter = uppercase, Shift+digit = symbols (!@#$%^&amp;*etc)<br>
+                    Keys use physical QWERTY positions - works with any keyboard layout.</p>
+                    <h5>Symbol Shift Combinations (Alt + Key)</h5>
+                    <table>
+                        <tr><th>Keys</th><th>Symbol</th><th>Keys</th><th>Symbol</th><th>Keys</th><th>Symbol</th></tr>
+                        <tr><td>Alt+1</td><td>!</td><td>Alt+Q</td><td>&lt;=</td><td>Alt+A</td><td>~</td></tr>
+                        <tr><td>Alt+2</td><td>@</td><td>Alt+W</td><td>&lt;&gt;</td><td>Alt+S</td><td>|</td></tr>
+                        <tr><td>Alt+3</td><td>#</td><td>Alt+E</td><td>&gt;=</td><td>Alt+D</td><td>\</td></tr>
+                        <tr><td>Alt+4</td><td>$</td><td>Alt+R</td><td>&lt;</td><td>Alt+F</td><td>{</td></tr>
+                        <tr><td>Alt+5</td><td>%</td><td>Alt+T</td><td>&gt;</td><td>Alt+G</td><td>}</td></tr>
+                        <tr><td>Alt+6</td><td>&amp;</td><td>Alt+Y</td><td>[</td><td>Alt+H</td><td>^</td></tr>
+                        <tr><td>Alt+7</td><td>'</td><td>Alt+U</td><td>]</td><td>Alt+J</td><td>-</td></tr>
+                        <tr><td>Alt+8</td><td>(</td><td>Alt+I</td><td>В©</td><td>Alt+K</td><td>+</td></tr>
+                        <tr><td>Alt+9</td><td>)</td><td>Alt+O</td><td>;</td><td>Alt+L</td><td>=</td></tr>
+                        <tr><td>Alt+0</td><td>_</td><td>Alt+P</td><td>"</td><td>Alt+Z</td><td>:</td></tr>
+                        <tr><td>Alt+M</td><td>.</td><td>Alt+N</td><td>,</td><td>Alt+B</td><td>*</td></tr>
+                        <tr><td>Alt+C</td><td>?</td><td>Alt+V</td><td>/</td><td>Alt+X</td><td>ВЈ</td></tr>
+                    </table>
+                    <h5>Kempston Joystick (Numpad)</h5>
+                    <table>
+                        <tr><td>Numpad 8/2/4/6</td><td>Up/Down/Left/Right</td></tr>
+                        <tr><td>Numpad 5 or 0</td><td>Fire (B button)</td></tr>
+                        <tr><td>Numpad 7/9/1/3</td><td>Diagonals</td></tr>
+                    </table>
+                    <h5>Extended Kempston (Sega Genesis compatible)</h5>
+                    <p>Enable in Settings в†’ Input в†’ Extended. Uses port 0x1F bits 5-7:</p>
+                    <table>
+                        <tr><td>[ (left bracket)</td><td>C button (bit 5)</td></tr>
+                        <tr><td>] (right bracket)</td><td>A button (bit 6)</td></tr>
+                        <tr><td>\ (backslash)</td><td>Start button (bit 7)</td></tr>
+                    </table>
+                    <h5>Hardware Gamepad</h5>
+                    <p>Enable in Settings в†’ Input в†’ Gamepad. Supports USB/Bluetooth controllers.</p>
+                    <p><b>Calibration:</b> Click "Calibrate" button to configure non-standard gamepads:</p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li>Click "Assign" next to each direction/button</li>
+                        <li>Move stick or press button on your gamepad</li>
+                        <li>Mapping is auto-detected and saved</li>
+                    </ul>
+                    <table>
+                        <tr><td>Up/Down/Left/Right</td><td>Directions (calibrate if needed)</td></tr>
+                        <tr><td>Fire</td><td>Main fire button</td></tr>
+                        <tr><td>C, A, Start</td><td>Extended buttons (Sega-style)</td></tr>
+                    </table>
+                    <p style="margin-top: 5px; font-size: 11px; color: var(--text-dim);">Mapping saved to browser localStorage and project files.</p>
+                    <h5>Kempston Mouse</h5>
+                    <p>Enable in Settings в†’ Input в†’ Kempston Mouse. Ports: FADF (buttons), FBDF (X), FFDF (Y).</p>
+                    <table>
+                        <tr><td>Click screen or рџ–±пёЏ button</td><td>Capture mouse</td></tr>
+                        <tr><td>Escape</td><td>Release mouse</td></tr>
+                        <tr><td>Mouse wheel</td><td>Wheel (bits 7:4 of FADF, if enabled)</td></tr>
+                        <tr><td>Swap L/R</td><td>Swap left/right button bits (bit0в†”bit1)</td></tr>
+                    </table>
+                    <h5>Autofire</h5>
+                    <p>Automatic rapid key press/release at a configurable rate. Enable in Settings &rarr; Input &rarr; Autofire, or toggle with <b>Ctrl+F</b>.</p>
+                    <table>
+                        <tr><td>Key</td><td>Which key to auto-press (Fire, Space, Enter, Caps Shift, Sym Shift, 0-9, A-Z)</td></tr>
+                        <tr><td>Rate</td><td>Repeat frequency in Hz (1&ndash;50, default 10)</td></tr>
+                        <tr><td>Hold</td><td>Key hold duration as percentage of cycle (30%&ndash;70%, default 50%), or &ldquo;Hold&rdquo; for constant press</td></tr>
+                        <tr><td>Profiles</td><td>Named presets (e.g. per game). Click to activate; + to add, &#x270E; to rename, &times; to delete</td></tr>
+                    </table>
+                    <p style="margin-top: 5px; font-size: 11px; color: var(--text-dim);">Fire option uses Kempston joystick fire bit. Autofire stops on machine reset. Profiles and settings saved to localStorage.</p>
+                    <h5>Debugger Hotkeys</h5>
+                    <table>
+                        <tr><td>F6 / Pause</td><td>Pause/Resume emulation</td></tr>
+                        <tr><td>F7</td><td>Step Into (single instruction)</td></tr>
+                        <tr><td>F8</td><td>Step Over (skip CALL/RST)</td></tr>
+                        <tr><td>F4</td><td>Run to Cursor</td></tr>
+                        <tr><td>F9</td><td>Toggle Breakpoint at PC</td></tr>
+                        <tr><td>F11</td><td>Toggle Fullscreen</td></tr>
+                        <tr><td>F2</td><td>Quicksave</td></tr>
+                        <tr><td>F5</td><td>Quickload</td></tr>
+                        <tr><td>PageUp / PageDown</td><td>Scroll hovered panel by page (disasm or memory)</td></tr>
+                        <tr><td>Up / Down (paused)</td><td>Scroll hovered panel by line (disasm or memory)</td></tr>
+                        <tr><td>Left / Right (paused)</td><td>Scroll hovered panel by 1 byte (disasm or memory)</td></tr>
+                        <tr><td>` (tilde)</td><td>Resume emulation (paused mode)</td></tr>
+                        <tr><td>1-5 (paused)</td><td>Jump to left panel bookmark</td></tr>
+                        <tr><td>Shift+1-5 (paused)</td><td>Set left panel bookmark</td></tr>
+                        <tr><td>6-9, 0 (paused)</td><td>Jump to right panel bookmark</td></tr>
+                        <tr><td>Shift+6-9, 0 (paused)</td><td>Set right panel bookmark</td></tr>
+                        <tr><td>F1</td><td>Cycle canvas zoom (x1 в†’ x2 в†’ x3)</td></tr>
+                        <tr><td>Ctrl+F</td><td>Toggle autofire on/off</td></tr>
+                        <tr><td>F10</td><td>Cycle overlay mode (Normal в†’ Grid в†’ Box в†’ ...)</td></tr>
+                    </table>
+                </div>
+                <div class="fullhelp-section hidden" id="help-debugger">
+                    <h4>Debugger</h4>
+                    <p>The built-in debugger provides comprehensive tools for development and reverse engineering.</p>
+                    <h5>Registers View</h5>
+                    <p>Shows all Z80 registers including the alternate set (AF', BC', DE', HL'). Flags are displayed as visual indicators: S, Z, H, P/V, N, C.</p>
+                    <p><strong>О”T (Delta T-states)</strong>: Accumulated T-states since the last breakpoint fired. Useful for measuring cycle-exact timing between breakpoints. The counter accumulates through steps, runs, and all execution modes. Resets to 0 when any breakpoint fires (exec, memory, or port).</p>
+                    <h5>Configurable Panels</h5>
+                    <p>Left and right debug panels can show different views:</p>
+                    <ul>
+                        <li>Use the dropdown selector in each panel header to choose view type</li>
+                        <li>Left panel: Disasm or Memory</li>
+                        <li>Right panel: Memory, Disasm, or Calculator</li>
+                        <li>Step controls (Step Into, Step Over, etc.) appear in disasm panels</li>
+                        <li>Search controls appear in memory panels</li>
+                        <li>Bookmarks show panel type: рџ”Ќ disasm, рџ“¦ memory</li>
+                    </ul>
+                    <h5>Programmer Calculator</h5>
+                    <p>Available in the right panel dropdown. Features:</p>
+                    <ul>
+                        <li>Input in HEX, DEC, OCT, or BIN with simultaneous display of all bases</li>
+                        <li>8/16/32-bit modes with signed/unsigned display</li>
+                        <li>Bitwise operations: AND, OR, XOR, NOT, shifts, rotates</li>
+                        <li>Expression evaluation: type formulas like "FF+10*2"</li>
+                        <li>Interactive bit grid for toggling individual bits</li>
+                        <li>History panel preserves calculations when switching views</li>
+                        <li>Base selector disabled during formula input to prevent conversion errors</li>
+                    </ul>
+                    <h5>Disassembly View</h5>
+                    <ul>
+                        <li>Live disassembly from current PC with label support</li>
+                        <li>Click address to set "run to cursor" target</li>
+                        <li>Right-click for context menu (labels, regions, operand format, subroutines)</li>
+                        <li>Hover over addresses to see cross-references</li>
+                        <li>Subroutine separators (IDA-style) for marked routines</li>
+                        <li>Syntax coloring: <span style="color:#daa520">registers</span>, <span style="color:#00aa00">numbers</span>, <span style="color:#cc66cc">chars</span></li>
+                    </ul>
+                    <h5>Subroutines</h5>
+                    <ul>
+                        <li>Right-click &rarr; "Mark as subroutine" to manually mark</li>
+                        <li>Auto-detected during Auto-Map Apply (CALL targets)</li>
+                        <li>Displays IDA-style separator before subroutine start</li>
+                        <li>Uses label name if available, or generates sub_XXXX</li>
+                    </ul>
+                    <h5>Code Folding</h5>
+                    <p>Collapse subroutines and custom blocks to reduce clutter in disassembly:</p>
+                    <ul>
+                        <li>Click <b>&#x25BE;</b> toggle on subroutine header to collapse, <b>&#x25B8;</b> to expand</li>
+                        <li>Collapsed view shows summary: "(N bytes, M instructions)"</li>
+                        <li>Right-click &rarr; "Create fold block..." for custom regions (data tables, init code)</li>
+                        <li>User fold markers displayed in magenta</li>
+                        <li>"Collapse all folds" / "Expand all folds" in context menu</li>
+                        <li>Auto-expands if PC enters a collapsed region</li>
+                        <li>Fold state saved in projects and localStorage</li>
+                    </ul>
+                    <h5>Operand Formatting</h5>
+                    <p>Right-click any disassembly line and select "Operand format..." to change how numeric operands are displayed:</p>
+                    <ul>
+                        <li><strong>Hex</strong>: FFh, 1234h (default)</li>
+                        <li><strong>Decimal</strong>: 255, 4660</li>
+                        <li><strong>Binary</strong>: %11111111, %0001001000110100</li>
+                        <li><strong>Char</strong>: 'A' (for printable ASCII)</li>
+                    </ul>
+                    <p>Format settings persist per instruction address and are saved with projects.</p>
+                    <h5>Stack View</h5>
+                    <p>Shows current stack contents from SP upward. Changed values are highlighted. Click an entry to navigate to that address (prefers disasm panel, falls back to memory view). Right-click for context menu with explicit panel choices.</p>
+                    <h5>Calls Panel</h5>
+                    <p>Runtime call stack tracking. Monitors CALL, RST, and INT instructions during execution and maintains a live subroutine chain. When RET/RETI/RETN executes, the corresponding entry is removed. Most recent call is shown at the top.</p>
+                    <ul>
+                        <li><strong>Click</strong>: Navigate to address (prefers disasm panel, falls back to memory)</li>
+                        <li><strong>Right-click</strong>: Context menu for explicit panel choice (disasm/memory, left/right)</li>
+                        <li><strong>INT</strong> marker shown for interrupt-triggered entries</li>
+                        <li>Labels from debugger and assembler are displayed alongside addresses</li>
+                        <li>Direct SP manipulation (LD SP,nn etc.) resets the call stack</li>
+                        <li>POP instructions do not affect the call stack (only true RET/RETI/RETN)</li>
+                        <li>Cleared on machine reset; max depth: 32 levels</li>
+                    </ul>
+                    <h5>Overlay Modes</h5>
+                    <p>Visual overlays for screen analysis (Settings row or F10 to cycle):</p>
+                    <ul>
+                        <li><strong>Normal</strong>: Standard display, no overlay</li>
+                        <li><strong>Grid</strong>: 8Г—8 character cell grid over the screen</li>
+                        <li><strong>Box</strong>: Yellow rectangle around the paper area boundary (256Г—192 region)</li>
+                        <li><strong>Screen</strong>: Border-only вЂ” removes paper area, showing border colors extended across the full display</li>
+                        <li><strong>Reveal</strong>: Normal screen content rendered at 50% transparency over border-only display вЂ” shows border effects underneath the screen picture</li>
+                        <li><strong>Beam</strong>: ULA beam position indicator</li>
+                        <li><strong>BeamScreen</strong>: Beam position over border-only display</li>
+                        <li><strong>No Attr</strong>: Screen bitmap without attribute colors (monochrome)</li>
+                        <li><strong>No Bitmap</strong>: Attribute colors only вЂ” bitmap replaced by diagonal X crosses per cell (ink on paper)</li>
+                    </ul>
+                    <h5>Bookmarks</h5>
+                    <p>Quick navigation: click bookmark to jump, right-click to set bookmark at current address. 5 slots for disassembly, 5 for memory view.</p>
+                    <p><strong>Hotkeys (paused mode only):</strong> 1-5 = left panel bookmarks, 6-9,0 = right panel bookmarks. Shift+digit sets bookmark at current address.</p>
+                    <h5>Context Menu Navigation</h5>
+                    <p>Right-click any address in disassembly or memory view for quick navigation:</p>
+                    <ul>
+                        <li><strong>Disasm left/right</strong>: Open address in left or right panel as disassembly</li>
+                        <li><strong>Memory left/right</strong>: Open address in left or right panel as memory dump</li>
+                        <li>In memory view, right-click works on both hex bytes and address column</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-labels">
+                    <h4>Labels</h4>
+                    <p>Labels provide meaningful names for memory addresses in the disassembly view.</p>
+                    <h5>Adding Labels</h5>
+                    <ul>
+                        <li>Right-click address in disassembly &rarr; "Add Label"</li>
+                        <li>Or use the Labels panel "Add" button</li>
+                        <li><strong>Profile</strong> (Tools &rarr; Analysis) &mdash; auto-generate labels from runtime behavior</li>
+                    </ul>
+                    <h5>Display Modes</h5>
+                    <ul>
+                        <li><strong>Address only</strong>: Show hex addresses</li>
+                        <li><strong>Label only</strong>: Show label names</li>
+                        <li><strong>Both</strong>: Show "address label"</li>
+                    </ul>
+                    <h5>Source Filter</h5>
+                    <ul>
+                        <li><strong>All</strong> &mdash; show all labels (user + profiled + ROM)</li>
+                        <li><strong>User</strong> &mdash; manually added labels only</li>
+                        <li><strong>Profiled</strong> &mdash; auto-generated by the profiler (marked with <strong style="color:var(--cyan)">P</strong> badge)</li>
+                        <li><strong>ROM</strong> &mdash; labels from ROM label files</li>
+                    </ul>
+                    <p style="font-size: 11px; color: var(--text-dim);">Counts per category shown next to the Clear button.</p>
+                    <h5>Features</h5>
+                    <ul>
+                        <li>Labels appear in operands: <code>CALL main_loop</code></li>
+                        <li>Page-aware: 128K paged labels resolve correctly for the active ROM/RAM bank</li>
+                        <li>Click label in list to navigate (disasm or memory view)</li>
+                        <li>Persistent storage per loaded file (localStorage)</li>
+                        <li>Import/Export to JSON files</li>
+                    </ul>
+                    <h5>Runtime Behavior Profiler</h5>
+                    <p>Tools &rarr; Analysis &rarr; <strong>Profile</strong>. Runs the emulator for N frames and classifies subroutines by their behavior:</p>
+                    <table>
+                        <tr><th>Label</th><th>Detection</th></tr>
+                        <tr><td>isr_handler</td><td>IM 1 interrupt handler at $0038</td></tr>
+                        <tr><td>isr_handler_im2</td><td>IM 2 interrupt handler (address from vector table)</td></tr>
+                        <tr><td>im2_vector_table</td><td>IM 2 vector table at I&times;256 (marked as DW region)</td></tr>
+                        <tr><td>isr_routine</td><td>Called from interrupt context</td></tr>
+                        <tr><td>main_loop</td><td>Called in &gt;90% of frames, most callees</td></tr>
+                        <tr><td>read_keyboard</td><td>Reads port $xxFE, no screen writes</td></tr>
+                        <tr><td>play_beep</td><td>Many OUTs to ULA port ($FE)</td></tr>
+                        <tr><td>play_music / ay_write</td><td>OUTs to AY ports ($FFFD/$BFFD)</td></tr>
+                        <tr><td>draw_sprite</td><td>Writes screen bitmap only</td></tr>
+                        <tr><td>set_attrs</td><td>Writes attributes only</td></tr>
+                        <tr><td>draw_screen</td><td>Writes both bitmap and attributes</td></tr>
+                        <tr><td>page_memory</td><td>OUTs to 128K paging port</td></tr>
+                        <tr><td>init_XXXX</td><td>Called once, in first frame</td></tr>
+                        <tr><td>util_XXXX</td><td>Leaf routine called &gt;10 times</td></tr>
+                    </table>
+                    <p style="font-size: 11px; color: var(--text-dim);">Profiler preserves user-named labels. Re-running replaces previous profiler labels. ROM subroutines are skipped (except ISR handlers). IM 2 detection: when the CPU uses interrupt mode 2, the profiler identifies the handler address and marks the vector table at I&times;256 as a data (DW) region.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-signatures">
+                    <h4>Signature Packs</h4>
+                    <p>Modular knowledge base for automatic label and region recognition. Each pack is a self-contained JSON file with labels, regions, and byte-pattern anchors for matching.</p>
+                    <h5>Pack Types</h5>
+                    <ul>
+                        <li><strong>Engine packs</strong> &mdash; Match known engines (AGD, Quill, PAW, etc.). One pack covers all games using that engine version.</li>
+                        <li><strong>Game packs</strong> &mdash; Labels for a specific game from community disassemblies.</li>
+                    </ul>
+                    <h5>Workflow</h5>
+                    <ol>
+                        <li><strong>Import</strong> a .skool file, .asm/.a80 source, .zip archive, or pack JSON via Settings &rarr; Signatures</li>
+                        <li><strong>Build Anchors</strong> &mdash; with the game loaded, click "Anchors" to snapshot byte patterns at key labeled addresses. Anchors automatically mask 16-bit address operands (CALL nn, JP nn, LD rr,nn, etc.) for cross-game matching.</li>
+                        <li><strong>Scan Memory</strong> &mdash; load a game and click "Scan Memory" to find matching packs. Results show confidence percentage. Two-pass matching: exact first, then masked fallback.</li>
+                        <li><strong>Apply</strong> &mdash; click "Apply" on a match to add labels and regions. Per-anchor offset voting handles procedures relocated to different addresses.</li>
+                        <li><strong>Direct Apply</strong> &mdash; click "Apply" in the pack list to apply all labels at offset 0 (no scanning needed).</li>
+                    </ol>
+                    <h5>Cross-Game Matching</h5>
+                    <p>Signature packs can match code across different games sharing the same engine (e.g. applying EATF labels to Bomberman). Each procedure is matched independently with its own offset, so shuffled code is handled correctly. Address operands in Z80 instructions are masked automatically, since absolute addresses differ between builds.</p>
+                    <h5>Supported Formats</h5>
+                    <ul>
+                        <li><strong>.skool</strong> (SkoolKit) &mdash; reads <code>@label=</code> directives, control chars (<code>c</code>=code, <code>b</code>=data, <code>t</code>=text, <code>w</code>=words), inline comments</li>
+                        <li><strong>.asm / .a80</strong> (sjasmplus, pasmo, z80asm) &mdash; reads labels, ORG directives, EQU constants, data directives (DEFB/DEFW/DEFS/DEFM). INCLUDE directives resolved when importing multiple files.</li>
+                        <li><strong>.zip</strong> &mdash; archives containing any combination of .skool, .asm, and .a80 files. All source files are extracted and processed together.</li>
+                    </ul>
+                    <h5>GitHub Browser</h5>
+                    <p>Click <strong>GitHub</strong> to browse a repository. Paste a URL (e.g. <code>github.com/Bedazzle/EATF</code>) or <code>owner/repo</code> shorthand. The scanner finds .skool, .asm, .a80 files recursively (up to 3 levels). ASM files are downloaded as a batch so INCLUDE directives resolve across the project.</p>
+                    <h5>Pack Management</h5>
+                    <ul>
+                        <li>Enable/disable individual packs via checkboxes</li>
+                        <li>Export packs as JSON for sharing</li>
+                        <li>User-imported packs stored in localStorage</li>
+                        <li>Shipped packs loaded from <code>signatures/</code> directory</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-breakpoints">
+                    <h4>Breakpoints</h4>
+                    <h5>Execution Breakpoints</h5>
+                    <ul>
+                        <li>Click gutter (left margin) in disassembly to toggle</li>
+                        <li>Or press F9 at current PC</li>
+                        <li>Execution pauses when PC reaches breakpoint</li>
+                        <li>Gutter indicators: <strong>&bull;</strong> (faint) = no breakpoint, <span style="color:var(--accent)"><strong>&times;</strong></span> = disabled, <span style="color:var(--accent)"><strong>&#9679;</strong></span> = active</li>
+                    </ul>
+                    <h5>Conditional Breakpoints</h5>
+                    <p>Add conditions to break only when criteria are met:</p>
+                    <table>
+                        <tr><th>Type</th><th>Examples</th></tr>
+                        <tr><td>Registers</td><td><code>A==0</code>, <code>HL&gt;4000</code>, <code>BC!=DE</code></td></tr>
+                        <tr><td>Flags</td><td><code>Z</code>, <code>NZ</code>, <code>C</code>, <code>NC</code>, <code>P</code>, <code>M</code></td></tr>
+                        <tr><td>Memory</td><td><code>(HL)==FF</code>, <code>(4000)==0</code>, <code>(IX+5)&gt;10</code></td></tr>
+                        <tr><td>T-states</td><td><code>T&gt;=14335</code>, <code>TSTATES&lt;20000</code></td></tr>
+                        <tr><td>Operators</td><td><code>==</code>, <code>!=</code>, <code>&lt;&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>&amp;</code>, <code>|</code></td></tr>
+                        <tr><td>Literals</td><td>Hex: <code>FF</code>, <code>4000h</code> / Decimal: <code>255</code></td></tr>
+                    </table>
+                    <h5>Memory Breakpoints</h5>
+                    <p>Break on memory access:</p>
+                    <ul>
+                        <li><strong>Break on Read</strong>: Pause when address is read</li>
+                        <li><strong>Break on Write</strong>: Pause when address is written</li>
+                    </ul>
+                    <h5>Port Breakpoints</h5>
+                    <p>Break on I/O port access (IN/OUT instructions).</p>
+                    <h5>Tape &amp; Disk Triggers</h5>
+                    <ul>
+                        <li><strong>Tape Block</strong>: Break after a tape block is loaded (flash or real-time). Use the skip count to break after N blocks (e.g. skip=4 breaks after the 5th block).</li>
+                        <li><strong>Disk Read</strong>: Break after any disk sector read (TR-DOS or +3DOS). Use skip count to break after N reads.</li>
+                        <li><strong>Disk Sector</strong>: Break when a specific track:sector is read. Enter as <code>TT:SS</code> (e.g. <code>0:1</code> for track 0, sector 1).</li>
+                    </ul>
+                    <h5>Port I/O Log</h5>
+                    <p>In the Trace tab, enable Port I/O logging to record all port reads/writes. Export produces a TSV file with columns: Dir, Port, Value, PC, Src, Frame, T-states.</p>
+                    <p>The <strong>Src</strong> column identifies the ROM source when PC is in 0000-3FFF:</p>
+                    <ul>
+                        <li><strong>TRDOS</strong> &mdash; TR-DOS ROM is paged in (Beta Disk)</li>
+                        <li><strong>ROM:N</strong> &mdash; ROM bank N (e.g. ROM:0 = 128 BASIC, ROM:2 = +3DOS)</li>
+                        <li><strong>RAM</strong> &mdash; RAM mapped over ROM (Pentagon 1024, Scorpion, +2A special paging)</li>
+                        <li><em>empty</em> &mdash; PC is in RAM (address &ge; 4000h)</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-memory">
+                    <h4>Memory Tools</h4>
+                    <h5>Memory Dump</h5>
+                    <ul>
+                        <li>Hex view with inline editing (click byte to edit, Tab for next, Enter to confirm, Escape to cancel)</li>
+                        <li>Click and drag to select range</li>
+                        <li>Right-click context menu: navigate to disasm/memory, add labels, mark regions, set breakpoints (break on read/write/R/W for single address or selected range)</li>
+                    </ul>
+                    <h5>Memory Diff</h5>
+                    <ol>
+                        <li>Click <strong>Snap</strong> to snapshot current memory</li>
+                        <li>Run the program</li>
+                        <li>Changed bytes are highlighted in the dump</li>
+                    </ol>
+                    <h5>POKE Search</h5>
+                    <p>Find memory locations storing game values (lives, score, etc.) by comparing snapshots:</p>
+                    <ol>
+                        <li><strong>Snap</strong> &mdash; take a memory snapshot (status shows snap count)</li>
+                        <li>Play game until the target value changes (e.g. lose a life)</li>
+                        <li><strong>Snap</strong> again &mdash; repeat snap/play for more data points</li>
+                        <li><strong>Search</strong> &mdash; scans all RAM, validates every snap-to-snap transition:
+                            <ul>
+                                <li><code>-1</code> / <code>+1</code> &mdash; value changed by exactly 1 between each snap</li>
+                                <li><code>Decreased</code> / <code>Increased</code> &mdash; value went down/up between each snap</li>
+                                <li><code>Changed</code> &mdash; value differs between each snap</li>
+                                <li><code>Unchanged</code> &mdash; value stayed the same across all snaps</li>
+                            </ul>
+                        </li>
+                        <li>Take more snaps and search again to narrow candidates</li>
+                        <li><strong>Filter</strong> &mdash; enter a hex value to keep only candidates where current memory matches. Clear the value and click Filter to undo</li>
+                        <li>Click result to view in memory dump; hover to see value at every snap point</li>
+                    </ol>
+                    <p>Requires at least 2 snapshots. Each search always scans all RAM &mdash; more snaps = fewer candidates. No deduplication: every snap-to-snap pair must match the selected mode.</p>
+                    <p><strong>Skip screen</strong> (on by default) &mdash; excludes screen memory (4000-5BFF) to reduce false positives.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-graphics">
+                    <h4>Graphics Viewer</h4>
+                    <p>View and analyze sprite/tile graphics stored in memory. Features a continuous memory dump view (EmuzWin-style). Access via the <strong>Graphics</strong> tab.</p>
+                    <h5>Memory Dump View</h5>
+                    <p>The main area shows memory rendered as graphics. Each byte is displayed as 8 horizontal pixels. A <span style="color:#f00">red rectangle</span> marks the current sprite selection. A <span style="color:#f44">red warning</span> appears when the emulator is running &mdash; memory changes every frame, so pause the emulator for stable graphics viewing.</p>
+                    <h5>Controls</h5>
+                    <ul>
+                        <li><strong>Address</strong>: Current sprite address (hex). Press Enter to jump.</li>
+                        <li><strong>Width</strong>: Sprite width in bytes (1-32). Each byte = 8 pixels. Max 32 = full screen width.</li>
+                        <li><strong>Height</strong>: Sprite height in lines (1-64)</li>
+                        <li><strong>Invert</strong>: Swap foreground/background colors</li>
+                        <li><strong>Grid</strong>: Show grid lines (vertical between bytes, horizontal every 8 rows)</li>
+                        <li><strong>Char</strong>: Character mode &mdash; treats data as 8&times;8 tiles stored sequentially (8 bytes per tile) rather than linear rows</li>
+                        <li><strong>x1/x2/x3</strong>: Zoom level for main dump view</li>
+                    </ul>
+                    <h5>Navigation</h5>
+                    <ul>
+                        <li><strong>-1/+1</strong>: Move sprite selection by 1 byte</li>
+                        <li><strong>-Line/+Line</strong>: Move by one line (width bytes)</li>
+                        <li><strong>-Row/+Row</strong>: Move by 8 lines (character row)</li>
+                        <li><strong>-Spr/+Spr</strong>: Move by full sprite (width Г— height bytes)</li>
+                        <li><strong>-Page/+Page</strong>: Move by 24 rows (192 lines Г— width bytes)</li>
+                        <li><strong>Mouse wheel</strong>: Scroll the dump view</li>
+                    </ul>
+                    <h5>Actions</h5>
+                    <ul>
+                        <li><strong>Mark Region</strong>: Mark sprite as Graphics region (stores width/height)</li>
+                        <li><strong>Copy Selection</strong>: Copy current selection as assembler DB statements</li>
+                        <li><strong>Save Selection</strong>: Save current selection to .asm file</li>
+                        <li><strong>Export All Marked</strong>: Export all marked Graphics regions to single file</li>
+                        <li><strong>в†’ Disasm</strong>: Jump to address in disassembly</li>
+                        <li><strong>в†’ Memory</strong>: Jump to address in memory dump</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-regions">
+                    <h4>Memory Regions</h4>
+                    <p>Mark memory regions for reverse engineering analysis. Affects how memory is displayed in disassembly and memory map.</p>
+                    <h5>Region Types</h5>
+                    <table>
+                        <tr><td><strong>Code</strong></td><td>Executable code (default)</td></tr>
+                        <tr><td><strong>DB</strong></td><td>Data bytes - shown as <code>DB nn,nn,...</code></td></tr>
+                        <tr><td><strong>DW</strong></td><td>Data words - shown as <code>DW nnnn,...</code></td></tr>
+                        <tr><td><strong>Text</strong></td><td>ASCII strings - shown as <code>DB "text"</code></td></tr>
+                        <tr><td><strong>Graphics</strong></td><td>Sprite/tile graphics</td></tr>
+                        <tr><td><strong>SMC</strong></td><td>Self-modifying code</td></tr>
+                    </table>
+                    <h5>Auto-Map</h5>
+                    <p>Automatically detect regions during execution:</p>
+                    <ul>
+                        <li>Executed addresses marked as Code</li>
+                        <li>Read addresses marked as Data</li>
+                        <li>Code that gets overwritten marked as SMC</li>
+                    </ul>
+                    <h5>Memory Map Dialog</h5>
+                    <p>Visual 256x256 map of entire 64KB memory. Click to navigate, colors indicate region types.</p>
+                    <h5>Heatmap Export</h5>
+                    <p>Export automap data as a TSV text file from the Heatmap view. Columns: Address ($hex), Page (bank), Exec, Read, Write counts. Options to skip ROM and screen addresses.</p>
+                    <h5>Export ASM</h5>
+                    <p>Export disassembly as sjasmplus-compatible ASM file from the Memory Map dialog:</p>
+                    <ul>
+                        <li>Uses memory regions to determine code vs data</li>
+                        <li>Code regions disassembled as Z80 instructions</li>
+                        <li>DB/DW/Text regions exported with appropriate directives</li>
+                        <li>Graphics regions exported as DB with width/height metadata</li>
+                        <li>Includes labels and CPU state in header</li>
+                        <li><strong>Addr+Bytes</strong> option adds address and hex bytes as comments</li>
+                        <li>Screen memory ($4000-$5AFF) exported as INCBIN directive</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-xrefs">
+                    <h4>Cross-References (XRefs)</h4>
+                    <p>Track where addresses are referenced from in the code.</p>
+                    <h5>Generating XRefs</h5>
+                    <ul>
+                        <li><strong>Scan</strong> - Scan visible disassembly range</li>
+                        <li><strong>Scan All</strong> - Scan full 64KB memory</li>
+                        <li><strong>Runtime</strong> checkbox - Collect refs during execution</li>
+                    </ul>
+                    <h5>Viewing XRefs</h5>
+                    <p>Hover over an address operand in disassembly to see tooltip showing all references to that address.</p>
+                    <h5>Reference Types</h5>
+                    <ul>
+                        <li><span style="color:#ff8080">CALL</span> - subroutine calls</li>
+                        <li><span style="color:#80ff80">JP</span> - absolute jumps</li>
+                        <li><span style="color:#80ffff">JR/DJNZ</span> - relative jumps</li>
+                        <li><span style="color:#ffff80">LD</span> - data references</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-files">
+                    <h4>File Formats</h4>
+                    <h5>Snapshots (Load &amp; Save)</h5>
+                    <p>Use the <strong>Save</strong> dropdown to choose format (SNA/Z80/SZX).</p>
+                    <table>
+                        <tr><td><strong>SNA</strong></td><td>48K/128K - simple format, widely supported</td></tr>
+                        <tr><td><strong>SZX</strong></td><td>Spectaculator format with zlib compression</td></tr>
+                        <tr><td><strong>Z80</strong></td><td>v1/v2/v3 load, v3 save (48K/128K/+2/Pentagon)</td></tr>
+                    </table>
+                    <h5>Quicksave / Quickload</h5>
+                    <p>Instant state save/restore during gameplay using browser localStorage.</p>
+                    <table>
+                        <tr><td><strong>F2</strong></td><td>Quicksave - saves current state</td></tr>
+                        <tr><td><strong>F5</strong></td><td>Quickload - restores saved state</td></tr>
+                    </table>
+                    <p style="font-size: 11px; color: var(--text-dim);">Also accessible via Save в†’ Quick (F2) and Load в†’ Quick (F5). Uses SZX format internally.</p>
+                    <h5>Tapes</h5>
+                    <table>
+                        <tr><td><strong>TAP</strong></td><td>Standard tape format</td></tr>
+                        <tr><td><strong>TZX</strong></td><td>Extended tape format (turbo blocks, pure tone, loops)</td></tr>
+                    </table>
+                    <p><strong>Loading modes:</strong></p>
+                    <ul>
+                        <li><strong>Flash Load</strong> (default, checkbox on): Instant loading via ROM traps - most reliable</li>
+                        <li><strong>Real-time</strong> (Flash Load off): Cycle-accurate playback with border stripes and sound</li>
+                    </ul>
+                    <p style="color: var(--yellow); font-size: 11px;"><strong>Note:</strong> Real-time tape loading is work in progress. Standard loaders and many turbo loaders work; some copy protection schemes may fail. Use Flash Load for problematic tapes.</p>
+                    <h5>Input Recording</h5>
+                    <table>
+                        <tr><td><strong>RZX</strong></td><td>Playback with embedded snapshot (may desync)</td></tr>
+                    </table>
+                    <h5>Disk Images</h5>
+                    <table>
+                        <tr><td><strong>TRD</strong></td><td>TR-DOS disk image (Pentagon/Beta Disk)</td></tr>
+                        <tr><td><strong>SCL</strong></td><td>TR-DOS file archive (more compact format)</td></tr>
+                        <tr><td><strong>DSK</strong></td><td>+3 disk image (standard and extended CPC DSK format)</td></tr>
+                    </table>
+                    <h5>Boot File Injection</h5>
+                    <p>Automatically add a boot loader to TRD disk images via Settings в†’ Media в†’ Boot File:</p>
+                    <ol>
+                        <li>Click <strong>Select...</strong> to choose a boot file source (TRD or Hobeta)</li>
+                        <li>Select the injection mode from the dropdown</li>
+                    </ol>
+                    <table>
+                        <tr><td><strong>No change</strong></td><td>Load TRD images as-is (default)</td></tr>
+                        <tr><td><strong>Add boot</strong></td><td>Add boot only if TRD has no boot file</td></tr>
+                        <tr><td><strong>Replace boot</strong></td><td>Replace existing boot, or add if none</td></tr>
+                        <tr><td><strong>Run first BASIC</strong></td><td>Boot TR-DOS and run the first BASIC file on disk</td></tr>
+                        <tr><td><strong>Run last BASIC</strong></td><td>Boot TR-DOS and run the last BASIC file on disk</td></tr>
+                    </table>
+                    <p style="font-size: 11px; color: var(--text-dim);">Supports TRD disk images and Hobeta files (typically .$b or .$c). When replacing, the new boot file reuses the old boot's disk location if it fits. Run modes type <code>RUN "filename"</code> in TR-DOS after boot, skipping any boot file on disk. If boot is the only BASIC file, it will still be selected. Settings are saved in localStorage.</p>
+                    <h5>Archives</h5>
+                    <table>
+                        <tr><td><strong>ZIP</strong></td><td>Select file from archive dialog</td></tr>
+                    </table>
+                    <h5>Game Browser (Load в†’ Web)</h5>
+                    <p>Search and download games online from <a href="https://spectrumcomputing.co.uk" target="_blank">Spectrum Computing</a> (ZXDB database).</p>
+                    <ul>
+                        <li>Search by title - results sorted alphabetically</li>
+                        <li>View screenshots, year, publisher, genre, authors</li>
+                        <li>Direct download links for TAP, TZX, Z80, SNA files</li>
+                        <li>Drag downloaded files into emulator to play</li>
+                    </ul>
+                    <p style="font-size: 11px; color: var(--text-dim);">Powered by ZXInfo API (api.zxinfo.dk). Zero dependencies - works directly from browser.</p>
+                    <h5>Project Files</h5>
+                    <p>Save via Save в†’ Project. Load via Load в†’ File or drag-and-drop (.zxproj, .json).</p>
+                    <p>Complete session state:</p>
+                    <ul>
+                        <li>Current snapshot</li>
+                        <li>All breakpoints (exec, memory, port)</li>
+                        <li>Labels and comments</li>
+                        <li>Memory regions</li>
+                        <li>Cross-references</li>
+                        <li>Bookmarks</li>
+                        <li>Loaded media (TAP/TRD/SCL) with tape position</li>
+                    </ul>
+                    <h5>AY Music Export (PSG)</h5>
+                    <p>Record AY chip output to PSG file format in Settings в†’ AY Capture:</p>
+                    <ul>
+                        <li><strong>Record</strong> - Start capturing AY register writes</li>
+                        <li><strong>Export</strong> - Stop and save as .psg file</li>
+                        <li><strong>Cancel</strong> - Discard recording</li>
+                        <li><strong>Changed only</strong> - Export only modified registers (smaller files)</li>
+                        <li><strong>Get Player</strong> - Download Z80 assembly player source</li>
+                    </ul>
+                    <p>The player source is sjasmplus-compatible. Use <code>INCBIN "music.psg"</code> to include your recorded music, then assemble to create a playable .sna file.</p>
+                    <h5>Screen Export</h5>
+                    <p>Capture frames in Settings в†’ Export section:</p>
+                    <table>
+                        <tr><td><strong>ZIP</strong></td><td>PNG sequence in ZIP archive</td></tr>
+                        <tr><td><strong>GIF</strong></td><td>Animated GIF</td></tr>
+                        <tr><td><strong>SCR</strong></td><td>ZX Spectrum screen (6912 bytes)</td></tr>
+                        <tr><td><strong>BSC</strong></td><td>Screen + border (11136 bytes)</td></tr>
+                        <tr><td><strong>SCA</strong></td><td>Animation format (see below)</td></tr>
+                    </table>
+                    <p><strong>SCA Animation Export:</strong></p>
+                    <ul>
+                        <li><strong>Type 0</strong> - Full 6912-byte SCR frames (larger files)</li>
+                        <li><strong>Type 1</strong> - 8-byte fill pattern + 768-byte attributes per frame (multicolor)</li>
+                    </ul>
+                    <p><strong>Type 1 Fill Patterns:</strong></p>
+                    <table>
+                        <tr><td><strong>Automatic</strong></td><td>Detect pattern from screen bitmap</td></tr>
+                        <tr><td><strong>53c (AA 55)</strong></td><td>Checkerboard dithering</td></tr>
+                        <tr><td><strong>127c (DD 77)</strong></td><td>Ink-biased dithering</td></tr>
+                        <tr><td><strong>Vertical 4x8</strong></td><td>4-pixel vertical stripes (F0)</td></tr>
+                        <tr><td><strong>Horizontal 8x4</strong></td><td>4-row horizontal stripes (FF/00)</td></tr>
+                        <tr><td><strong>Custom</strong></td><td>Enter 8 hex bytes manually</td></tr>
+                    </table>
+                    <p style="font-size: 11px; color: var(--text-dim);">Type 1 is for multicolor animations where bitmap stays constant and only attributes change. Automatic mode detects if screen uses a consistent 8-byte pattern; prompts for choice if not detected.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-assembler">
+                    <h4>Z80 Assembler</h4>
+                    <p>Integrated sjasmplus-compatible Z80 assembler for writing and testing code directly in the emulator.</p>
+                    <p><a href="https://z00m128.github.io/sjasmplus/documentation.html" target="_blank" style="color: var(--cyan);">Full sjasmplus Documentation</a></p>
+                    <h5>Keyboard Shortcuts</h5>
+                    <table>
+                        <tr><td><strong>F9</strong></td><td>Assemble code</td></tr>
+                        <tr><td><strong>Ctrl+F</strong></td><td>Find</td></tr>
+                        <tr><td><strong>Ctrl+R</strong> or <strong>Ctrl+H</strong></td><td>Find and Replace</td></tr>
+                        <tr><td><strong>F3</strong></td><td>Find Next</td></tr>
+                        <tr><td><strong>Shift+F3</strong></td><td>Find Previous</td></tr>
+                        <tr><td><strong>Escape</strong></td><td>Close search bar</td></tr>
+                    </table>
+                    <h5>Toolbar Buttons</h5>
+                    <ul>
+                        <li><strong>Files в–ј</strong> - Browse project files (disabled when в‰¤1 file)</li>
+                        <li><strong>Assemble</strong> - Compile the assembly code (F9)</li>
+                        <li><strong>Inject</strong> - Write assembled bytes to emulator memory</li>
+                        <li><strong>Debug</strong> - Inject code, set PC to entry point, switch to debugger. Entry point priority: SAVESNA address > single ORG > prompt if multiple ORGs. Also injects assembler labels into the debugger (visible in disassembly, Calls panel, etc.); internal labels prefixed with <code>__</code> are skipped, and existing debugger labels are not overwritten</li>
+                        <li><strong>Clear</strong> - Clear editor and reset project</li>
+                        <li><strong>New</strong> - Add a new file to the project</li>
+                        <li><strong>Load</strong> - Load .asm file or .zip project</li>
+                        <li><strong>Export</strong> - Save source files as ZIP</li>
+                        <li><strong>Download</strong> - Download generated output files (.bin, .sna, .tap). If multiple files, downloads as ZIP archive</li>
+                    </ul>
+                    <h5>Drag & Drop</h5>
+                    <ul>
+                        <li>Drag .asm or .zip files directly onto the editor to load them</li>
+                        <li>If a file with the same name exists, you'll be asked to replace or add as new</li>
+                        <li>Drag ROM/snapshot files (.sna, .tap, .trd) onto the emulator screen area instead</li>
+                    </ul>
+                    <h5>Multi-File Projects</h5>
+                    <ul>
+                        <li>Load a ZIP file containing multiple .asm files</li>
+                        <li>Main file (red label) is assembled first and includes others</li>
+                        <li>Click main file label to change which file is the main</li>
+                        <li>Use tabs to switch between open files</li>
+                        <li>Use <code>INCLUDE "filename.asm"</code> to include other files</li>
+                    </ul>
+                    <h5>Search All Files</h5>
+                    <ul>
+                        <li>Open search bar with Ctrl+F</li>
+                        <li>Click <strong>All Files</strong> button to search across all project files</li>
+                        <li>Results show filename, line number, and matching text</li>
+                        <li>Click any result to jump to that file and line</li>
+                    </ul>
+                    <h5>Output Options</h5>
+                    <ul>
+                        <li><strong>Unused labels</strong> - Show labels that are defined but never referenced</li>
+                        <li><strong>Show compiled</strong> - Include hex dump of assembled bytes</li>
+                    </ul>
+                    <h5>Command-Line Defines</h5>
+                    <p>Use the <strong>Defines</strong> input field to pass defines for conditional assembly:</p>
+                    <ul>
+                        <li>Format: <code>NAME,NAME=value,...</code></li>
+                        <li>Simple define: <code>DEBUG</code> (value = 1)</li>
+                        <li>With value: <code>VERSION=5</code> or <code>BUILD=$100</code></li>
+                        <li>Multiple: <code>DEBUG,VERSION=5,RELEASE</code></li>
+                    </ul>
+                    <h5>@define Markers</h5>
+                    <p>Add <code>; @define</code> comments in the first 50 lines of your main file to show a dropdown of available defines:</p>
+                    <pre>; @define DEBUG
+; @define RELEASE
+; @define VERSION=5
+; @define BUILD=$0100</pre>
+                    <p>The dropdown appears automatically. Ctrl+click to select multiple defines.</p>
+                    <h5>Output Files</h5>
+                    <p>Use directives to generate output files:</p>
+                    <ul>
+                        <li><code>SAVEBIN "file.bin", start, length</code> - Save binary data</li>
+                        <li><code>SAVESNA "file.sna", start</code> - Save 48K SNA snapshot</li>
+                        <li><code>SAVETAP "file.tap", CODE, "name", start, length</code> - Save TAP file</li>
+                        <li><code>EMPTYTAP "file.tap"</code> - Create empty TAP (for multiple blocks)</li>
+                    </ul>
+                    <p>Generated files are listed in the output with size and MD5 hash.</p>
+                    <h5>MD5 Checksum Verification</h5>
+                    <p>Add expected MD5 hash in a comment to verify output:</p>
+                    <pre>SAVEBIN "game.bin", $8000, $1000  ; md5: a1b2c3d4e5f6...</pre>
+                    <p>Or use the MD5CHECK macro:</p>
+                    <pre>MD5CHECK "game.bin", "a1b2c3d4e5f6..."</pre>
+                    <p>Output shows <span style="color:#80ff80">MD5 OK</span> or <span style="color:#ff8080">MD5 MISMATCH</span>.</p>
+                    <h5>Supported Directives</h5>
+                    <ul>
+                        <li><strong>ORG</strong> - Set origin address</li>
+                        <li><strong>EQU</strong> - Define constant</li>
+                        <li><strong>DEFINE</strong> - Define symbol</li>
+                        <li><strong>DB/DEFB</strong> - Define bytes</li>
+                        <li><strong>DW/DEFW</strong> - Define words</li>
+                        <li><strong>DS/DEFS/BLOCK</strong> - Reserve space</li>
+                        <li><strong>DZ</strong> - Zero-terminated string</li>
+                        <li><strong>DC</strong> - High-bit terminated string</li>
+                        <li><strong>ALIGN</strong> - Align to boundary</li>
+                        <li><strong>INCLUDE</strong> - Include source file</li>
+                        <li><strong>INCBIN</strong> - Include binary file</li>
+                        <li><strong>IF/ELSE/ENDIF</strong> - Conditional assembly</li>
+                        <li><strong>IFDEF/IFNDEF</strong> - Check if defined</li>
+                        <li><strong>MACRO/ENDM</strong> - Define macro</li>
+                        <li><strong>REPT/ENDR</strong> - Repeat block</li>
+                        <li><strong>STRUCT/ENDS</strong> - Define structure</li>
+                        <li><strong>DEVICE</strong> - Set target device (ZXSPECTRUM48, ZXSPECTRUM128)</li>
+                        <li><strong>SLOT/PAGE</strong> - Memory paging (128K)</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-tests">
+                    <h4>Automated Tests</h4>
+                    <p>The Tests tab provides automated regression testing for the emulator using native Spectrum programs.</p>
+
+                    <h5>Test Configuration (tests.json)</h5>
+                    <p>Tests are defined in <code>tests.json</code> with the following structure:</p>
+                    <pre>{
+    "tests": [
+        {
+            "id": "unique-id",
+            "name": "Display Name",
+            "file": "tests/program.tap",
+            "machine": "48k",           // 48k, 128k, +2, +2a, +3, pentagon, pentagon1024, scorpion
+            "earlyTimings": true,       // Use early ULA timings
+            "ulaplus": false,           // Enable ULAplus (default: false)
+            "palette": "default",       // Color palette
+            "enabled": true,            // false to skip
+            "fullBorder": true,         // Include border in comparison
+            "diskRun": "game",          // TRD/SCL: program to RUN (optional)
+            "author": "Author Name",    // Test program author
+            "source": "https://...",    // Source URL
+            "steps": [
+                { "frames": 500, "screen": "tests/screen1.png" }
+            ]
+        }
+    ]
+}</pre>
+
+                    <h5>Step Definition</h5>
+                    <table>
+                        <tr><th>Field</th><th>Description</th></tr>
+                        <tr><td><code>frames</code></td><td>Absolute frame number from test start (required)</td></tr>
+                        <tr><td><code>screen</code></td><td>Path to reference PNG screenshot (optional)</td></tr>
+                        <tr><td><code>keys</code></td><td>Keys to press before running this step (optional)</td></tr>
+                    </table>
+
+                    <h5>Multi-Step Tests</h5>
+                    <p>For programs with multiple screens (e.g., menu в†’ game в†’ results), use multiple steps with key presses:</p>
+                    <pre>{
+    "steps": [
+        { "frames": 2350, "screen": "tests/menu.png" },
+        { "frames": 5000, "screen": "tests/game.png", "keys": "ENTER" },
+        { "frames": 8000, "screen": "tests/results.png", "keys": "SPACE" }
+    ]
+}</pre>
+                    <p><em>Note: Frame counts are absolute from test start, not relative to previous step.</em></p>
+
+                    <h5>Key String Format</h5>
+                    <table>
+                        <tr><th>Format</th><th>Example</th><th>Description</th></tr>
+                        <tr><td>Single key</td><td><code>ENTER</code></td><td>Press Enter key</td></tr>
+                        <tr><td>Letter/digit</td><td><code>a</code>, <code>1</code></td><td>Press letter or digit</td></tr>
+                        <tr><td>Caps Shift</td><td><code>CTRL+a</code></td><td>Caps Shift + A</td></tr>
+                        <tr><td>Symbol Shift</td><td><code>ALT+p</code></td><td>Symbol Shift + P (produces ")</td></tr>
+                        <tr><td>Sequence</td><td><code>ENTER,500ms,SPACE</code></td><td>ENTER, wait 500ms, then SPACE</td></tr>
+                        <tr><td>Repeated keys</td><td><code>q,q,q,ENTER</code></td><td>Press Q three times, then ENTER</td></tr>
+                        <tr><td>Repeated + delay</td><td><code>q,200ms,q,200ms,ENTER</code></td><td>Q, wait 200ms, Q, wait 200ms, ENTER</td></tr>
+                        <tr><td>Comma key</td><td><code>ALT+n</code></td><td>Symbol Shift + N = comma on Spectrum</td></tr>
+                    </table>
+
+                    <h5>Special Keys</h5>
+                    <p><code>ENTER</code>, <code>SPACE</code>, <code>CTRL</code> (Caps Shift), <code>ALT</code> (Symbol Shift),
+                       <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, <code>RIGHT</code></p>
+
+                    <h5>Preview Mode</h5>
+                    <p>Use <strong>Preview</strong> to run a test with live display for calibrating frame numbers:</p>
+                    <ol>
+                        <li>Select a test and click <strong>Preview</strong></li>
+                        <li>Click <strong>Pause</strong> when the desired screen appears</li>
+                        <li>Click <strong>Copy Frame#</strong> to copy the frame count</li>
+                        <li>Click <strong>Screenshot</strong> to save reference PNG</li>
+                        <li>Update tests.json with the frame number and screenshot path</li>
+                    </ol>
+
+                    <h5>Example: Raxoft Z80 Test</h5>
+                    <pre>{
+    "id": "z80ccf",
+    "name": "Raxoft z80ccf",
+    "file": "tests/z80ccf.tap",
+    "machine": "48k",
+    "earlyTimings": true,
+    "enabled": true,
+    "steps": [
+        { "frames": 2350, "screen": "tests/z80ccf_1.png" },
+        { "frames": 5076, "screen": "tests/z80ccf_2.png", "keys": "ENTER" },
+        { "frames": 6610, "screen": "tests/z80ccf_3.png", "keys": "ENTER" },
+        { "frames": 8430, "screen": "tests/z80ccf_4.png", "keys": "ENTER" }
+    ]
+}</pre>
+
+                    <h5>Example: TRD Disk Test</h5>
+                    <pre>{
+    "id": "disk-game",
+    "name": "Game (TRD)",
+    "file": "tests/game.trd",
+    "machine": "pentagon",
+    "diskRun": "game",          // Program name to run from disk
+    "enabled": true,
+    "steps": [
+        { "frames": 500, "screen": "tests/game_menu.png" }
+    ]
+}</pre>
+                    <p><code>diskRun</code> values: program name (e.g. <code>"game"</code>) for <code>RUN "game"</code>, or <code>"boot"</code> for <code>RUN</code> (boot file).</p>
+
+                    <h5>Example: DSK Disk Test (+3)</h5>
+                    <pre>{
+    "id": "plus3-game",
+    "name": "Game (DSK)",
+    "file": "tests/game.dsk",
+    "machine": "+3",
+    "enabled": true,
+    "steps": [
+        { "frames": 800, "screen": "tests/game_menu.png" }
+    ]
+}</pre>
+                    <p>DSK tests auto-boot via the +3 ROM. No <code>diskRun</code> needed вЂ” the +3 ROM auto-detects and loads from disk.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-compare">
+                    <h4>Compare Tool</h4>
+                    <p>The Compare tab allows comparing snapshots and binary files to identify differences in memory and CPU state.</p>
+
+                    <h5>Comparison Modes</h5>
+                    <table>
+                        <tr><th>Mode</th><th>Description</th></tr>
+                        <tr><td><strong>Snapshots</strong></td><td>Compare two snapshot files (.SNA or .Z80, 48K or 128K)</td></tr>
+                        <tr><td><strong>Binaries</strong></td><td>Compare two raw binary files byte-by-byte</td></tr>
+                        <tr><td><strong>Snapshot vs Emulator</strong></td><td>Compare a snapshot file against current emulator state</td></tr>
+                    </table>
+
+                    <h5>Supported Formats</h5>
+                    <ul>
+                        <li><strong>Binary</strong> - Any raw binary file</li>
+                        <li><strong>SNA</strong> - 48K (49179 bytes) and 128K (131103/147487 bytes)</li>
+                        <li><strong>SZX</strong> - Spectaculator format (48K and 128K)</li>
+                        <li><strong>Z80</strong> - Version 1, 2, and 3 formats (48K and 128K)</li>
+                    </ul>
+
+                    <h5>Options</h5>
+                    <table>
+                        <tr><th>Option</th><th>Description</th></tr>
+                        <tr><td><strong>Show equal values</strong></td><td>Display matching bytes in addition to differences</td></tr>
+                        <tr><td><strong>Hex dump</strong></td><td>Show side-by-side hex dump with ASCII representation</td></tr>
+                        <tr><td><strong>Exclude screen</strong></td><td>Skip screen memory ($4000-$5AFF and $C000-$DAFF for 128K)</td></tr>
+                    </table>
+
+                    <h5>Register Comparison</h5>
+                    <p>When comparing snapshots, CPU registers are displayed in two columns:</p>
+                    <ul>
+                        <li>Left column: Main registers (AF, BC, DE, HL, PC, IX, I, IM, Border)</li>
+                        <li>Right column: Alternate registers (AF', BC', DE', HL', SP, IY, R, IFF1, IFF2)</li>
+                    </ul>
+                    <p>Differences are highlighted in red with a в—„ marker.</p>
+
+                    <h5>Memory Comparison</h5>
+                    <p>Memory differences are shown in a side-by-side hex dump with:</p>
+                    <ul>
+                        <li>Address and hex values for both files</li>
+                        <li>ASCII representation (unprintable chars shown as dots)</li>
+                        <li>Differing bytes highlighted in red</li>
+                        <li>Pagination for large differences (50 blocks per page)</li>
+                    </ul>
+
+                    <h5>Use Cases</h5>
+                    <ul>
+                        <li>Verify emulator accuracy by comparing against reference snapshots</li>
+                        <li>Debug save state issues</li>
+                        <li>Analyze memory changes between two execution points</li>
+                        <li>Compare different versions of a program</li>
+                    </ul>
+                </div>
+                <div class="fullhelp-section hidden" id="help-explorer">
+                    <h4>Explorer</h4>
+                    <p>The Explorer tab analyzes ZX Spectrum file formats without loading them into the emulator.</p>
+                    <h5>Supported Formats</h5>
+                    <table>
+                        <tr><th>Format</th><th>Description</th></tr>
+                        <tr><td>RZX</td><td>Input recordings</td></tr>
+                        <tr><td>SCL</td><td>TR-DOS file archives</td></tr>
+                        <tr><td>SNA</td><td>48K/128K snapshots with registers</td></tr>
+                        <tr><td>SZX</td><td>Spectaculator snapshots</td></tr>
+                        <tr><td>TAP</td><td>Tape files with block structure</td></tr>
+                        <tr><td>TRD</td><td>TR-DOS disk images</td></tr>
+                        <tr><td>Z80</td><td>Compressed snapshots (v1, v2, v3)</td></tr>
+                        <tr><td>ZIP</td><td>Archives containing above formats</td></tr>
+                    </table>
+                    <h5>Sub-tabs</h5>
+                    <ul>
+                        <li><strong>File Info</strong> - File structure, blocks, registers, disk catalog</li>
+                        <li><strong>BASIC</strong> - Decode and display BASIC programs with syntax highlighting</li>
+                        <li><strong>Disasm</strong> - Z80 disassembly with ROM labels, click addresses in BASIC to jump</li>
+                        <li><strong>Hex Dump</strong> - Raw hex view with ASCII column</li>
+                    </ul>
+                    <h5>Features</h5>
+                    <ul>
+                        <li>Screen preview for snapshots and screen files</li>
+                        <li>Click on TRD/SCL files to view: BASIC files open decoder, CODE files open disassembly</li>
+                        <li>Click USR addresses in BASIC to jump to disassembly</li>
+                        <li>Disassembly shows blank lines after JP, JR, CALL, RET, RST, DJNZ, HALT</li>
+                        <li>Copy-friendly output format (text copies correctly to clipboard)</li>
+                        <li>ROM routine labels shown in disassembly</li>
+                    </ul>
+                    <h5>TR-DOS File Types</h5>
+                    <table>
+                        <tr><th>Ext</th><th>Type</th></tr>
+                        <tr><td>B</td><td>BASIC program</td></tr>
+                        <tr><td>C</td><td>Code (machine code)</td></tr>
+                        <tr><td>D</td><td>Data array</td></tr>
+                        <tr><td>#</td><td>Sequential file</td></tr>
+                    </table>
+                </div>
+                <div class="fullhelp-section hidden" id="help-mapper">
+                    <h4>Game Mapper</h4>
+                    <p>The Mapper tab (Utils &rarr; Mapper) captures game screens and stitches them into a navigable map grid. Useful for documenting game layouts, creating maps, and reverse engineering room structures.</p>
+                    <h5>Basic Workflow</h5>
+                    <ol>
+                        <li>Navigate to a room in the game</li>
+                        <li>Click <strong>Capture</strong> (or Ctrl+Space) to capture the screen</li>
+                        <li>Use arrow buttons (or Ctrl+Arrow keys) to move to an adjacent grid position</li>
+                        <li>Navigate to the next room in the game and capture again</li>
+                        <li>Repeat until the map is complete</li>
+                    </ol>
+                    <h5>Toolbar</h5>
+                    <ul>
+                        <li><strong>Capture</strong> &mdash; capture the current screen (or configured sub-region) into the current room slot</li>
+                        <li><strong>Arrow buttons</strong> &mdash; move the current room position on the grid</li>
+                        <li><strong>Room label</strong> &mdash; shows current (X, Y) grid coordinates</li>
+                        <li><strong>Floor buttons</strong> (F: &#9660; / &#9650;) &mdash; navigate between floors for multi-level games</li>
+                        <li><strong>Blend</strong> &mdash; per-pixel mode blend of all screenshots (picks most frequent color at each pixel, extracting static background and discarding moving sprites). Appears when room has 2+ screenshots</li>
+                        <li><strong>Stamp</strong> &mdash; copy a rectangular region from the selected screenshot onto the blended image to correct blend artifacts (appears when blend exists and a screenshot is selected). Opens a dialog over the overview &mdash; drag to select a rectangle, pixels are stamped immediately. Multiple stamps supported; Escape to close</li>
+                        <li><strong>Mark color</strong> &mdash; mark the room with a colored diagonal cross (X) overlay using one of the 8 ZX Spectrum colors. Marks appear in the overview, hover popup, and PNG export. Select &ldquo;No mark&rdquo; to remove</li>
+                        <li><strong>Delete</strong> &mdash; delete the currently selected screenshot</li>
+                        <li><strong>Thumbnails</strong> &mdash; clickable strip of all screenshots for the current room; click to select which is displayed</li>
+                        <li><strong>&#9881; (gear)</strong> &mdash; toggle the settings panel</li>
+                    </ul>
+                    <h5>Settings Panel</h5>
+                    <ul>
+                        <li><strong>Region</strong> (X, Y, W, H) &mdash; capture sub-region in character cells (default: full screen 0,0,32,24). Locked once any screenshot is captured to prevent dimension mismatches; clear the map to change</li>
+                        <li><strong>Highlight</strong> &mdash; color used to outline the current room in the overview</li>
+                        <li><strong>Gap H / V</strong> &mdash; horizontal and vertical pixel spacing between rooms in the overview and export (useful for games with non-connected rooms or varying row/column spacing)</li>
+                        <li><strong>Zoom</strong> &mdash; overview zoom level: Fit (auto-scale to container), x1 (native pixel size), x2 (double size). x1 and x2 enable scrolling when the map exceeds the container</li>
+                        <li><strong>Follow</strong> &mdash; when enabled in x1/x2 zoom mode, the overview auto-scrolls to keep the current room visible</li>
+                        <li><strong>Export</strong> &mdash; multi-floor PNG export layout: Separate PNGs (one file per floor), or composite grid (N&times;... for column-count, ...&times;N for row-count). Empty floors are skipped</li>
+                        <li><strong>Floor gap</strong> &mdash; pixel spacing between floors in composite PNG exports</li>
+                        <li><strong>Game / Level / Author</strong> &mdash; metadata fields saved in the JSON file</li>
+                        <li><strong>Save</strong> &mdash; export the map as a JSON file</li>
+                        <li><strong>Load</strong> &mdash; import a previously saved JSON map</li>
+                        <li><strong>Export PNG</strong> &mdash; export the full stitched map as a PNG image</li>
+                        <li><strong>Clear</strong> &mdash; remove all rooms from the map</li>
+                    </ul>
+                    <h5>Map Overview</h5>
+                    <p>The overview canvas shows all rooms on the current floor stitched together. In Fit mode (default), auto-scaled to the available space. In x1/x2 mode, rendered at native/double pixel size with scrollbars; enable Follow to auto-scroll to the current room. The current room is highlighted with a colored border.</p>
+                    <ul>
+                        <li><strong>Click</strong> a room in the overview to select it</li>
+                        <li><strong>Hover</strong> over a room to see a 2x zoom popup preview</li>
+                    </ul>
+                    <h5>Multi-Floor Support</h5>
+                    <p>Games with multiple levels or floors can be mapped using the floor dimension. Each floor is an independent 2D grid. The overview shows only the current floor. Use the floor buttons or Ctrl+Shift+Up/Down to switch floors.</p>
+                    <h5>Keyboard Shortcuts</h5>
+                    <table>
+                        <tr><th>Key</th><th>Action</th></tr>
+                        <tr><td>Ctrl+Space</td><td>Capture screen</td></tr>
+                        <tr><td>Ctrl+Arrow keys</td><td>Navigate rooms</td></tr>
+                        <tr><td>Ctrl+Shift+Up / Down</td><td>Change floor</td></tr>
+                    </table>
+                    <h5>Save/Load Format</h5>
+                    <p>Maps are saved as JSON files containing room screenshots (as data URLs), grid coordinates, floor data, capture region, and metadata. Version 2 format supports floors; version 1 files (without floors) are auto-migrated on load.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-pokes">
+                    <h4>POKE Manager</h4>
+                    <p>The Pokes tab in the debugger panel manages named pokes (multi-address byte patches) and memory value editors. Two-column layout: editors on the left, pokes on the right. Create entries inline or load from JSON files.</p>
+                    <h5>Layout</h5>
+                    <p>Editors column (left) and pokes column (right) are shown side by side. <strong>Load</strong>, <strong>Save</strong>, and <strong>Clear</strong> buttons are at the top right. Click the <strong>game name</strong> label to edit it.</p>
+                    <h5>Adding Pokes</h5>
+                    <p>Use the add form at the top of the pokes column: enter a name, address, original value, and poke value, then click <strong>+</strong>. If a poke with the same name already exists, the new patch is added to it (multi-patch building). All addresses and values are hex.</p>
+                    <h5>Poke Entries</h5>
+                    <p>Each poke has a checkbox to toggle it on/off. Enabling writes the patched bytes to memory; disabling restores the original values. Changes are instant &mdash; no apply button needed. The master checkbox above the poke list enables or disables all pokes at once (indeterminate state when partially enabled). Click <strong>&times;</strong> to remove an entry (restores original bytes if enabled).</p>
+                    <h5>Adding Editors</h5>
+                    <p>Use the editor add form at the top of the editors column: enter a name, address, and value type (byte or word), then click <strong>+</strong>. <strong>Read</strong> refreshes all editor values from memory.</p>
+                    <h5>Memory Editors</h5>
+                    <p>Editors provide live read/write access to specific memory addresses. All values are hex. Editing a value and pressing Enter or leaving the field writes it to memory immediately. Click <strong>&times;</strong> to remove an editor.</p>
+                    <p>Word editors use little-endian byte order (low byte at address, high byte at address+1).</p>
+                    <h5>JSON File Format</h5>
+                    <p>Create poke files in a text editor. All addresses and values are hex. Patches use compact <code>[addr, normal, poke]</code> arrays.</p>
+                    <pre>
+{
+    "game": "Game Name",
+    "pokes": [
+        {
+            "name": "Infinite lives",
+            "enabled": true,
+            "patches": [["8C2A", "3D", "00"]]
+        },
+        {
+            "name": "Walk through walls",
+            "patches": [["8E01", "28", "18"], ["8E10", "3C", "00"]]
+        }
+    ],
+    "editors": [
+        { "name": "Lives", "addr": "8C2B", "type": "byte" },
+        { "name": "Score", "addr": "8C30", "type": "word" }
+    ]
+}</pre>
+                    <h5>Fields</h5>
+                    <ul>
+                        <li><strong>game</strong> &mdash; optional display label shown in the toolbar</li>
+                        <li><strong>pokes[].name</strong> &mdash; display name for the poke entry</li>
+                        <li><strong>pokes[].enabled</strong> &mdash; initial enabled state (boolean, default false)</li>
+                        <li><strong>pokes[].patches[]</strong> &mdash; arrays of <code>[addr, normal, poke]</code></li>
+                        <li><strong>editors[].name</strong> &mdash; display label for the editor</li>
+                        <li><strong>editors[].addr</strong> &mdash; memory address</li>
+                        <li><strong>editors[].type</strong> &mdash; <code>"byte"</code> or <code>"word"</code> (little-endian)</li>
+                    </ul>
+                    <h5>Project Persistence</h5>
+                    <p>Pokes and editors are saved and restored with the project file, including which pokes are currently enabled.</p>
+                </div>
+                <div class="fullhelp-section hidden" id="help-api">
+                    <h4>JavaScript API</h4>
+                    <p>Access emulator via browser console:</p>
+                    <pre>
+// Access emulator
+window.spectrum
+
+// Get version
+APP_VERSION
+
+// Memory access
+spectrum.peek(0x4000)
+spectrum.poke(0x4000, 0xff)
+
+// Control
+spectrum.start()
+spectrum.stop()
+spectrum.reset()
+
+// Breakpoints
+spectrum.addBreakpoint(0x0000)
+spectrum.addBreakpointWithCondition('4000', 'A==0')
+spectrum.removeBreakpoint(0x0000)
+spectrum.getBreakpoints()
+spectrum.clearBreakpoints()
+
+// Labels
+labelManager.add({
+    address: 0x4000,
+    name: 'main_loop',
+    comment: 'Main game loop'
+})
+labelManager.get(0x4000)
+labelManager.remove(0x4000)
+labelManager.findByName('main_loop')
+labelManager.exportJSON()
+labelManager.importJSON(jsonStr, merge)</pre>
+                </div>
+                <div class="fullhelp-section hidden" id="help-about">
+                    <div style="text-align: center; margin: 15px 0;">
+                        <img src="docs/m8xxx_cat.jpg" alt="M8XXX Cat" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                    </div>
+                    <h5>The Name</h5>
+                    <p><strong>ZX-M8XXX</strong> stands for <strong>ZX Matrix</strong> вЂ” a nod to the iconic 8-bit architecture and the intricate web of code, memory, and pixels that make up the Spectrum experience.</p>
+                    <h5>License</h5>
+                    <p>This software is released under the <strong>GPL-3.0</strong> license.</p>
+                    <p>You are free to use, modify, and distribute this software under the terms of the GNU General Public License version 3.</p>
+                    <p><a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color: var(--cyan);">Read the full GPL-3.0 license text</a></p>
+                    <p><strong>Test Programs:</strong> The test programs in the <code>tests/</code> folder (z80ccf, z80doc, z80docflags, etc.) are copyright of their respective authors. These programs are included for emulator validation purposes only.</p>
+                    <h5>Source Code</h5>
+                    <p><a href="https://github.com/Bedazzle/ZX-M8XXX" target="_blank" style="color: var(--cyan);">https://github.com/Bedazzle/ZX-M8XXX</a></p>
+                    <h5>Inspired By</h5>
+                    <ul>
+                        <li><strong>JSSpeccy 3</strong> - Matt Westcott's excellent JavaScript Spectrum emulator</li>
+                        <li><strong>Fuse</strong> - The Free Unix Spectrum Emulator</li>
+                        <li><strong>EmuzWin</strong> - Windows Spectrum emulator</li>
+                        <li><strong>Swan</strong> - Delphi Spectrum emulator (I/O contention algorithm)</li>
+                        <li><strong>ZXMAK2</strong> - .NET Spectrum emulator</li>
+                        <li><strong>IDA Pro</strong> - Interactive disassembler (debugger UI concepts)</li>
+                        <li><strong>Ghidra</strong> - NSA reverse engineering tool (analysis features)</li>
+                    </ul>
+                    <h5>Known Limitations</h5>
+                    <ul>
+                        <li><strong>Chained prefix interrupts:</strong> On real Z80, interrupts can occur between chained DD/FD prefix bytes (each prefix is a separate instruction fetch). This emulator processes prefix chains atomically within a single step, so interrupts cannot occur mid-chain. This rarely affects real software.</li>
+                        <li><strong>Floating bus:</strong> Not fully emulated. Some copy protection schemes may not work.</li>
+                        <li><strong>Z80 save uncompressed:</strong> Z80 snapshots saved without RLE compression for compatibility (~131KB for 128K, ~49KB for 48K).</li>
+                    </ul>
+                    <h5>Technical References</h5>
+                    <ul>
+                        <li>Z80 CPU User Manual (Zilog)</li>
+                        <li>The Undocumented Z80 Documented (Sean Young)</li>
+                        <li>World of Spectrum documentation</li>
+                    </ul>
+                    <h5>Greetings</h5>
+                    <p>Greetings fly out to:</p>
+                    <ul>
+                        <li>The ZX Spectrum demo scene and retro computing community</li>
+                        <li>All the developers keeping the Speccy spirit alive</li>
+                        <li>Everyone who contributed to documenting the Z80 and ZX Spectrum hardware</li>
+                        <li>Amstrad for allowing free distribution of Spectrum ROMs</li>
+                    </ul>
+                    <p style="margin-top: 20px; color: var(--text-secondary); font-style: italic;">
+                        "The Spectrum lives on!"
+                    </p>
+                </div>
+            </div>
+        </div>

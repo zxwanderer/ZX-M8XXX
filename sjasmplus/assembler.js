@@ -2,7 +2,18 @@
 // Assembler core - Multi-pass assembly orchestration
 // https://github.com/anthropics/sjasmplus-js
 
-const Assembler = {
+import { SymbolTable, EquTable } from './labels.js';
+import { ErrorCollector, AssemblerError } from './errors.js';
+import { AsmMemory } from './memory.js';
+import { Preprocessor } from './preprocessor.js';
+import { VFS } from './vfs.js';
+import { Parser } from './parser.js';
+import { InstructionEncoder, Z80Asm } from './instructions.js';
+import { parseExpression } from './expression.js';
+import './instructions2.js';
+import './instructions3.js';
+
+export const Assembler = {
     // Configuration
     maxPasses: 10,
     
@@ -1870,6 +1881,3 @@ const Assembler = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    window.Assembler = Assembler;
-}
