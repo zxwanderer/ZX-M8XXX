@@ -88,18 +88,29 @@ export function initProjectIO({
                     disasmBookmarks: leftBookmarks.slice(),
                     memoryBookmarks: rightBookmarks.slice(),
                     // Unified triggers (new format)
-                    triggers: spectrum.getTriggers().map(t => ({
-                        type: t.type,
-                        start: t.start,
-                        end: t.end,
-                        page: t.page,
-                        mask: t.mask,
-                        condition: t.condition || '',
-                        enabled: t.enabled,
-                        skipCount: t.skipCount || 0,
-                        hitCount: t.hitCount || 0,
-                        name: t.name || ''
-                    })),
+                    triggers: spectrum.getTriggers().map(t => {
+                        const obj = {
+                            type: t.type,
+                            start: t.start,
+                            end: t.end,
+                            page: t.page,
+                            mask: t.mask,
+                            condition: t.condition || '',
+                            enabled: t.enabled,
+                            skipCount: t.skipCount || 0,
+                            hitCount: t.hitCount || 0,
+                            name: t.name || ''
+                        };
+                        if (t.type === 'screen_bitmap' || t.type === 'screen_attr') {
+                            obj.col = t.col;
+                            obj.row = t.row;
+                            obj.w = t.w;
+                            obj.h = t.h;
+                            obj.pixelMode = t.pixelMode || false;
+                            obj.screen = t.screen || 'normal';
+                        }
+                        return obj;
+                    }),
                     labels: JSON.parse(labelManager.exportJSON()),
                     regions: JSON.parse(regionManager.exportJSON()),
                     comments: JSON.parse(commentManager.exportJSON()),

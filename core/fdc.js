@@ -76,6 +76,105 @@
         getTotalTracks() {
             return this.numTracks * this.numSides;
         }
+
+        /**
+         * Serialize DSKImage back to Extended DSK (EDSK) binary format.
+         * Always writes EDSK format regardless of original format —
+         * EDSK is a superset that handles variable sector sizes correctly.
+         * @returns {Uint8Array} EDSK file data
+         */
+        toBuffer() {
+            const totalTracks = this.numTracks * this.numSides;
+
+            // First pass: compute per-track sizes for the track size table
+            // and total file size
+            const trackSizes = []; // actual byte sizes (256-byte aligned)
+            let totalSize = 0x100; // disk info block (256 bytes)
+
+            for (let t = 0; t < totalTracks; t++) {
+                const track = this.tracks[t];
+                if (!track || track.sectors.length === 0) {
+                    trackSizes.push(0);
+                    continue;
+                }
+                // Track info block (256 bytes) + sector data
+                let dataSize = 0x100;
+                for (const sec of track.sectors) {
+                    dataSize += sec.data.length;
+                }
+                // Round up to 256-byte boundary
+                dataSize = Math.ceil(dataSize / 256) * 256;
+                trackSizes.push(dataSize);
+                totalSize += dataSize;
+            }
+
+            const buf = new Uint8Array(totalSize);
+
+            // ---- Disk Information Block (256 bytes) ----
+            const sig = 'EXTENDED CPC DSK File\r\nDisk-Info\r\n';
+            for (let i = 0; i < sig.length; i++) buf[i] = sig.charCodeAt(i);
+            // Creator (14 bytes at offset 0x22)
+            const creator = 'ZX-M8XXX      ';
+            for (let i = 0; i < 14; i++) buf[0x22 + i] = creator.charCodeAt(i);
+            buf[0x30] = this.numTracks;
+            buf[0x31] = this.numSides;
+            // 0x32-0x33: unused in EDSK (standard DSK uses trackSize here)
+            // Track size table at 0x34 (high bytes only, size / 256)
+            for (let t = 0; t < totalTracks; t++) {
+                buf[0x34 + t] = (trackSizes[t] / 256) | 0;
+            }
+
+            // ---- Track blocks ----
+            let offset = 0x100;
+            for (let t = 0; t < totalTracks; t++) {
+                const track = this.tracks[t];
+                if (trackSizes[t] === 0) continue;
+
+                // Track-Info signature (12 bytes + \0)
+                const trackSig = 'Track-Info\r\n';
+                for (let i = 0; i < trackSig.length; i++) buf[offset + i] = trackSig.charCodeAt(i);
+
+                // Cylinder and side from track index
+                const cylinder = Math.floor(t / this.numSides);
+                const side = t % this.numSides;
+                buf[offset + 0x10] = cylinder;
+                buf[offset + 0x11] = side;
+                // 0x12-0x13: unused
+
+                // Sector size code — use first sector's sizeCode as default
+                const defaultSizeCode = track.sectors.length > 0 ? track.sectors[0].sizeCode : 2;
+                buf[offset + 0x14] = defaultSizeCode;
+                buf[offset + 0x15] = track.sectors.length;
+                // 0x16: GAP#3 length (not significant for EDSK, use 0x4E)
+                buf[offset + 0x16] = 0x4E;
+                // 0x17: Filler byte
+                buf[offset + 0x17] = 0xE5;
+
+                // Sector info entries (8 bytes each, starting at offset+0x18)
+                let dataOffset = offset + 0x100;
+                for (let s = 0; s < track.sectors.length; s++) {
+                    const sec = track.sectors[s];
+                    const infoBase = offset + 0x18 + s * 8;
+                    buf[infoBase] = sec.cylinder;
+                    buf[infoBase + 1] = sec.head;
+                    buf[infoBase + 2] = sec.id;
+                    buf[infoBase + 3] = sec.sizeCode;
+                    buf[infoBase + 4] = sec.st1;
+                    buf[infoBase + 5] = sec.st2;
+                    // EDSK actual data length (16-bit LE)
+                    buf[infoBase + 6] = sec.data.length & 0xFF;
+                    buf[infoBase + 7] = (sec.data.length >> 8) & 0xFF;
+
+                    // Write sector data
+                    buf.set(sec.data, dataOffset);
+                    dataOffset += sec.data.length;
+                }
+
+                offset += trackSizes[t];
+            }
+
+            return buf;
+        }
     }
 
     // ========== DSKLoader ==========
@@ -289,40 +388,42 @@
             const bootData = sorted[0].data;
 
             // +3DOS disk specification block (16 bytes at start of boot sector):
-            // Byte 0: Disk type (0=PCW SS SD, 1=CPC system, 2=CPC data, 3=PCW/+3)
-            // Byte 1: Sides - 1 (0=single, 1=double)
+            // Per +3 manual ch.8 pt.27:
+            // Byte 0: Disk type (0=PCW SS SD/+3, 1=CPC system, 2=CPC data, 3=PCW DS DT)
+            // Byte 1: Sidedness (bits 0-1: 0=single, 1=alt, 2=successive; bit 7: double track)
             // Byte 2: Tracks per side
             // Byte 3: Sectors per track
-            // Byte 4: First sector number
-            // Byte 5: Sector size log2 (2=512)
-            // Byte 6: Reserved tracks
-            // Byte 7: Block shift (BSH: 3=1K, 4=2K, 5=4K)
-            // Byte 8: Directory blocks (allocation units)
-            // Byte 9: R/W gap length
-            // Byte 10: Format gap length
-            // Bytes 11-14: Reserved (0)
-            // Byte 15: Checksum (bytes 0-15 sum to 0 mod 256)
+            // Byte 4: Log2(sector size) - 7  (2=512)
+            // Byte 5: Reserved tracks
+            // Byte 6: Log2(block size / 128)  (3=1K, 4=2K, 5=4K)
+            // Byte 7: Directory blocks
+            // Byte 8: R/W gap length
+            // Byte 9: Format gap length
+            // Bytes 10-14: Reserved (0)
+            // Byte 15: Checksum (sum of bytes 0-15 must equal 3 mod 256)
             if (bootData && bootData.length >= 16) {
                 let checksum = 0;
                 for (let i = 0; i < 16; i++) checksum = (checksum + bootData[i]) & 0xFF;
 
-                if (checksum === 0) {
-                    const reservedTracks = bootData[6];
-                    const blockShift = bootData[7];
+                if (checksum === 3) {
+                    const sectorSizeLog = bootData[4];
+                    const reservedTracks = bootData[5];
+                    const blockShift = bootData[6];
+                    const dirBlocks = bootData[7];
                     // Validate: blockShift should be 3-5, reservedTracks 0-3
                     if (blockShift >= 3 && blockShift <= 5 && reservedTracks <= 3) {
                         return {
                             diskType: bootData[0],
-                            sides: (bootData[1] & 0x01) + 1,
+                            sides: (bootData[1] & 0x03) + 1,
                             tracksPerSide: bootData[2],
                             sectorsPerTrack: bootData[3],
-                            firstSectorId: bootData[4],
-                            sectorSizeLog: bootData[5],
-                            sectorSize: 128 << bootData[5],
+                            firstSectorId: sorted[0].id,
+                            sectorSizeLog: sectorSizeLog,
+                            sectorSize: 128 << sectorSizeLog,
                             reservedTracks: reservedTracks,
                             blockShift: blockShift,
                             blockSize: 128 << blockShift,
-                            dirBlocks: bootData[8],
+                            dirBlocks: dirBlocks,
                             valid: true
                         };
                     }
@@ -676,6 +777,138 @@
                 return result.slice(0, fileSize);
             }
             return result.slice(0, Math.min(writePos, result.length));
+        }
+
+        /**
+         * Create a blank formatted standard +3 disk image.
+         * 40 tracks, 1 side, 9 sectors/track, 512 bytes/sector, IDs 0xC1-0xC9.
+         * Boot sector with 16-byte disk spec, directory sectors filled with 0xE5.
+         * @returns {DSKImage}
+         */
+        static createBlankDSK() {
+            const dsk = new DSKImage();
+            dsk.numTracks = 40;
+            dsk.numSides = 1;
+            dsk.isExtended = true;
+
+            for (let t = 0; t < 40; t++) {
+                const sectors = [];
+                for (let s = 0; s < 9; s++) {
+                    const data = new Uint8Array(512);
+                    // Fill directory sectors (track 1, all sectors) with 0xE5
+                    if (t === 1) data.fill(0xE5);
+                    sectors.push({
+                        cylinder: t,
+                        head: 0,
+                        id: 0xC1 + s,
+                        sizeCode: 2, // 512 bytes
+                        st1: 0,
+                        st2: 0,
+                        data: data
+                    });
+                }
+                dsk.tracks.push({ sectors });
+            }
+
+            // Write boot sector disk spec (16 bytes at track 0, first sector)
+            // Layout per +3 manual ch.8 pt.27: type, sides, tracks, sectors,
+            // sectorSizeLog, reservedTracks, blockSizeLog, dirBlocks, rwGap, fmtGap, reserved(5), checksum
+            const bootSector = dsk.readSector(0, 0, 0xC1);
+            bootSector[0] = 0;    // Disk type: 0 = PCW SS SD (+3 standard)
+            bootSector[1] = 0;    // Sidedness (0=single sided)
+            bootSector[2] = 40;   // Tracks per side
+            bootSector[3] = 9;    // Sectors per track
+            bootSector[4] = 2;    // Log2(sector size) - 7  (2 → 512 bytes)
+            bootSector[5] = 1;    // Reserved tracks
+            bootSector[6] = 3;    // Log2(block size / 128)  (3 → 1024 bytes)
+            bootSector[7] = 2;    // Directory blocks
+            bootSector[8] = 0x2A; // R/W gap length
+            bootSector[9] = 0x52; // Format gap length
+            // Bytes 10-14: reserved (0)
+            // Byte 15: checksum — sum of all 16 bytes must equal 3 mod 256
+            let sum = 0;
+            for (let i = 0; i < 15; i++) sum = (sum + bootSector[i]) & 0xFF;
+            bootSector[15] = (3 - sum) & 0xFF;
+
+            return dsk;
+        }
+
+        /**
+         * Build a block allocation map from a DSK image's CP/M directory.
+         * Scans all non-deleted directory entries for referenced block numbers.
+         * @param {DSKImage} dskImage
+         * @param {object} spec - Disk specification from getDiskSpec()
+         * @returns {{ used: Set<number>, totalBlocks: number, freeBlocks: number }}
+         */
+        static getBlockAllocationMap(dskImage, spec) {
+            const dir = DSKLoader._readDirectory(dskImage, spec);
+            const used = new Set();
+
+            // Directory blocks themselves are always allocated (blocks 0..dirBlocks-1)
+            const dirBlocks = spec.dirBlocks || 2;
+            for (let i = 0; i < dirBlocks; i++) used.add(i);
+
+            if (dir) {
+                const { dirData } = dir;
+                const maxEntries = Math.floor(dirData.length / 32);
+                for (let i = 0; i < maxEntries; i++) {
+                    const entryBase = i * 32;
+                    const user = dirData[entryBase];
+                    if (user === 0xE5 || user > 15) continue;
+                    // Allocation block numbers (single byte each)
+                    for (let j = 16; j < 32; j++) {
+                        if (dirData[entryBase + j] !== 0) {
+                            used.add(dirData[entryBase + j]);
+                        }
+                    }
+                }
+            }
+
+            // Total blocks: (totalDataTracks * sectorsPerTrack * sectorSize) / blockSize
+            const sectorSize = spec.sectorSize || 512;
+            const sectorsPerTrack = spec.sectorsPerTrack || 9;
+            const reservedTracks = spec.reservedTracks || 1;
+            const dataTracks = (dskImage.numTracks * dskImage.numSides) - reservedTracks;
+            const totalBlocks = Math.floor((dataTracks * sectorsPerTrack * sectorSize) / spec.blockSize);
+
+            return {
+                used,
+                totalBlocks,
+                freeBlocks: totalBlocks - used.size
+            };
+        }
+
+        /**
+         * Write directory data back to a DSK image.
+         * Inverse of _readDirectory() — writes dirData to the correct track/sector positions.
+         * @param {DSKImage} dskImage
+         * @param {object} spec - Disk specification from getDiskSpec()
+         * @param {Uint8Array} dirData - Modified directory data to write back
+         */
+        static writeDirectory(dskImage, spec, dirData) {
+            const dirTrackNum = spec.reservedTracks;
+            const dirBlocks = spec.dirBlocks || 2;
+            const totalDirBytes = dirBlocks * spec.blockSize;
+
+            let pos = 0;
+            let currentTrack = dirTrackNum;
+            let sectorIdx = 0;
+
+            while (pos < totalDirBytes && pos < dirData.length) {
+                const track = dskImage.getTrack(currentTrack, 0);
+                if (!track || track.sectors.length === 0) break;
+                const tSorted = [...track.sectors].sort((a, b) => a.id - b.id);
+                if (sectorIdx >= tSorted.length) {
+                    currentTrack++;
+                    sectorIdx = 0;
+                    continue;
+                }
+                const sec = tSorted[sectorIdx];
+                const copyLen = Math.min(sec.data.length, totalDirBytes - pos);
+                sec.data.set(dirData.subarray(pos, pos + copyLen));
+                pos += sec.data.length;
+                sectorIdx++;
+            }
         }
     }
 

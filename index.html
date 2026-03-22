@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" id="metaColorScheme" content="dark">
     <script>if(localStorage.getItem('zxm8_theme')==='light')document.getElementById('metaColorScheme').content='light';</script>
-    <title>ZX-M8XXX v0.9.50</title>
+    <title>ZX-M8XXX v0.9.6</title>
     <style>
         * { box-sizing: border-box; }
         .hidden { display: none !important; }
@@ -3513,6 +3513,125 @@
         .explorer-block-details .filename {
             color: #2ecc71;
         }
+        /* TAP Editor block rows */
+        .editor-block-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 6px;
+            border-bottom: 1px solid var(--bg-button);
+            font-size: 11px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            cursor: pointer;
+            user-select: none;
+        }
+        .editor-block-row:hover { background: var(--bg-tertiary); }
+        .editor-block-row.selected { background: var(--bg-button); }
+        .editor-block-row.selected:hover { background: var(--bg-button-hover); }
+        .editor-block-row.header-row { border-left: 3px solid var(--cyan); }
+        .editor-block-row.data-row { border-left: 3px solid #7f8c8d; }
+        .editor-block-row.data-row.pair { border-left-color: var(--cyan); opacity: 0.8; }
+        .editor-block-info { flex: 1; color: var(--text-primary); }
+        .editor-block-info .dim { color: var(--text-secondary); }
+        .editor-block-info .name { color: var(--cyan); }
+        .editor-block-info .addr { color: var(--accent); }
+        .editor-block-info .ok { color: #2ecc71; }
+        .editor-block-info .bad { color: #e74c3c; }
+        .editor-inline-edit {
+            display: flex; gap: 6px; align-items: center;
+            padding: 4px 6px; background: var(--bg-primary); border-radius: 3px;
+            flex-wrap: wrap; border-left: 3px solid var(--accent);
+        }
+        .editor-inline-edit input { width: 100px; font-size: 11px; }
+        .editor-inline-edit select { font-size: 11px; }
+        .editor-inline-edit label { color: var(--text-secondary); font-size: 11px; }
+        .editor-inline-edit .editor-apply-btn {
+            background: var(--bg-button); border: 1px solid var(--bg-button); color: var(--text-primary);
+            cursor: pointer; padding: 2px 6px; font-size: 11px; border-radius: 3px;
+        }
+        .editor-inline-edit .editor-apply-btn:hover { background: var(--bg-tertiary); }
+        /* Disk editor rows */
+        .editor-block-row.disk-row { border-left: 3px solid var(--cyan); }
+        .editor-block-row.disk-row.disk-deleted {
+            border-left-color: #7f8c8d;
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .editor-block-row.disk-row.disk-deleted.selected { opacity: 0.7; }
+        .editor-block-row.disk-label-row {
+            border-left: 3px solid var(--accent);
+            color: var(--text-secondary);
+            font-size: 10px;
+            cursor: default;
+        }
+        .editor-block-row.disk-label-row:hover { background: transparent; }
+        .editor-block-info .file-ext { color: var(--accent); margin-right: 4px; display: inline-block; width: 1.2em; }
+        .editor-block-info .file-name { color: var(--cyan); }
+        .editor-block-info .file-addr { color: var(--accent); }
+        .editor-block-info .file-size { color: var(--text-secondary); }
+        .editor-block-info .file-sectors { color: var(--text-secondary); }
+        .editor-block-row.dsk-row { border-left: 3px solid var(--cyan); }
+        .editor-block-row.dsk-row .file-user { color: var(--text-secondary); font-size: 10px; }
+        .editor-block-row.dsk-row .file-plus3type { color: var(--accent); margin-right: 4px; display: inline-block; width: 4em; }
+        .editor-block-row.dsk-info-row { border-left: 3px solid var(--accent); color: var(--text-secondary); font-size: 10px; cursor: default; }
+        .editor-block-row.dsk-info-row:hover { background: transparent; }
+        .editor-block-row.nonstandard-row { border-left: 3px solid #555; opacity: 0.5; cursor: default; }
+        .editor-block-row.nonstandard-row:hover { background: transparent; }
+        /* Dual-panel editor */
+        .editor-panels {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            overflow: hidden;
+        }
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 80px;
+            border: 1px solid var(--bg-button);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .editor-panel.active { border-color: var(--cyan); }
+        .editor-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 6px;
+            background: var(--bg-secondary);
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .editor-panel.active .editor-panel-header {
+            background: var(--bg-button);
+            color: var(--text-primary);
+        }
+        .editor-panel-format {
+            font-weight: bold;
+            color: var(--cyan);
+            min-width: 28px;
+        }
+        .editor-panel-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .editor-panel-filelist {
+            flex: 1;
+            overflow: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            padding: 2px;
+        }
+        /* Landscape: side-by-side */
+        @media (min-width: 1400px) {
+            .editor-panels { flex-direction: row; }
+        }
         /* TRD/SCL file list - compact table-like layout */
         .explorer-file-list {
             display: table;
@@ -4455,6 +4574,8 @@
         .trigger-icon.tape_block { color: #f0a030; }
         .trigger-icon.disk_read { color: #40d040; }
         .trigger-icon.disk_sector { color: #40d040; }
+        .trigger-icon.screen_bitmap { color: var(--warning); }
+        .trigger-icon.screen_attr { color: #ff80ff; }
         .trigger-desc {
             flex: 1;
             color: var(--accent);
@@ -6295,10 +6416,11 @@
                 <option value="sna">SNA</option>
                 <option value="z80">Z80</option>
                 <option value="szx">SZX</option>
+                <option value="dsk">DSK</option>
                 <option value="project">Project</option>
                 <option value="quick">Quick (F2)</option>
             </select>
-            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.50 — Help">Help</button>
+            <button id="btnHelpFull" class="test-link" title="ZX-M8XXX v0.9.6 — Help">Help</button>
             <button id="themeToggle" class="theme-btn" title="Toggle light/dark theme">☀️</button>
 
         </div>
@@ -6680,10 +6802,17 @@
                                 <option value="tape_block">Tape Block</option>
                                 <option value="disk_read">Disk Read</option>
                                 <option value="disk_sector">Disk Sector</option>
+                                <option value="screen_bitmap">Write Bitmap</option>
+                                <option value="screen_attr">Write Attr</option>
                             </select>
-                            <input type="text" id="triggerAddrInput" placeholder="ADDR" maxlength="15" title="Examples: 4000, 4000-4FFF, 5:C000, FE&FF">
+                            <input type="text" id="triggerAddrInput" placeholder="ADDR" maxlength="15" title="Examples: 4000, 4000-4FFF, 5:C000, FE&FF"><label id="triggerPxLabel" class="hidden" style="font-size:11px;margin:0 5px 0 0;cursor:pointer;display:inline-flex;align-items:center;gap:1px;"><input type="checkbox" id="triggerPxMode" style="margin:0;padding:0;width:12px;height:12px;">px</label>
                             <input type="text" id="triggerCondInput" placeholder="if..." maxlength="30" title="Condition: A==0, val==FF, port&FE==FE">
                             <input type="number" id="triggerSkipInput" placeholder="skip" min="0" value="0" title="Skip count: number of hits to skip before breaking" style="width: 45px;">
+                            <select id="triggerScreenSelect" class="hidden" title="Screen target" style="width: auto;">
+                                <option value="normal">Normal</option>
+                                <option value="shadow">Shadow</option>
+                                <option value="both">Both</option>
+                            </select>
                             <button id="btnAddTrigger" title="Add breakpoint/watchpoint">+</button>
                             <button id="btnClearTriggers" title="Clear all triggers">Clear</button>
                         </div>
@@ -7568,7 +7697,7 @@ start:
             <div class="explorer-container">
                 <!-- Controls Row -->
                 <div class="explorer-controls">
-                    <input type="file" id="explorerFileInput" accept=".tap,.tzx,.sna,.z80,.szx,.rzx,.trd,.scl,.dsk,.zip" style="display:none">
+                    <input type="file" id="explorerFileInput" accept=".tap,.tzx,.sna,.z80,.szx,.rzx,.trd,.scl,.dsk,.zip,.$b,.$c,.$d,.$#,.hobeta" style="display:none">
                     <button id="btnExplorerLoad" class="explorer-btn primary">Load File</button>
                     <span id="explorerFileName" class="explorer-file-info">No file loaded</span>
                     <span id="explorerFileSize" class="explorer-file-size"></span>
@@ -7580,6 +7709,7 @@ start:
                     <button class="explorer-subtab" data-subtab="basic">BASIC</button>
                     <button class="explorer-subtab" data-subtab="disasm">Disasm</button>
                     <button class="explorer-subtab" data-subtab="hexdump">Hex Dump</button>
+                    <button class="explorer-subtab" data-subtab="edit">Edit</button>
                 </div>
 
                 <!-- Sub-tab Content -->
@@ -7640,9 +7770,189 @@ start:
                             <span class="explorer-empty">Select a source and click View</span>
                         </div>
                     </div>
+
+                    <!-- Edit Sub-tab -->
+                    <div class="explorer-subtab-content" id="explorer-edit" style="display:none">
+                        <!-- Shared toolbar -->
+                        <div id="editorSharedToolbar" class="explorer-controls" style="margin-bottom:4px">
+                            <select id="editorNewFormat" class="explorer-btn" style="font-size:12px;padding:5px 6px;border-radius:4px;border:none;background:var(--bg-button);color:var(--text-primary);cursor:pointer">
+                                <option value="" disabled selected>New</option>
+                                <option value="tap">TAP</option>
+                                <option value="tzx">TZX</option>
+                                <option value="trd">TRD</option>
+                                <option value="scl">SCL</option>
+                                <option value="dsk">DSK</option>
+                            </select>
+                            <button id="btnEditorAddFile" class="explorer-btn">Add File</button>
+                            <button id="btnEditorSave" class="explorer-btn primary">Save</button>
+                            <button id="btnEditorMoveUp" class="explorer-btn" disabled style="min-width:0;padding:4px 8px">&#9650;</button>
+                            <button id="btnEditorMoveDown" class="explorer-btn" disabled style="min-width:0;padding:4px 8px">&#9660;</button>
+                            <button id="btnEditorDel" class="explorer-btn" disabled>Delete</button>
+                            <button id="btnEditorMarkDel" class="explorer-btn" disabled style="display:none">Mark Del</button>
+                            <button id="btnEditorExtract" class="explorer-btn" disabled>Extract</button>
+                            <select id="editorExtractDisk" class="explorer-btn" style="display:none;font-size:12px;padding:5px 6px;border-radius:4px;border:none;background:var(--bg-button);color:var(--text-primary);cursor:pointer" disabled>
+                                <option value="" disabled selected>Extract</option>
+                                <option value="bin">Extract bin</option>
+                                <option value="hobeta">Extract Hobeta</option>
+                            </select>
+                            <button id="btnEditorCopy" class="explorer-btn" disabled title="Copy selected files to other panel">Copy &#9654;</button>
+                            <label id="editorLinkLabel" style="font-size:11px;color:var(--text-secondary);cursor:pointer;user-select:none" title="Select header+data blocks together">
+                                <input type="checkbox" id="editorPairLock" checked style="vertical-align:middle;margin-right:2px">Link header
+                            </label>
+                            <input type="file" id="editorPanelFileInput" style="display:none">
+                        </div>
+
+                        <!-- Dual panel container -->
+                        <div class="editor-panels" id="editorPanels">
+                            <div class="editor-panel active" id="editorPanelLeft" data-panel="left">
+                                <div class="editor-panel-header" data-panel="left">
+                                    <span class="editor-panel-format"></span>
+                                    <span class="editor-panel-name">Empty</span>
+                                    <span class="editor-panel-status" style="margin-left:auto"></span>
+                                </div>
+                                <div class="editor-panel-filelist" data-panel="left"></div>
+                            </div>
+                            <div class="editor-panel" id="editorPanelRight" data-panel="right">
+                                <div class="editor-panel-header" data-panel="right">
+                                    <span class="editor-panel-format"></span>
+                                    <span class="editor-panel-name">Empty</span>
+                                    <span class="editor-panel-status" style="margin-left:auto"></span>
+                                </div>
+                                <div class="editor-panel-filelist" data-panel="right"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             </div><!-- tools-explorer -->
+
+            <!-- Add File Dialog -->
+            <div id="tapAddDialog" class="modal-overlay hidden">
+                <div class="modal" style="max-width:340px;padding:20px">
+                    <h2 style="font-size:14px;margin-bottom:12px">Add Block</h2>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Type:</label>
+                        <select id="tapAddType" style="font-size:12px;margin-left:4px">
+                            <option value="3">Bytes (CODE)</option>
+                            <option value="0">Program (BASIC)</option>
+                            <option value="1">Number array</option>
+                            <option value="2">Character array</option>
+                            <option value="-1">Headerless (raw data)</option>
+                        </select>
+                    </div>
+                    <div id="tapAddNameRow" style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Filename:</label>
+                        <input type="text" id="tapAddName" maxlength="10" value="" placeholder="10 chars max" style="width:120px;font-size:12px;margin-left:4px">
+                    </div>
+                    <div id="tapAddAddrRow" style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Start address:</label>
+                        <input type="text" id="tapAddAddr" value="8000" maxlength="4" style="width:60px;font-size:12px;margin-left:4px" placeholder="hex">
+                    </div>
+                    <div id="tapAddAutoRow" style="margin-bottom:8px;display:none">
+                        <label style="color:var(--text-secondary);font-size:11px">Autostart line:</label>
+                        <input type="number" id="tapAddAuto" value="" min="0" max="9999" style="width:60px;font-size:12px;margin-left:4px" placeholder="none">
+                    </div>
+                    <div id="tapAddVarRow" style="margin-bottom:8px;display:none">
+                        <label style="color:var(--text-secondary);font-size:11px">Variable:</label>
+                        <input type="text" id="tapAddVar" maxlength="1" value="A" style="width:24px;font-size:12px;margin-left:4px;text-transform:uppercase">
+                    </div>
+                    <div id="tapAddFlagRow" style="margin-bottom:8px;display:none">
+                        <label style="color:var(--text-secondary);font-size:11px">Flag byte:</label>
+                        <input type="text" id="tapAddFlag" value="FF" maxlength="2" style="width:32px;font-size:12px;margin-left:4px" placeholder="hex">
+                    </div>
+                    <div id="tapAddPauseRow" style="margin-bottom:8px;display:none">
+                        <label style="color:var(--text-secondary);font-size:11px">Pause (ms):</label>
+                        <input type="number" id="tapAddPause" value="1000" min="0" max="65535" style="width:70px;font-size:12px;margin-left:4px">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <span id="tapAddFileInfo" class="explorer-file-size"></span>
+                    </div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button id="btnTapAddOk" class="explorer-btn primary">Add</button>
+                        <button id="btnTapAddCancel" class="explorer-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disk Add File Dialog -->
+            <div id="diskAddDialog" class="modal-overlay hidden">
+                <div class="modal" style="max-width:340px;padding:20px">
+                    <h2 style="font-size:14px;margin-bottom:12px">Add Disk File</h2>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Filename:</label>
+                        <input type="text" id="diskAddName" maxlength="8" value="" placeholder="8 chars max" style="width:100px;font-size:12px;margin-left:4px">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Extension:</label>
+                        <select id="diskAddExt" style="font-size:12px;margin-left:4px">
+                            <option value="C">C (Code)</option>
+                            <option value="B">B (BASIC)</option>
+                            <option value="D">D (Data)</option>
+                            <option value="#"># (Sequential)</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Start address:</label>
+                        <input type="text" id="diskAddAddr" value="8000" maxlength="4" style="width:60px;font-size:12px;margin-left:4px" placeholder="hex">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <span id="diskAddFileInfo" class="explorer-file-size"></span>
+                    </div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button id="btnDiskAddOk" class="explorer-btn primary">Add</button>
+                        <button id="btnDiskAddCancel" class="explorer-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DSK Add File Dialog -->
+            <div id="dskAddDialog" class="modal-overlay hidden">
+                <div class="modal" style="max-width:360px;padding:20px">
+                    <h2 style="font-size:14px;margin-bottom:12px">Add +3DOS File</h2>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Filename:</label>
+                        <input type="text" id="dskAddName" maxlength="8" value="" placeholder="8 chars max" style="width:100px;font-size:12px;margin-left:4px">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Extension:</label>
+                        <input type="text" id="dskAddExt" maxlength="3" value="" placeholder="3 chars" style="width:50px;font-size:12px;margin-left:4px">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Type:</label>
+                        <select id="dskAddType" style="font-size:12px;margin-left:4px">
+                            <option value="3">CODE</option>
+                            <option value="0">BASIC</option>
+                            <option value="-1">Raw (no +3DOS header)</option>
+                        </select>
+                    </div>
+                    <div id="dskAddAddrRow" style="margin-bottom:8px">
+                        <label style="color:var(--text-secondary);font-size:11px">Load address:</label>
+                        <input type="text" id="dskAddAddr" value="8000" maxlength="4" style="width:60px;font-size:12px;margin-left:4px" placeholder="hex">
+                    </div>
+                    <div id="dskAddAutoRow" style="margin-bottom:8px;display:none">
+                        <label style="color:var(--text-secondary);font-size:11px">Autostart line:</label>
+                        <input type="number" id="dskAddAuto" value="" min="0" max="9999" style="width:60px;font-size:12px;margin-left:4px" placeholder="none">
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <span id="dskAddFileInfo" class="explorer-file-size"></span>
+                    </div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button id="btnDskAddOk" class="explorer-btn primary">Add</button>
+                        <button id="btnDskAddCancel" class="explorer-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZIP File Picker Dialog -->
+            <div id="zipPickDialog" class="modal-overlay hidden">
+                <div class="modal" style="max-width:360px;padding:20px">
+                    <h2 style="font-size:14px;margin-bottom:12px">Select file from ZIP</h2>
+                    <div id="zipPickList" style="max-height:300px;overflow-y:auto;margin-bottom:12px"></div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button id="btnZipPickCancel" class="explorer-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Export Sub-tab -->
             <div class="tools-subtab-content" id="tools-export">
@@ -8026,8 +8336,10 @@ start:
                                     <tr><td>1</td><td>Left</td></tr>
                                     <tr><td>2</td><td>Down</td></tr>
                                     <tr><td>3</td><td>Up</td></tr>
-                                    <tr><td>4</td><td>Fire</td></tr>
-                                    <tr><td>5-7</td><td>Not used (typically 0)</td></tr>
+                                    <tr><td>4</td><td>Fire (B)</td></tr>
+                                    <tr><td>5</td><td>C button (extended)</td></tr>
+                                    <tr><td>6</td><td>A button (extended)</td></tr>
+                                    <tr><td>7</td><td>Start button (extended)</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -9134,7 +9446,7 @@ start:
     import { initDisasmNavigation } from './ui/disasm-navigation.js';
     import { initLabelsPanel } from './ui/labels-panel.js';
     import { initPsgPlayer } from './ui/psg-player.js';
-        const APP_VERSION = '0.9.50';
+        const APP_VERSION = '0.9.6';
         console.log('ZX-M8XXX v' + APP_VERSION);
 
 
@@ -9724,7 +10036,7 @@ start:
 
 
         // Explorer (extracted to explorer.js)
-        initExplorer({
+        const explorerAPI = initExplorer({
             DSKLoader, Disassembler, SZXLoader, RZXLoader, ZipLoader,
             pako: window.pako,
             getPalette: () => spectrum?.ula?.palette || null,
@@ -10077,6 +10389,35 @@ start:
                 saveProject();
             } else if (action === 'quick') {
                 displayAPI.quicksave();
+            } else if (action === 'dsk') {
+                try {
+                    if (!spectrum.fdc) {
+                        showMessage('DSK save requires ZX Spectrum +3', 'error');
+                        return;
+                    }
+                    // Find first drive with a disk
+                    let driveIdx = -1;
+                    for (let i = 0; i < 2; i++) {
+                        if (spectrum.fdc.drives[i].disk) { driveIdx = i; break; }
+                    }
+                    if (driveIdx < 0) {
+                        showMessage('No disk in FDC drive', 'error');
+                        return;
+                    }
+                    const dskImage = spectrum.fdc.drives[driveIdx].disk;
+                    const data = dskImage.toBuffer();
+                    const name = (spectrum.loadedFDCDisks[driveIdx] && spectrum.loadedFDCDisks[driveIdx].name) || 'disk.dsk';
+                    const blob = new Blob([data], { type: 'application/octet-stream' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = name.toLowerCase().endsWith('.dsk') ? name : name + '.dsk';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showMessage(`DSK saved (drive ${String.fromCharCode(65 + driveIdx)})`);
+                } catch (err) {
+                    showMessage('Failed to save DSK: ' + err.message, 'error');
+                }
             } else {
                 // Save snapshot (sna, z80, szx)
                 try {
@@ -10192,7 +10533,15 @@ start:
         const mediaCatalogAPI = initMediaCatalog({
             getSpectrum: () => spectrum,
             showMessage,
-            updateDriveSelector: (...args) => updateDriveSelector(...args)
+            updateDriveSelector: (...args) => updateDriveSelector(...args),
+            openInExplorer: async (data, filename) => {
+                await explorerAPI.loadData(data, filename);
+                // Switch to Utils main tab
+                const utilsBtn = document.querySelector('.tab-btn[data-tab="tools"]');
+                if (utilsBtn && !utilsBtn.classList.contains('active')) utilsBtn.click();
+                // Switch to Explorer sub-tab
+                document.querySelector('.tools-subtab-btn[data-toolstab="explorer"]').click();
+            }
         });
 
         // Auto-Loader (extracted to ui/auto-loader.js)

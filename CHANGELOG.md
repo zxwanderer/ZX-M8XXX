@@ -2,6 +2,27 @@
 
 All notable changes to ZX-M8XXX are documented in this file.
 
+## v0.9.6
+- **Dual-Panel File Editor**: Explorer Edit tab — Norton Commander-style dual-panel interface for TAP, TZX, TRD/SCL, and DSK formats. Create, edit, reorder, delete, extract, and save blocks/files. Cross-panel copy with automatic format conversion. Inline editing via double-click. ZIP archives transparently unwrapped.
+- **TZX Editor**: Standard speed blocks use the same workflow as TAP. Non-standard blocks (turbo, pure tone, metadata, etc.) preserved as read-only rows with full round-trip save/load. Editable per-block pause values.
+- **DSK Write Persistence**: +3 games can save to disk. FDC writes preserved across project save/load.
+- **Hobeta Support**: Full import/export support for Hobeta files (.$B, .$C, .$D, .$#, .hobeta) — the standard single-file exchange format for TR-DOS files.
+  - **Extract dropdown**: The Extract button is replaced by a dropdown with "Extract bin" (raw binary) and "Extract Hobeta" options, available for all panel types (TAP, TZX, TRD/SCL, DSK). Linked header+data pairs in TAP/TZX produce a single Hobeta file (header metadata embedded in the Hobeta wrapper).
+  - **Add File**: Hobeta files dropped onto TRD/SCL panels are auto-detected — the 17-byte header is stripped and filename, extension, and start address are pre-filled in the add dialog.
+  - **Explorer**: Hobeta files can be opened directly in the Explorer for analysis (File Info, BASIC decode, Disasm, Hex Dump, screen preview).
+- **DSK Boot Sector Fix**: Fixed +3DOS boot sector disk specification byte layout — an extra `firstSectorId` byte at position 4 shifted all subsequent fields, causing external tools (ZX-Blockeditor, etc.) to show files as "HEADERLESS". Also fixed checksum formula (sum ≡ 3 mod 256) and disk type byte.
+- **DSK Directory Fix**: Removed non-standard CP/M byte 13 (S1) write from directory entries — +3DOS uses CP/M 2.2 where S1 must be 0.
+- **TR-DOS BASIC Fix**: Fixed BASIC file autostart field in cross-panel copy — TR-DOS bytes 9-10 are program body length, not autostart (autostart is embedded in the BASIC data).
+
+## v0.9.52
+- **Screen Region Write Breakpoints**: New "Write Bitmap" and "Write Attr" trigger types break on writes to rectangular screen regions. Cell mode (col, row, width, height in character cells) or pixel mode (x, y, w, h in pixels — bitmap only). Supports Normal screen (page 5), Shadow screen (page 7), or Both. Uses precomputed address Sets for O(1) lookup with zero overhead when no screen triggers are set. Saved/restored in projects.
+- **Media Catalog → Explorer**: Double-click a tape block or disk file in Settings → Media catalog to open the full tape/disk image in Utils → Explorer for analysis (BASIC decode, disassembly, hex dump).
+- **Kempston Info**: Utils → Info now documents extended Kempston buttons (bits 5-7: C, A, Start) instead of showing "Not used".
+- **TZX Explorer**: Standard speed blocks in TZX files now support BASIC decoding, disassembly, and hex dump in Explorer — same as TAP files. Click a Program header to decode BASIC, a Bytes header to disassemble, or a data block to view hex.
+
+## v0.9.51
+- **Boot File Injection**: Fixed Hobeta boot files being rejected when the internal filename wasn't literally "boot". A Hobeta file selected as boot source is now always accepted — the injection writes the name as "boot" regardless of the original filename.
+
 ## v0.9.50
 - **GIF Export**: Fixed all-black frames when recording starts from a black screen. Each frame now uses a local color table instead of relying on the first frame's palette as the global table.
 - **Disk Auto-Load**: Fixed filenames with special characters (hyphens, punctuation) being silently stripped during TR-DOS RUN command injection. All Symbol Shift characters are now supported.

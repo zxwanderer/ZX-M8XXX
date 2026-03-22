@@ -142,6 +142,12 @@ import { Disassembler } from './disasm.js';
             this.onTrigger = null; // Unified callback for all trigger types
             // Fast O(1) lookup Set for exec breakpoints (rebuilt when triggers change)
             this.execBreakpointSet = new Set();
+            // Fast O(1) lookup Sets for screen region write breakpoints
+            this.screenNormalBitmapSet = new Set();
+            this.screenNormalAttrSet = new Set();
+            this.screenShadowBitmapSet = new Set();
+            this.screenShadowAttrSet = new Set();
+            this._hasScreenTriggers = false;
 
             // Legacy arrays - now views into unified triggers for backward compatibility
             this.breakpoints = [];
@@ -332,6 +338,15 @@ import { Disassembler } from './disasm.js';
                         newVal: val,
                         frame: this.totalFrames
                     });
+                }
+                // Screen region write breakpoints
+                if (this._hasScreenTriggers && !this._suppressWatchpoints) {
+                    if (this.screenNormalBitmapSet.has(addr) || this.screenNormalAttrSet.has(addr)) {
+                        this._checkScreenTrigger(addr, val, false);
+                    } else if ((this.screenShadowBitmapSet.has(addr) || this.screenShadowAttrSet.has(addr)) &&
+                               this._isWritingToPage7(addr)) {
+                        this._checkScreenTrigger(addr, val, true);
+                    }
                 }
                 // Multicolor: disabled (known limitation - see README)
                 if (this.triggers.length > 0 && !this._suppressWatchpoints) this.checkWriteWatchpoint(addr, val);
@@ -4848,12 +4863,13 @@ import { Disassembler } from './disasm.js';
          */
         addTrigger(trigger) {
             const isMedia = trigger.type === 'tape_block' || trigger.type === 'disk_read' || trigger.type === 'disk_sector';
+            const isScreen = trigger.type === 'screen_bitmap' || trigger.type === 'screen_attr';
 
             // Normalize trigger
             const t = {
                 type: trigger.type || 'exec',
-                start: isMedia ? (trigger.start || 0) : trigger.start & 0xffff,
-                end: isMedia ? (trigger.end !== undefined ? trigger.end : 0) : (trigger.end !== undefined ? trigger.end : trigger.start) & 0xffff,
+                start: isMedia || isScreen ? (trigger.start || 0) : trigger.start & 0xffff,
+                end: isMedia || isScreen ? (trigger.end !== undefined ? trigger.end : 0) : (trigger.end !== undefined ? trigger.end : trigger.start) & 0xffff,
                 page: trigger.page !== undefined ? trigger.page : null,
                 mask: trigger.mask !== undefined ? trigger.mask : 0xffff,
                 condition: trigger.condition || '',
@@ -4863,6 +4879,18 @@ import { Disassembler } from './disasm.js';
                 log: trigger.log || false,
                 name: trigger.name || ''
             };
+
+            // Screen trigger properties
+            if (isScreen) {
+                t.col = trigger.col || 0;
+                t.row = trigger.row || 0;
+                t.w = trigger.w || 1;
+                t.h = trigger.h || 1;
+                t.pixelMode = trigger.pixelMode || false;
+                t.screen = trigger.screen || 'normal';
+                t.start = 0;
+                t.end = 0;
+            }
 
             // For port types, default mask based on port value
             if (t.type.startsWith('port') && trigger.mask === undefined) {
@@ -4886,6 +4914,18 @@ import { Disassembler } from './disasm.js';
                         if (t.skipCount !== existing.skipCount) {
                             existing.skipCount = t.skipCount;
                             existing.hitCount = 0;
+                        }
+                        return this.triggers.indexOf(existing);
+                    }
+                    continue;
+                }
+                // Screen triggers: same col/row/w/h/screen = duplicate
+                if (isScreen) {
+                    if (existing.col === t.col && existing.row === t.row &&
+                        existing.w === t.w && existing.h === t.h &&
+                        existing.screen === t.screen && existing.pixelMode === t.pixelMode) {
+                        if (t.condition && t.condition !== existing.condition) {
+                            existing.condition = t.condition;
                         }
                         return this.triggers.indexOf(existing);
                     }
@@ -4932,6 +4972,10 @@ import { Disassembler } from './disasm.js';
                 // Rebuild exec breakpoint Set if this is an exec trigger
                 if (this.triggers[index].type === 'exec') {
                     this._rebuildExecBreakpointSet();
+                }
+                // Rebuild screen breakpoint Sets if this is a screen trigger
+                if (this.triggers[index].type === 'screen_bitmap' || this.triggers[index].type === 'screen_attr') {
+                    this._rebuildScreenBreakpointSets();
                 }
                 return this.triggers[index].enabled;
             }
@@ -4985,6 +5029,22 @@ import { Disassembler } from './disasm.js';
                 if (t.condition) str += ' if ' + t.condition;
                 return str;
             }
+            if (t.type === 'screen_bitmap') {
+                str = t.pixelMode
+                    ? `SCR px:${t.col},${t.row} ${t.w}\u00D7${t.h}`
+                    : `SCR ${t.col},${t.row} ${t.w}\u00D7${t.h}`;
+                if (t.screen === 'shadow') str += ' (shadow)';
+                else if (t.screen === 'both') str += ' (both)';
+                if (t.condition) str += ' if ' + t.condition;
+                return str;
+            }
+            if (t.type === 'screen_attr') {
+                str = `ATTR ${t.col},${t.row} ${t.w}\u00D7${t.h}`;
+                if (t.screen === 'shadow') str += ' (shadow)';
+                else if (t.screen === 'both') str += ' (both)';
+                if (t.condition) str += ' if ' + t.condition;
+                return str;
+            }
 
             const isPort = t.type.startsWith('port');
 
@@ -5028,7 +5088,9 @@ import { Disassembler } from './disasm.js';
                 port_io: '⇔',
                 tape_block: 'T',
                 disk_read: 'D',
-                disk_sector: 'S'
+                disk_sector: 'S',
+                screen_bitmap: '\u25A6',
+                screen_attr: '\u25A4'
             };
             return icons[type] || '?';
         }
@@ -5047,7 +5109,9 @@ import { Disassembler } from './disasm.js';
                 port_io: 'Port I/O',
                 tape_block: 'Tape Block',
                 disk_read: 'Disk Read',
-                disk_sector: 'Disk Sector'
+                disk_sector: 'Disk Sector',
+                screen_bitmap: 'Write Bitmap',
+                screen_attr: 'Write Attr'
             };
             return labels[type] || type;
         }
@@ -5211,6 +5275,9 @@ import { Disassembler } from './disasm.js';
 
             // Rebuild fast exec breakpoint Set
             this._rebuildExecBreakpointSet();
+
+            // Rebuild screen breakpoint Sets
+            this._rebuildScreenBreakpointSets();
         }
 
         /**
@@ -5225,6 +5292,157 @@ import { Disassembler } from './disasm.js';
                     for (let addr = t.start; addr <= end; addr++) {
                         this.execBreakpointSet.add(addr);
                     }
+                }
+            }
+        }
+
+        /**
+         * Rebuild the screen breakpoint address Sets from screen triggers
+         */
+        _rebuildScreenBreakpointSets() {
+            this.screenNormalBitmapSet.clear();
+            this.screenNormalAttrSet.clear();
+            this.screenShadowBitmapSet.clear();
+            this.screenShadowAttrSet.clear();
+            this._hasScreenTriggers = false;
+
+            for (const t of this.triggers) {
+                if (!t.enabled) continue;
+                if (t.type === 'screen_bitmap') {
+                    this._addBitmapAddresses(t);
+                    this._hasScreenTriggers = true;
+                } else if (t.type === 'screen_attr') {
+                    this._addAttrAddresses(t);
+                    this._hasScreenTriggers = true;
+                }
+            }
+
+            // Enable memory write callback if screen triggers exist
+            if (this._hasScreenTriggers) {
+                this.updateMemoryCallbacksFlag();
+            }
+        }
+
+        /**
+         * Compute and add bitmap addresses for a screen_bitmap trigger
+         */
+        _addBitmapAddresses(t) {
+            const addNormal = t.screen === 'normal' || t.screen === 'both';
+            const addShadow = t.screen === 'shadow' || t.screen === 'both';
+
+            if (t.pixelMode) {
+                // Pixel mode: col=x, row=y, w=pixel width, h=pixel height
+                const startCol = t.col >> 3;
+                const endCol = (t.col + t.w - 1) >> 3;
+                for (let y = t.row; y < t.row + t.h; y++) {
+                    for (let col = startCol; col <= endCol; col++) {
+                        const offset = ((y & 0xC0) << 5) | ((y & 0x07) << 8) | ((y & 0x38) << 2) | col;
+                        if (addNormal) this.screenNormalBitmapSet.add(0x4000 + offset);
+                        if (addShadow) this.screenShadowBitmapSet.add(0xC000 + offset);
+                    }
+                }
+            } else {
+                // Cell mode: col/row are character cells, iterate all 8 pixel rows per cell row
+                for (let cellRow = t.row; cellRow < t.row + t.h; cellRow++) {
+                    for (let pixRow = 0; pixRow < 8; pixRow++) {
+                        const y = cellRow * 8 + pixRow;
+                        for (let col = t.col; col < t.col + t.w; col++) {
+                            const offset = ((y & 0xC0) << 5) | ((y & 0x07) << 8) | ((y & 0x38) << 2) | col;
+                            if (addNormal) this.screenNormalBitmapSet.add(0x4000 + offset);
+                            if (addShadow) this.screenShadowBitmapSet.add(0xC000 + offset);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Compute and add attribute addresses for a screen_attr trigger
+         */
+        _addAttrAddresses(t) {
+            const addNormal = t.screen === 'normal' || t.screen === 'both';
+            const addShadow = t.screen === 'shadow' || t.screen === 'both';
+
+            for (let row = t.row; row < t.row + t.h; row++) {
+                for (let col = t.col; col < t.col + t.w; col++) {
+                    const offset = row * 32 + col;
+                    if (addNormal) this.screenNormalAttrSet.add(0x5800 + offset);
+                    if (addShadow) this.screenShadowAttrSet.add(0xD800 + offset);
+                }
+            }
+        }
+
+        /**
+         * Check if a logical address write is going to physical RAM page 7
+         */
+        _isWritingToPage7(addr) {
+            const mem = this.memory;
+            if (mem.specialPagingMode) {
+                const slot = addr >> 14;
+                return mem.specialBanks[slot] === 7;
+            }
+            // Shadow screen at $C000 only when page 7 is banked in at slot 3
+            return addr >= SLOT3_START && mem.currentRamBank === 7;
+        }
+
+        /**
+         * Check screen trigger match and fire watchpoint hit
+         */
+        _checkScreenTrigger(addr, val, isShadow) {
+            if (!this.running) return;
+            const isBitmap = isShadow
+                ? this.screenShadowBitmapSet.has(addr)
+                : this.screenNormalBitmapSet.has(addr);
+
+            // Decode address back to coordinates for per-trigger region check
+            const base = isShadow ? (isBitmap ? 0xC000 : 0xD800) : (isBitmap ? 0x4000 : 0x5800);
+            const offset = addr - base;
+            let addrCol, addrRow;
+            if (isBitmap) {
+                // Reverse bitmap address: offset = ((y&0xC0)<<5)|((y&0x07)<<8)|((y&0x38)<<2)|col
+                addrCol = offset & 0x1F;
+                addrRow = ((offset >> 5) & 0xC0) | ((offset >> 8) & 0x07) | ((offset >> 2) & 0x38);
+            } else {
+                // Reverse attr address: offset = row*32 + col
+                addrCol = offset & 0x1F;
+                addrRow = offset >> 5;
+            }
+
+            for (const t of this.triggers) {
+                if (!t.enabled) continue;
+                if (isBitmap && t.type !== 'screen_bitmap') continue;
+                if (!isBitmap && t.type !== 'screen_attr') continue;
+                // Check screen match
+                if (isShadow && t.screen === 'normal') continue;
+                if (!isShadow && t.screen === 'shadow') continue;
+                // Check if address falls within this trigger's region
+                if (isBitmap && t.type === 'screen_bitmap') {
+                    if (t.pixelMode) {
+                        // Pixel mode: addrCol is byte column (0-31), addrRow is pixel row (0-191)
+                        const startCol = t.col >> 3;
+                        const endCol = (t.col + t.w - 1) >> 3;
+                        if (addrCol < startCol || addrCol > endCol) continue;
+                        if (addrRow < t.row || addrRow >= t.row + t.h) continue;
+                    } else {
+                        // Cell mode: addrCol is column (0-31), addrRow is pixel row (0-191)
+                        if (addrCol < t.col || addrCol >= t.col + t.w) continue;
+                        const cellRow = addrRow >> 3;
+                        if (cellRow < t.row || cellRow >= t.row + t.h) continue;
+                    }
+                } else {
+                    // Attr: addrCol/addrRow are cell coordinates
+                    if (addrCol < t.col || addrCol >= t.col + t.w) continue;
+                    if (addrRow < t.row || addrRow >= t.row + t.h) continue;
+                }
+                // Evaluate condition
+                if (t.condition && !this.evaluateCondition(t.condition, { val })) continue;
+                t.hitCount++;
+                if (t.hitCount > t.skipCount) {
+                    this.watchpointHit = true;
+                    this.triggerHit = true;
+                    this.lastWatchpoint = { addr, type: 'write', val, instrPC: this._currentInstrPC };
+                    this.lastTrigger = { trigger: t, addr, val, type: 'write', instrPC: this._currentInstrPC };
+                    return;
                 }
             }
         }
@@ -6327,10 +6545,22 @@ import { Disassembler } from './disasm.js';
 
         getLoadedMedia() {
             // Return structured state for project save
+            // For FDC disks, serialize current in-memory state (may have been modified by game writes)
+            let fdcDisks = this.loadedFDCDisks;
+            if (this.fdc) {
+                fdcDisks = this.loadedFDCDisks.map((entry, i) => {
+                    if (!entry) return null;
+                    const disk = this.fdc.drives[i].disk;
+                    if (disk && disk.toBuffer) {
+                        return { data: disk.toBuffer(), name: entry.name };
+                    }
+                    return entry;
+                });
+            }
             return {
                 tape: this.loadedTape,
                 betaDisks: this.loadedBetaDisks,
-                fdcDisks: this.loadedFDCDisks,
+                fdcDisks: fdcDisks,
                 tapeBlock: this.getTapeBlock()
             };
         }

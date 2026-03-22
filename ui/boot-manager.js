@@ -177,10 +177,12 @@ export function initBootManager({ showMessage }) {
         return true;
     }
 
-    // Helper: Check if Hobeta file has "boot" filename
+    // Helper: Check if Hobeta file can be used as boot file.
+    // A Hobeta file IS the boot file — the user selected it for injection.
+    // The internal filename doesn't need to be "boot"; injectBootIntoTrd()
+    // writes the name as "boot" regardless.
     function hobetaHasBootFile(data) {
-        if (data.length < 17) return false;
-        return readTrdFilename(data, 0) === 'boot';
+        return data.length > 17;
     }
 
     // Helper: Extract boot file from Hobeta

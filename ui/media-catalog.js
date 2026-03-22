@@ -20,7 +20,7 @@ const TRD_LABEL_OFFSET       = 0xF5;
 const TRD_LABEL_LENGTH       = 8;
 const TRD_MIN_IMAGE_SIZE     = 0x8E7;
 
-export function initMediaCatalog({ getSpectrum, showMessage, updateDriveSelector }) {
+export function initMediaCatalog({ getSpectrum, showMessage, updateDriveSelector, openInExplorer }) {
     const chkFlashLoad = document.getElementById('chkFlashLoad');
     const tapeLoadModeEl = document.getElementById('tapeLoadMode');
     const tapePositionEl = document.getElementById('tapePosition');
@@ -119,6 +119,15 @@ export function initMediaCatalog({ getSpectrum, showMessage, updateDriveSelector
                 updateTapePosition();
                 updateTapeCatalogHighlight();
             });
+            if (openInExplorer) {
+                row.addEventListener('dblclick', () => {
+                    const tape = getSpectrum().loadedTape;
+                    if (tape && tape.data) {
+                        openInExplorer(tape.data, tape.name || ('tape.' + (tape.type || 'tap')));
+                    }
+                });
+                row.title = 'Click: jump to block. Double-click: open in Explorer';
+            }
             tapeCatalogEl.appendChild(row);
         }
         updateTapeCatalogHighlight();
@@ -206,6 +215,14 @@ export function initMediaCatalog({ getSpectrum, showMessage, updateDriveSelector
                         row.style.color = 'var(--cyan)';
                         row.title = 'Boot file (auto-run on TR-DOS startup)';
                     }
+                }
+                if (openInExplorer && media && media.data) {
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('dblclick', () => {
+                        const ext = isDSK ? 'dsk' : 'trd';
+                        openInExplorer(media.data, media.name || ('disk.' + ext));
+                    });
+                    if (!row.title) row.title = 'Double-click: open in Explorer';
                 }
                 diskCatalogEl.appendChild(row);
             }

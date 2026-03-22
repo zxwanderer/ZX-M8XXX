@@ -549,11 +549,17 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
             explorerDisasmOutput.innerHTML = '<div class="explorer-empty">Select a source to disassemble</div>';
             explorerHexOutput.innerHTML = '';
 
-            // Render File Info
-            explorerRenderFileInfo();
+            // Check if Edit tab is active with an editor-supported format
+            const activeSubtab = document.querySelector('.explorer-subtab.active');
+            const editorFormats = ['tap', 'tzx', 'trd', 'scl', 'dsk', 'zip'];
+            const keepEditTab = activeSubtab && activeSubtab.dataset.subtab === 'edit' && editorFormats.includes(ext);
 
-            // Switch to File Info tab
-            document.querySelector('.explorer-subtab[data-subtab="info"]').click();
+            // Render File Info (suppress auto-switch when staying on Edit tab)
+            explorerRenderFileInfo(!keepEditTab);
+
+            if (!keepEditTab) {
+                document.querySelector('.explorer-subtab[data-subtab="info"]').click();
+            }
 
         } catch (err) {
             explorerFileName.textContent = 'Error loading file';
@@ -569,6 +575,12 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         explorerBlocks = [];
         explorerZipFiles = [];
         explorerParsed = null;
+        // Reset left panel state for new file
+        const leftPanel = editorPanels.left;
+        leftPanel.selection.clear();
+        leftPanel.expandedBlock = -1;
+        leftPanel.diskFiles = [];
+        leftPanel.diskLabel = '        ';
 
         switch (ext) {
             case 'tap':
@@ -593,6 +605,8 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 explorerParsed = explorerParseDSK(explorerData);
                 break;
             case 'zip':
+                // Save original ZIP data before explorerParseZIP may auto-drill into single file
+                var zipOriginalData = new Uint8Array(explorerData);
                 explorerParsed = await explorerParseZIP(explorerData);
                 break;
             case 'scr':
@@ -608,8 +622,27 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 explorerParsed = await explorerParseRZX(explorerData);
                 break;
             default:
+                if (isHobetaExt(ext)) {
+                    explorerParsed = explorerParseHobeta(explorerData);
+                    break;
+                }
                 // Check if raw data matches known graphics sizes
                 explorerParsed = explorerParseRawGraphics(explorerData, ext);
+        }
+
+        // Auto-populate active editor panel for editable formats
+        const editorFormats = ['tap', 'tzx', 'trd', 'scl', 'dsk'];
+        const targetPanel = getActivePanel();
+        if (editorFormats.includes(ext) && explorerParsed) {
+            loadFileIntoPanel(targetPanel, explorerData, filename, ext, explorerParsed);
+        } else if (ext === 'zip' && explorerParsed) {
+            // Check if ZIP auto-drilled into a single editable file
+            if (editorFormats.includes(explorerFileType) && explorerParsed.type !== 'zip') {
+                const innerName = explorerFileName.textContent.split(' > ').pop() || filename;
+                await loadFileIntoPanel(targetPanel, explorerData, innerName, explorerFileType, explorerParsed);
+            } else {
+                await loadFileIntoPanel(targetPanel, zipOriginalData, filename, 'zip', null);
+            }
         }
     }
 
@@ -737,37 +770,9 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         const blocks = [];
         let offset = 10;
 
-        const blockNames = {
-            0x10: 'Standard Speed Data',
-            0x11: 'Turbo Speed Data',
-            0x12: 'Pure Tone',
-            0x13: 'Pulse Sequence',
-            0x14: 'Pure Data',
-            0x15: 'Direct Recording',
-            0x18: 'CSW Recording',
-            0x19: 'Generalized Data',
-            0x20: 'Pause/Stop',
-            0x21: 'Group Start',
-            0x22: 'Group End',
-            0x23: 'Jump to Block',
-            0x24: 'Loop Start',
-            0x25: 'Loop End',
-            0x26: 'Call Sequence',
-            0x27: 'Return from Sequence',
-            0x28: 'Select Block',
-            0x2A: 'Stop if 48K',
-            0x2B: 'Set Signal Level',
-            0x30: 'Text Description',
-            0x31: 'Message',
-            0x32: 'Archive Info',
-            0x33: 'Hardware Type',
-            0x35: 'Custom Info',
-            0x5A: 'Glue Block'
-        };
-
         while (offset < data.length) {
             const blockId = data[offset];
-            const blockName = blockNames[blockId] || `Unknown (0x${hex8(blockId)})`;
+            const blockName = TZX_BLOCK_NAMES[blockId] || `Unknown (0x${hex8(blockId)})`;
             let blockLen = 0;
             let blockInfo = {
                 offset: offset,
@@ -788,16 +793,22 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
 
                         // Parse header if it's a standard header block
                         const blockData = data.slice(offset + 4, offset + 4 + dataLen);
+                        blockInfo.data = blockData;
                         if (dataLen === 19 && blockData[0] === 0) {
                             const type = blockData[1];
                             const name = String.fromCharCode(...blockData.slice(2, 12)).replace(/\x00/g, ' ').trim();
                             const len = blockData[12] | (blockData[13] << 8);
                             const param1 = blockData[14] | (blockData[15] << 8);
+                            const param2 = blockData[16] | (blockData[17] << 8);
                             const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
                             blockInfo.headerType = typeNames[type] || 'Unknown';
+                            blockInfo.headerTypeId = type;
                             blockInfo.fileName = name;
                             blockInfo.fileLength = len;
-                            if (type === 0) blockInfo.autostart = param1 < 32768 ? param1 : null;
+                            if (type === 0) {
+                                blockInfo.autostart = param1 < 32768 ? param1 : null;
+                                blockInfo.varsOffset = param2;
+                            }
                             if (type === 3) blockInfo.startAddress = param1;
                         } else if (blockData[0] === 0xFF) {
                             blockInfo.dataBlock = true;
@@ -978,7 +989,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         explorerBlocks = blocks;
         return {
             type: 'tzx',
-            version: `${versionMajor}.${versionMinor}`,
+            version: `${versionMajor}.${String(versionMinor).padStart(2, '0')}`,
             blocks: blocks,
             size: data.length
         };
@@ -1331,6 +1342,22 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         };
     }
 
+    // Hobeta file parser
+    function explorerParseHobeta(data) {
+        const file = parseHobeta(data);
+        if (!file) {
+            return { type: 'hobeta', error: 'Invalid Hobeta file (CRC mismatch)', size: data.length };
+        }
+        const trdTypeNames = { 'B': 'BASIC', 'C': 'Code', 'D': 'Data', '#': 'Sequential' };
+        explorerBlocks = [file];
+        return {
+            type: 'hobeta',
+            file: file,
+            typeName: trdTypeNames[file.ext] || file.ext,
+            size: data.length
+        };
+    }
+
     // DSK file parser
     function explorerParseDSK(data) {
         try {
@@ -1398,6 +1425,8 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                         return explorerParseTRD(explorerData);
                     case 'scl':
                         return explorerParseSCL(explorerData);
+                    case 'dsk':
+                        return explorerParseDSK(explorerData);
                 }
             }
 
@@ -1430,7 +1459,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
     }
 
     // Render File Info
-    function explorerRenderFileInfo() {
+    function explorerRenderFileInfo(autoSwitchTab = true) {
         if (!explorerParsed) {
             explorerInfoOutput.innerHTML = '<div class="explorer-empty">No file loaded</div>';
             return;
@@ -1466,6 +1495,9 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
             case 'dsk':
                 html = explorerRenderDSKInfo();
                 break;
+            case 'hobeta':
+                html = explorerRenderHobetaInfo();
+                break;
             case 'zip':
                 html = explorerRenderZIPInfo();
                 break;
@@ -1479,7 +1511,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         explorerInfoOutput.innerHTML = html;
 
         // Update source selectors
-        explorerUpdateSourceSelectors();
+        explorerUpdateSourceSelectors(autoSwitchTab);
 
         // Update preview - check for previewable content
         explorerUpdatePreviewForFile();
@@ -1544,6 +1576,16 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                         }
                     }
                 }
+            }
+        }
+
+        // For Hobeta files, check if the contained data is screen-sized
+        if (explorerParsed && explorerParsed.type === 'hobeta' && explorerParsed.file) {
+            const contentLen = explorerParsed.file.length;
+            if (contentLen === SCREEN_SIZE || contentLen === SCREEN_BITMAP_SIZE || contentLen === 4096 ||
+                contentLen === 2048 || contentLen === SCREEN_ATTR_SIZE) {
+                explorerUpdatePreview(explorerParsed.file.data);
+                return;
             }
         }
 
@@ -1740,7 +1782,6 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 // V2/V3: extended header + compressed pages
                 const extLen = data[30] | (data[31] << 8);
                 const headerEnd = 32 + extLen;
-                const hwMode = data[34];
 
                 // Determine which page contains the screen
                 // Page 8 always contains the screen ($4000-$7FFF)
@@ -2591,6 +2632,32 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         return html;
     }
 
+    function explorerRenderHobetaInfo() {
+        if (explorerParsed.error) {
+            return `<div class="explorer-info-section">
+                <div class="explorer-info-header">Hobeta File</div>
+                <div style="color:#e74c3c">Error: ${explorerParsed.error}</div>
+            </div>`;
+        }
+
+        const f = explorerParsed.file;
+        const len = f.length;
+        const previewable = len === 6912 || len === 6144 || len === 4096 ||
+            len === 2048 || len === 768 || len === 9216 ||
+            len === 11136 || len === 12288 || len === 18432;
+        const previewIcon = previewable ? ' \u2B1A' : '';
+        return `<div class="explorer-info-section">
+            <div class="explorer-info-header">Hobeta File</div>
+            <table class="explorer-info-table">
+                <tr><th>File size</th><td>${explorerData.length.toLocaleString()} bytes</td></tr>
+                <tr><th>Name</th><td>${f.name.replace(/\s+$/, '')}</td></tr>
+                <tr><th>Extension</th><td>${f.ext} (${explorerParsed.typeName})</td></tr>
+                <tr><th>Data length</th><td>${f.length.toLocaleString()} bytes</td></tr>
+                <tr><th>Start address</th><td>$${hex16(f.startAddress)}</td></tr>
+            </table>
+        </div>`;
+    }
+
     function explorerRenderDSKInfo() {
         if (explorerParsed.error) {
             return `<div class="explorer-info-section">
@@ -2794,6 +2861,57 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
             explorerRenderHexDump();
         }
 
+        if (blockEntry && explorerParsed && explorerParsed.type === 'tzx') {
+            const idx = parseInt(blockEntry.dataset.blockIndex);
+            if (isNaN(idx) || !explorerBlocks[idx]) return;
+
+            const block = explorerBlocks[idx];
+
+            // Only handle standard speed data blocks (0x10)
+            if (block.id !== 0x10) return;
+
+            // Screen-size data → preview
+            if (block.dataBlock && block.data && block.data.length > 2) {
+                const content = block.data.slice(1, block.data.length - 1);
+                const contentLen = content.length;
+                if (contentLen === SCREEN_SIZE || contentLen === SCREEN_BITMAP_SIZE || contentLen === 4096 ||
+                    contentLen === 2048 || contentLen === SCREEN_ATTR_SIZE || contentLen === 9216 ||
+                    contentLen === 11136 || contentLen === 12288 || contentLen === 18432) {
+                    explorerUpdatePreview(content);
+                    return;
+                }
+            }
+
+            // Program header → BASIC tab
+            if (block.headerTypeId === 0) {
+                document.querySelector('.explorer-subtab[data-subtab="basic"]').click();
+                explorerBasicSource.value = idx.toString();
+                explorerRenderBASIC();
+                return;
+            }
+
+            // Bytes header → Disasm tab
+            if (block.headerTypeId === 3) {
+                document.querySelector('.explorer-subtab[data-subtab="disasm"]').click();
+                explorerDisasmSource.value = idx.toString();
+                explorerDisasmAddr.value = hex16(block.startAddress);
+                explorerDisasmLen.value = Math.min(block.fileLength, 4096);
+                explorerRenderDisasm();
+                return;
+            }
+
+            // Data block → hex dump
+            document.querySelector('.explorer-subtab[data-subtab="hexdump"]').click();
+            if (block.dataBlock) {
+                explorerHexSource.value = idx.toString();
+            } else if (idx + 1 < explorerBlocks.length && explorerBlocks[idx + 1].id === 0x10 && explorerBlocks[idx + 1].dataBlock) {
+                explorerHexSource.value = (idx + 1).toString();
+            }
+            explorerHexLen.value = Math.min(block.dataLength || block.length, 65536);
+            explorerHexAddr.value = '0000';
+            explorerRenderHexDump();
+        }
+
         const trdEntry = e.target.closest('.explorer-file-entry[data-index]');
         if (trdEntry && explorerParsed && (explorerParsed.type === 'trd' || explorerParsed.type === 'scl')) {
             const idx = parseInt(trdEntry.dataset.index);
@@ -2813,7 +2931,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
             if (file.ext === 'B') {
                 document.querySelector('.explorer-subtab[data-subtab="basic"]').click();
                 explorerBasicSource.value = idx.toString();
-                explorerDecodeBASIC();
+                explorerRenderBASIC();
                 return;
             }
 
@@ -2881,7 +2999,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
     });
 
     // Update source selectors based on file type
-    function explorerUpdateSourceSelectors() {
+    function explorerUpdateSourceSelectors(autoSwitchTab = true) {
         const basicOpts = [];
         const disasmOpts = [];
         const hexOpts = [];
@@ -2920,6 +3038,43 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                     hexOpts.push(`<option value="${i}">${name} (${block.length} bytes)</option>`);
                 }
             }
+        } else if (explorerParsed.type === 'tzx') {
+            // TZX standard speed blocks (0x10) — same structure as TAP
+            for (let i = 0; i < explorerBlocks.length; i++) {
+                const block = explorerBlocks[i];
+                if (block.id === 0x10 && block.headerTypeId === 0) {
+                    // Program header — BASIC source
+                    basicOpts.push(`<option value="${i}">Block ${i + 1}: ${block.fileName}</option>`);
+                    basicSources.push(i.toString());
+                }
+            }
+            for (let i = 0; i < explorerBlocks.length; i++) {
+                const block = explorerBlocks[i];
+                if (block.id === 0x10 && block.headerTypeId === 3) {
+                    // Bytes header — disasm source
+                    disasmOpts.push(`<option value="${i}">Block ${i + 1}: ${block.fileName} @ ${hex16(block.startAddress)}</option>`);
+                }
+            }
+            for (let i = 0; i < explorerBlocks.length; i++) {
+                const block = explorerBlocks[i];
+                if (block.id === 0x10 && block.dataBlock) {
+                    // Data block — disasm + hex source
+                    const prevBlock = i > 0 ? explorerBlocks[i - 1] : null;
+                    const name = prevBlock && prevBlock.id === 0x10 && prevBlock.headerType ? prevBlock.fileName : `Block ${i + 1}`;
+                    const addr = prevBlock && prevBlock.startAddress !== undefined ? ` @ ${hex16(prevBlock.startAddress)}` : '';
+                    if (!prevBlock || prevBlock.headerTypeId !== 3) {
+                        disasmOpts.push(`<option value="data:${i}">${name} data${addr} (${block.dataLength} bytes)</option>`);
+                    }
+                }
+            }
+            for (let i = 0; i < explorerBlocks.length; i++) {
+                const block = explorerBlocks[i];
+                if (block.id === 0x10 && block.dataBlock) {
+                    const prevBlock = i > 0 ? explorerBlocks[i - 1] : null;
+                    const name = prevBlock && prevBlock.id === 0x10 && prevBlock.headerType ? prevBlock.fileName : `Block ${i + 1}`;
+                    hexOpts.push(`<option value="${i}">${name} (${block.dataLength} bytes)</option>`);
+                }
+            }
         } else if (explorerParsed.type === 'trd' || explorerParsed.type === 'scl') {
             const files = explorerParsed.files;
             for (let i = 0; i < files.length; i++) {
@@ -2934,6 +3089,17 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                     disasmOpts.push(`<option value="${i}">${file.name}.${file.ext} @ ${hex16(file.startAddress)}</option>`);
                 }
                 hexOpts.push(`<option value="${i}">${file.name}.${file.ext} (${file.length} bytes)</option>`);
+            }
+        } else if (explorerParsed.type === 'hobeta') {
+            if (!explorerParsed.error) {
+                const f = explorerParsed.file;
+                const trimName = f.name.replace(/\s+$/, '');
+                if (f.ext === 'B') {
+                    basicOpts.push(`<option value="0">${trimName}.${f.ext}</option>`);
+                    basicSources.push('0');
+                }
+                disasmOpts.push(`<option value="0">${trimName}.${f.ext} @ ${hex16(f.startAddress)}</option>`);
+                hexOpts.push(`<option value="0">${trimName}.${f.ext} (${f.length} bytes)</option>`);
             }
         } else if (explorerParsed.type === 'dsk') {
             disasmOpts.push('<option value="boot">Boot sector @ $FE10</option>');
@@ -2964,7 +3130,7 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         if (basicSources.length === 1) {
             explorerBasicSource.value = basicSources[0];
             explorerRenderBASIC();
-            document.querySelector('.explorer-subtab[data-subtab="basic"]').click();
+            if (autoSwitchTab) document.querySelector('.explorer-subtab[data-subtab="basic"]').click();
         }
 
         if (explorerDisasmSource.options.length > 1) {
@@ -3001,6 +3167,20 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 const blockIdx = parseInt(source.slice(5));
                 const prevBlock = blockIdx > 0 ? explorerBlocks[blockIdx - 1] : null;
                 if (prevBlock && prevBlock.blockType === 'header' && prevBlock.startAddress !== undefined) {
+                    explorerDisasmAddr.value = hex16(prevBlock.startAddress);
+                }
+            } else {
+                const blockIdx = parseInt(source);
+                const headerBlock = explorerBlocks[blockIdx];
+                if (headerBlock && headerBlock.startAddress !== undefined) {
+                    explorerDisasmAddr.value = hex16(headerBlock.startAddress);
+                }
+            }
+        } else if (explorerParsed.type === 'tzx') {
+            if (source.startsWith('data:')) {
+                const blockIdx = parseInt(source.slice(5));
+                const prevBlock = blockIdx > 0 ? explorerBlocks[blockIdx - 1] : null;
+                if (prevBlock && prevBlock.id === 0x10 && prevBlock.startAddress !== undefined) {
                     explorerDisasmAddr.value = hex16(prevBlock.startAddress);
                 }
             } else {
@@ -3073,6 +3253,31 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                     explorerDisasmAddr.value = hex16(baseAddr);
                 }
             }
+        } else if (source && explorerParsed.type === 'tzx') {
+            if (source.startsWith('data:')) {
+                const blockIdx = parseInt(source.slice(5));
+                const dataBlock = explorerBlocks[blockIdx];
+                if (dataBlock && dataBlock.id === 0x10 && dataBlock.dataBlock && dataBlock.data) {
+                    data = dataBlock.data.slice(1, -1);
+                    const prevBlock = blockIdx > 0 ? explorerBlocks[blockIdx - 1] : null;
+                    if (prevBlock && prevBlock.id === 0x10 && prevBlock.startAddress !== undefined) {
+                        baseAddr = prevBlock.startAddress;
+                    } else {
+                        baseAddr = 0;
+                    }
+                }
+            } else {
+                const blockIdx = parseInt(source);
+                const headerBlock = explorerBlocks[blockIdx];
+                if (headerBlock && headerBlock.id === 0x10 && headerBlock.headerTypeId === 3 && blockIdx + 1 < explorerBlocks.length) {
+                    const dataBlock = explorerBlocks[blockIdx + 1];
+                    if (dataBlock && dataBlock.data) {
+                        data = dataBlock.data.slice(1, -1);
+                        baseAddr = headerBlock.startAddress || 0;
+                        explorerDisasmAddr.value = hex16(baseAddr);
+                    }
+                }
+            }
         } else if (source && (explorerParsed.type === 'trd' || explorerParsed.type === 'scl')) {
             if (source.startsWith('basic:')) {
                 const fileIdx = parseInt(source.slice(6));
@@ -3091,6 +3296,13 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                     baseAddr = file.startAddress;
                     explorerDisasmAddr.value = hex16(baseAddr);
                 }
+            }
+        } else if (source && explorerParsed.type === 'hobeta') {
+            const f = explorerParsed.file;
+            if (f) {
+                data = f.data;
+                baseAddr = f.startAddress;
+                explorerDisasmAddr.value = hex16(baseAddr);
             }
         } else if (source && explorerParsed.type === 'dsk') {
             if (source === 'boot') {
@@ -3196,11 +3408,24 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 data = block.data;
                 baseAddr = 0;
             }
+        } else if (source && explorerParsed.type === 'tzx') {
+            const blockIdx = parseInt(source);
+            const block = explorerBlocks[blockIdx];
+            if (block && block.id === 0x10 && block.data) {
+                data = block.data;
+                baseAddr = 0;
+            }
         } else if (source && (explorerParsed.type === 'trd' || explorerParsed.type === 'scl')) {
             const fileIdx = parseInt(source);
             const file = explorerParsed.files[fileIdx];
             if (file) {
                 data = explorerData.slice(file.offset, file.offset + file.length);
+                baseAddr = 0;
+            }
+        } else if (source && explorerParsed.type === 'hobeta') {
+            const f = explorerParsed.file;
+            if (f) {
+                data = f.data;
                 baseAddr = 0;
             }
         } else if (source && explorerParsed.type === 'dsk') {
@@ -3564,11 +3789,6 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
         });
     }
 
-    // Alias for TRD click handler compatibility
-    function explorerDecodeBASIC() {
-        explorerRenderBASIC();
-    }
-
     function explorerRenderBASIC() {
         const source = explorerBasicSource.value;
         if (!source) {
@@ -3585,11 +3805,25 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
                 const dataBlock = explorerBlocks[blockIdx + 1];
                 data = dataBlock.data.slice(1, -1);
             }
+        } else if (explorerParsed.type === 'tzx') {
+            const blockIdx = parseInt(source);
+            const headerBlock = explorerBlocks[blockIdx];
+            if (headerBlock && headerBlock.id === 0x10 && headerBlock.headerTypeId === 0 && blockIdx + 1 < explorerBlocks.length) {
+                const dataBlock = explorerBlocks[blockIdx + 1];
+                if (dataBlock && dataBlock.id === 0x10 && dataBlock.data) {
+                    data = dataBlock.data.slice(1, -1);
+                }
+            }
         } else if (explorerParsed.type === 'trd' || explorerParsed.type === 'scl') {
             const fileIdx = parseInt(source);
             const file = explorerParsed.files[fileIdx];
             if (file) {
                 data = explorerData.slice(file.offset, file.offset + file.length);
+            }
+        } else if (explorerParsed.type === 'hobeta') {
+            const f = explorerParsed.file;
+            if (f && f.ext === 'B') {
+                data = f.data;
             }
         } else if (explorerParsed.type === 'dsk') {
             const fileIdx = parseInt(source);
@@ -3805,5 +4039,3212 @@ export function initExplorer({ DSKLoader, Disassembler, SZXLoader, RZXLoader, Zi
 
         explorerRenderDisasm();
     });
+
+    // ========== Dual-Panel File Editor ==========
+
+    // --- Shared toolbar DOM refs ---
+    const editorNewFormat = document.getElementById('editorNewFormat');
+    const btnEditorAddFile = document.getElementById('btnEditorAddFile');
+    const btnEditorSave = document.getElementById('btnEditorSave');
+
+    const btnEditorMoveUp = document.getElementById('btnEditorMoveUp');
+    const btnEditorMoveDown = document.getElementById('btnEditorMoveDown');
+    const btnEditorDel = document.getElementById('btnEditorDel');
+    const btnEditorMarkDel = document.getElementById('btnEditorMarkDel');
+    const btnEditorExtract = document.getElementById('btnEditorExtract');
+    const editorExtractDisk = document.getElementById('editorExtractDisk');
+    const btnEditorCopy = document.getElementById('btnEditorCopy');
+    const editorLinkLabel = document.getElementById('editorLinkLabel');
+    const editorPanelFileInput = document.getElementById('editorPanelFileInput');
+
+    // Add File dialog elements (shared across panels via dialogTargetPanel)
+    const tapAddDialog = document.getElementById('tapAddDialog');
+    const tapAddType = document.getElementById('tapAddType');
+    const tapAddName = document.getElementById('tapAddName');
+    const tapAddAddr = document.getElementById('tapAddAddr');
+    const tapAddAuto = document.getElementById('tapAddAuto');
+    const tapAddVar = document.getElementById('tapAddVar');
+    const tapAddNameRow = document.getElementById('tapAddNameRow');
+    const tapAddAddrRow = document.getElementById('tapAddAddrRow');
+    const tapAddAutoRow = document.getElementById('tapAddAutoRow');
+    const tapAddVarRow = document.getElementById('tapAddVarRow');
+    const tapAddFlag = document.getElementById('tapAddFlag');
+    const tapAddFlagRow = document.getElementById('tapAddFlagRow');
+    const tapAddPause = document.getElementById('tapAddPause');
+    const tapAddPauseRow = document.getElementById('tapAddPauseRow');
+    const tapAddFileInfo = document.getElementById('tapAddFileInfo');
+    const btnTapAddOk = document.getElementById('btnTapAddOk');
+    const btnTapAddCancel = document.getElementById('btnTapAddCancel');
+    const editorPairLock = document.getElementById('editorPairLock');
+
+    // Disk Add File dialog elements
+    const diskAddDialog = document.getElementById('diskAddDialog');
+    const diskAddName = document.getElementById('diskAddName');
+    const diskAddExt = document.getElementById('diskAddExt');
+    const diskAddAddr = document.getElementById('diskAddAddr');
+    const diskAddFileInfo = document.getElementById('diskAddFileInfo');
+    const btnDiskAddOk = document.getElementById('btnDiskAddOk');
+    const btnDiskAddCancel = document.getElementById('btnDiskAddCancel');
+
+    // DSK Add File dialog elements
+    const dskAddDialog = document.getElementById('dskAddDialog');
+    const dskAddName = document.getElementById('dskAddName');
+    const dskAddExt = document.getElementById('dskAddExt');
+    const dskAddType = document.getElementById('dskAddType');
+    const dskAddAddr = document.getElementById('dskAddAddr');
+    const dskAddAuto = document.getElementById('dskAddAuto');
+    const dskAddAddrRow = document.getElementById('dskAddAddrRow');
+    const dskAddAutoRow = document.getElementById('dskAddAutoRow');
+    const dskAddFileInfo = document.getElementById('dskAddFileInfo');
+    const btnDskAddOk = document.getElementById('btnDskAddOk');
+    const btnDskAddCancel = document.getElementById('btnDskAddCancel');
+
+    // --- Panel state ---
+    function createPanelState() {
+        return {
+            parsedFile: null,       // panel-local parsed structure
+            rawData: null,          // panel-local raw data
+            blocks: [],             // panel-local blocks (TAP) or files list ref (DSK)
+            fileType: null,         // 'tap', 'trd', 'scl', 'dsk', null
+            fileName: '',
+            selection: new Set(),
+            expandedBlock: -1,
+            lastClickIdx: -1,
+            lastClickTime: 0,
+            // TRD-specific
+            diskFiles: [],
+            diskLabel: '        ',
+            // Pending file data for add dialogs
+            pendingFileData: null,
+            // DOM refs (set during init)
+            dom: { container: null, header: null, fileList: null,
+                   formatSpan: null, nameSpan: null, statusSpan: null }
+        };
+    }
+
+    let editorPanels = { left: createPanelState(), right: createPanelState() };
+    let activePanel = 'left';
+    let dialogTargetPanel = 'left';
+
+    // Init DOM refs for panels
+    function initPanelDom(panel, side) {
+        const el = document.getElementById(side === 'left' ? 'editorPanelLeft' : 'editorPanelRight');
+        panel.dom.container = el;
+        panel.dom.header = el.querySelector('.editor-panel-header');
+        panel.dom.fileList = el.querySelector('.editor-panel-filelist');
+        panel.dom.formatSpan = el.querySelector('.editor-panel-format');
+        panel.dom.nameSpan = el.querySelector('.editor-panel-name');
+        panel.dom.statusSpan = el.querySelector('.editor-panel-status');
+    }
+    initPanelDom(editorPanels.left, 'left');
+    initPanelDom(editorPanels.right, 'right');
+
+    function getActivePanel() { return editorPanels[activePanel]; }
+    function getOtherPanel() { return editorPanels[activePanel === 'left' ? 'right' : 'left']; }
+
+    // --- Pair logic (parameterized on panel) ---
+
+    function editorIsPairHeader(panel, idx) {
+        return idx < panel.blocks.length &&
+            panel.blocks[idx].blockType === 'header' &&
+            idx + 1 < panel.blocks.length &&
+            panel.blocks[idx + 1].blockType === 'data';
+    }
+
+    function editorPairHeaderOf(panel, idx) {
+        if (idx > 0 &&
+            panel.blocks[idx].blockType === 'data' &&
+            panel.blocks[idx - 1].blockType === 'header') {
+            return idx - 1;
+        }
+        return -1;
+    }
+
+    function editorExpandPairs(panel, indices) {
+        const result = new Set(indices);
+        if (!editorPairLock.checked) return result;
+        for (const idx of indices) {
+            if (editorIsPairHeader(panel, idx)) {
+                result.add(idx + 1);
+            }
+            const hdr = editorPairHeaderOf(panel, idx);
+            if (hdr >= 0) {
+                result.add(hdr);
+            }
+        }
+        return result;
+    }
+
+    function editorSelectedSorted(panel) {
+        return [...panel.selection].sort((a, b) => a - b);
+    }
+
+    function editorRecalcChecksum(blockData) {
+        let checksum = 0;
+        for (let i = 0; i < blockData.length - 1; i++) {
+            checksum ^= blockData[i];
+        }
+        blockData[blockData.length - 1] = checksum;
+    }
+
+    // --- TZX block type names ---
+
+    const TZX_BLOCK_NAMES = {
+        0x10: 'Standard Speed Data', 0x11: 'Turbo Speed Data', 0x12: 'Pure Tone',
+        0x13: 'Pulse Sequence', 0x14: 'Pure Data', 0x15: 'Direct Recording',
+        0x18: 'CSW Recording', 0x19: 'Generalized Data', 0x20: 'Pause/Stop',
+        0x21: 'Group Start', 0x22: 'Group End', 0x23: 'Jump to Block',
+        0x24: 'Loop Start', 0x25: 'Loop End', 0x26: 'Call Sequence',
+        0x27: 'Return from Sequence', 0x28: 'Select Block', 0x2A: 'Stop if 48K',
+        0x2B: 'Set Signal Level', 0x30: 'Text Description', 0x31: 'Message',
+        0x32: 'Archive Info', 0x33: 'Hardware Type', 0x35: 'Custom Info',
+        0x5A: 'Glue Block'
+    };
+
+    function isTapOrTzx(t) { return t === 'tap' || t === 'tzx'; }
+
+    // --- Hobeta format helpers ---
+
+    const HOBETA_EXTS = ['$b', '$c', '$d', '$#', 'hobeta'];
+
+    function isHobetaExt(ext) {
+        return HOBETA_EXTS.includes(ext.toLowerCase());
+    }
+
+    /** Map TR-DOS extension char to Hobeta file extension */
+    function trdExtToHobetaExt(ext) {
+        const map = { 'B': '$b', 'C': '$c', 'D': '$d', '#': '$#' };
+        return map[ext] || '$c';
+    }
+
+    /** Compute Hobeta CRC over first 15 bytes of header */
+    function hobetaCRC(header) {
+        let sum = 0;
+        for (let i = 0; i < 15; i++) sum += header[i];
+        return (257 * sum + 105) & 0xFFFF;
+    }
+
+    /** Build a Hobeta file from TR-DOS file entry.
+     *  file: { name, ext, startAddress, length, data }
+     *  Returns Uint8Array with 17-byte header + data. */
+    function buildHobeta(file) {
+        const dataLen = file.length;
+        const sectorLen = Math.ceil(dataLen / 256) * 256;
+        const hdr = new Uint8Array(17);
+        // Bytes 0-7: filename padded with spaces
+        const name = (file.name + '        ').substring(0, 8);
+        for (let i = 0; i < 8; i++) hdr[i] = name.charCodeAt(i);
+        // Byte 8: extension character
+        hdr[8] = file.ext.charCodeAt(0);
+        // Bytes 9-10: start address (LE)
+        const addr = file.startAddress || 0;
+        hdr[9] = addr & 0xFF;
+        hdr[10] = (addr >> 8) & 0xFF;
+        // Bytes 11-12: data length (LE)
+        hdr[11] = dataLen & 0xFF;
+        hdr[12] = (dataLen >> 8) & 0xFF;
+        // Bytes 13-14: full sector length (LE)
+        hdr[13] = sectorLen & 0xFF;
+        hdr[14] = (sectorLen >> 8) & 0xFF;
+        // Bytes 15-16: CRC (LE)
+        const crc = hobetaCRC(hdr);
+        hdr[15] = crc & 0xFF;
+        hdr[16] = (crc >> 8) & 0xFF;
+
+        const result = new Uint8Array(17 + dataLen);
+        result.set(hdr, 0);
+        result.set(file.data.slice(0, dataLen), 17);
+        return result;
+    }
+
+    /** Parse a Hobeta file. Returns { name, ext, startAddress, length, data } or null on CRC fail. */
+    function parseHobeta(data) {
+        if (data.length < 17) return null;
+        const hdr = data.slice(0, 17);
+        const crc = hdr[15] | (hdr[16] << 8);
+        if (crc !== hobetaCRC(hdr)) return null;
+        let name = '';
+        for (let i = 0; i < 8; i++) name += String.fromCharCode(hdr[i]);
+        const ext = String.fromCharCode(hdr[8]);
+        const startAddress = hdr[9] | (hdr[10] << 8);
+        const length = hdr[11] | (hdr[12] << 8);
+        const fileData = data.slice(17, 17 + length);
+        return { name, ext, startAddress, length, data: fileData };
+    }
+
+    /** Map TAP/+3DOS header type to TR-DOS extension character */
+    function headerTypeToTrdExt(type) {
+        // 0=BASIC→B, 1=Number array→D, 2=Char array→D, 3=Bytes/Code→C
+        return type === 0 ? 'B' : type === 3 ? 'C' : 'D';
+    }
+
+    /** Build Hobeta from generic file info (name, headerType, startAddress, data).
+     *  Works for files extracted from TAP, TZX, DSK, or any source. */
+    function buildHobetaGeneric(fileName, headerType, startAddress, data) {
+        const padded = (fileName + '        ').substring(0, 8);
+        return buildHobeta({
+            name: padded,
+            ext: headerTypeToTrdExt(headerType),
+            startAddress: startAddress || 0,
+            length: data.length,
+            data: data
+        });
+    }
+
+    // --- Shared toolbar visibility ---
+
+    function editorUpdateToolbar() {
+        const panel = getActivePanel();
+        const t = panel.fileType;
+        const isTap = isTapOrTzx(t);
+        const isTrd = t === 'trd' || t === 'scl';
+        const isDsk = t === 'dsk';
+        const isZip = t === 'zip';
+        const hasSel = panel.selection.size > 0;
+
+        btnEditorSave.textContent = t ? `Save ${t.toUpperCase()}` : 'Save';
+        btnEditorSave.disabled = !t;
+
+
+        btnEditorMoveUp.style.display = (isTap || isTrd) && !isZip ? '' : 'none';
+        btnEditorMoveDown.style.display = (isTap || isTrd) && !isZip ? '' : 'none';
+        btnEditorMoveUp.disabled = !hasSel;
+        btnEditorMoveDown.disabled = !hasSel;
+
+        btnEditorMarkDel.style.display = isTrd ? '' : 'none';
+        btnEditorMarkDel.disabled = !hasSel;
+
+        btnEditorDel.disabled = !hasSel;
+        btnEditorExtract.style.display = 'none';
+        editorExtractDisk.style.display = '';
+        editorExtractDisk.disabled = !hasSel;
+        if (hasSel) editorExtractDisk.value = '';
+
+        editorLinkLabel.style.display = isTap ? '' : 'none';
+
+        btnEditorAddFile.disabled = isDsk && panel.parsedFile && panel.parsedFile.dskImage &&
+            !DSKLoader.getDiskSpec(panel.parsedFile.dskImage).valid && (panel.parsedFile.files || []).length === 0;
+
+        btnEditorCopy.disabled = !hasSel || !t;
+        btnEditorCopy.innerHTML = activePanel === 'left' ? 'Copy &#9654;' : '&#9664; Copy';
+    }
+
+    function updatePanelHeader(panel) {
+        panel.dom.formatSpan.textContent = panel.fileType ? panel.fileType.toUpperCase() : '';
+        panel.dom.nameSpan.textContent = panel.fileName || 'Empty';
+    }
+
+    function activatePanel(side) {
+        if (activePanel === side) return;
+        activePanel = side;
+        editorPanels.left.dom.container.classList.toggle('active', side === 'left');
+        editorPanels.right.dom.container.classList.toggle('active', side === 'right');
+        editorUpdateToolbar();
+    }
+
+    // --- Sync left panel to explorer state ---
+    function syncPanelToExplorer(panel) {
+        if (panel !== editorPanels.left) return;
+        explorerParsed = panel.parsedFile;
+        explorerData = panel.rawData;
+        explorerBlocks = panel.blocks;
+        const editActive = document.querySelector('.explorer-subtab.active');
+        explorerUpdateSourceSelectors(!(editActive && editActive.dataset.subtab === 'edit'));
+    }
+
+    // --- TAP rendering (parameterized) ---
+
+    function editorRenderBlockList(panel) {
+        if (!panel) panel = getActivePanel();
+        // Format-aware dispatch
+        if (panel.fileType === 'trd' || panel.fileType === 'scl') {
+            diskEditorRenderFileList(panel);
+            return;
+        }
+        if (panel.fileType === 'dsk') {
+            dskEditorRenderFileList(panel);
+            return;
+        }
+        if (panel.fileType === 'zip') {
+            zipEditorRenderFileList(panel);
+            return;
+        }
+        if (!panel.parsedFile || !isTapOrTzx(panel.parsedFile.type)) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">Empty</span>';
+            panel.dom.statusSpan.textContent = '';
+            editorUpdateToolbar();
+            return;
+        }
+
+        if (panel.blocks.length === 0) {
+            const fmtName = panel.fileType === 'tzx' ? 'TZX' : 'TAP';
+            panel.dom.fileList.innerHTML = `<span class="explorer-empty">Empty ${fmtName}. Use "Add File" to add blocks.</span>`;
+            panel.dom.statusSpan.textContent = '0 blocks';
+            editorUpdateToolbar();
+            return;
+        }
+
+        let html = '';
+        for (let i = 0; i < panel.blocks.length; i++) {
+            const block = panel.blocks[i];
+
+            // Non-standard TZX block — dimmed info row
+            if (block.blockType === 'nonstandard') {
+                html += `<div class="editor-block-row nonstandard-row">`;
+                html += `<span class="editor-block-info">`;
+                html += `<span class="dim">${i + 1}:</span> ${block.typeName}`;
+                html += ` <span class="dim">\u2014 ${block.dataLength} bytes</span>`;
+                html += `</span></div>`;
+                continue;
+            }
+
+            const isHeader = block.blockType === 'header';
+            const isSel = panel.selection.has(i);
+            const isPairData = editorPairLock.checked && !isHeader && editorPairHeaderOf(panel, i) >= 0;
+            const isExpanded = panel.expandedBlock === i;
+
+            let rowClasses = 'editor-block-row';
+            rowClasses += isHeader ? ' header-row' : ' data-row';
+            if (isPairData) rowClasses += ' pair';
+            if (isSel) rowClasses += ' selected';
+
+            let checksumOk = true;
+            if (!isHeader) {
+                let calcChecksum = 0;
+                for (let j = 0; j < block.data.length - 1; j++) {
+                    calcChecksum ^= block.data[j];
+                }
+                checksumOk = calcChecksum === block.data[block.data.length - 1];
+            }
+
+            html += `<div class="${rowClasses}" data-block-idx="${i}">`;
+            html += '<span class="editor-block-info">';
+            if (isHeader) {
+                const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
+                const typeName = typeNames[block.headerType] || 'Unknown';
+                html += `<span class="dim">${i + 1}:</span> Header \u2014 ${typeName} <span class="name">"${block.name}"</span>`;
+                html += ` <span class="dim">\u2014 ${block.dataLength} bytes</span>`;
+                if (block.headerType === 0 && block.autostart !== null) {
+                    html += ` <span class="dim">\u2014 autostart ${block.autostart}</span>`;
+                } else if (block.headerType === 3) {
+                    html += ` <span class="addr"> @ $${hex16(block.startAddress)}</span>`;
+                }
+            } else {
+                html += `<span class="dim">${i + 1}:</span> Data \u2014 ${block.data.length - 2} bytes`;
+                html += ` <span class="dim">\u2014 checksum </span>`;
+                html += checksumOk ? '<span class="ok">\u2713</span>' : '<span class="bad">\u2717</span>';
+            }
+            if (panel.fileType === 'tzx' && block.tzxPause !== undefined && block.tzxPause !== 1000) {
+                html += ` <span class="dim">\u2014 pause ${block.tzxPause}ms</span>`;
+            }
+            html += '</span></div>';
+
+            if (isExpanded && isHeader) {
+                html += `<div class="editor-inline-edit" data-edit-idx="${i}">`;
+                html += `<label>Name:</label><input type="text" maxlength="10" value="${block.name}" data-field="name" style="width:100px">`;
+                html += `<label>Type:</label><select data-field="type">`;
+                html += `<option value="0"${block.headerType === 0 ? ' selected' : ''}>Program</option>`;
+                html += `<option value="1"${block.headerType === 1 ? ' selected' : ''}>Num array</option>`;
+                html += `<option value="2"${block.headerType === 2 ? ' selected' : ''}>Char array</option>`;
+                html += `<option value="3"${block.headerType === 3 ? ' selected' : ''}>Bytes</option>`;
+                html += '</select>';
+                if (block.headerType === 0) {
+                    html += `<label>Autostart:</label><input type="number" value="${block.autostart !== null ? block.autostart : ''}" data-field="autostart" min="0" max="9999" style="width:60px" placeholder="none">`;
+                } else if (block.headerType === 3) {
+                    html += `<label>Address:</label><input type="text" value="${hex16(block.startAddress)}" data-field="addr" maxlength="4" style="width:60px">`;
+                }
+                html += `<label class="dim">Data len: ${block.dataLength}</label>`;
+                if (panel.fileType === 'tzx') {
+                    const pauseVal = block.tzxPause !== undefined ? block.tzxPause : 1000;
+                    html += `<label>Pause (ms):</label><input type="number" value="${pauseVal}" data-field="pause" min="0" max="65535" style="width:70px">`;
+                }
+                html += `<button class="editor-apply-btn" data-action="apply" data-idx="${i}">Apply</button>`;
+                html += '</div>';
+            }
+        }
+
+        panel.dom.fileList.innerHTML = html;
+
+        const selCount = panel.selection.size;
+        if (selCount > 0) {
+            panel.dom.statusSpan.textContent = `${panel.blocks.length} blocks, ${selCount} sel`;
+        } else {
+            panel.dom.statusSpan.textContent = `${panel.blocks.length} blocks`;
+        }
+        editorUpdateToolbar();
+    }
+
+    // --- Selection handling (parameterized) ---
+
+    function editorSelectBlock(panel, idx, ctrlKey) {
+        const isDisk = panel.fileType === 'trd' || panel.fileType === 'scl';
+        const isDsk = panel.fileType === 'dsk';
+        const isZip = panel.fileType === 'zip';
+        if (ctrlKey) {
+            if (isDisk || isDsk || isZip) {
+                if (panel.selection.has(idx)) {
+                    panel.selection.delete(idx);
+                } else {
+                    panel.selection.add(idx);
+                }
+            } else {
+                const pairIndices = editorExpandPairs(panel, new Set([idx]));
+                const allSelected = [...pairIndices].every(i => panel.selection.has(i));
+                if (allSelected) {
+                    for (const i of pairIndices) panel.selection.delete(i);
+                } else {
+                    for (const i of pairIndices) panel.selection.add(i);
+                }
+            }
+        } else {
+            if (isDisk || isDsk || isZip) {
+                panel.selection = new Set([idx]);
+            } else {
+                panel.selection = editorExpandPairs(panel, new Set([idx]));
+            }
+        }
+        panel.expandedBlock = -1;
+        editorRenderBlockList(panel);
+    }
+
+    // --- TAP operations (parameterized) ---
+
+    function editorMoveSelection(panel, direction) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        if (direction === -1 && sorted[0] === 0) return;
+        if (direction === 1 && sorted[sorted.length - 1] === panel.blocks.length - 1) return;
+
+        const order = direction === -1 ? sorted : sorted.slice().reverse();
+        const newSel = new Set();
+        for (const idx of order) {
+            const newIdx = idx + direction;
+            const temp = panel.blocks[idx];
+            panel.blocks[idx] = panel.blocks[newIdx];
+            panel.blocks[newIdx] = temp;
+            newSel.add(newIdx);
+        }
+        panel.selection = newSel;
+        panel.expandedBlock = -1;
+        editorRenderBlockList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function editorDeleteSelection(panel) {
+        if (panel.selection.size === 0) return;
+        const sorted = editorSelectedSorted(panel).reverse();
+        for (const idx of sorted) {
+            panel.blocks.splice(idx, 1);
+        }
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        editorRenderBlockList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function editorCrc32(data) {
+        let crc = 0xFFFFFFFF;
+        const table = editorCrc32.t || (editorCrc32.t = (() => {
+            const t = new Uint32Array(256);
+            for (let i = 0; i < 256; i++) {
+                let c = i;
+                for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                t[i] = c;
+            }
+            return t;
+        })());
+        for (let i = 0; i < data.length; i++) {
+            crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function editorCreateZip(files) {
+        const localHeaders = [];
+        const centralHeaders = [];
+        let offset = 0;
+        for (const file of files) {
+            const nameBytes = new TextEncoder().encode(file.name);
+            // Local file header
+            const lh = new Uint8Array(30 + nameBytes.length);
+            const dv = new DataView(lh.buffer);
+            dv.setUint32(0, 0x04034B50, true); // sig
+            dv.setUint16(4, 20, true);  // version
+            dv.setUint16(8, 0, true);   // compression: store
+            dv.setUint32(14, editorCrc32(file.data), true);
+            dv.setUint32(18, file.data.length, true); // compressed
+            dv.setUint32(22, file.data.length, true); // uncompressed
+            dv.setUint16(26, nameBytes.length, true);
+            lh.set(nameBytes, 30);
+
+            // Central dir
+            const ch = new Uint8Array(46 + nameBytes.length);
+            const cdv = new DataView(ch.buffer);
+            cdv.setUint32(0, 0x02014B50, true);
+            cdv.setUint16(4, 20, true);
+            cdv.setUint16(6, 20, true);
+            cdv.setUint32(16, editorCrc32(file.data), true);
+            cdv.setUint32(20, file.data.length, true);
+            cdv.setUint32(24, file.data.length, true);
+            cdv.setUint16(28, nameBytes.length, true);
+            cdv.setUint32(42, offset, true);
+            ch.set(nameBytes, 46);
+
+            localHeaders.push({ header: lh, data: file.data });
+            centralHeaders.push(ch);
+            offset += lh.length + file.data.length;
+        }
+        const cdOffset = offset;
+        let cdSize = 0;
+        for (const ch of centralHeaders) cdSize += ch.length;
+        const end = new Uint8Array(22);
+        const edv = new DataView(end.buffer);
+        edv.setUint32(0, 0x06054B50, true);
+        edv.setUint16(8, files.length, true);
+        edv.setUint16(10, files.length, true);
+        edv.setUint32(12, cdSize, true);
+        edv.setUint32(16, cdOffset, true);
+        const result = new Uint8Array(offset + cdSize + 22);
+        let pos = 0;
+        for (const lh of localHeaders) {
+            result.set(lh.header, pos); pos += lh.header.length;
+            result.set(lh.data, pos); pos += lh.data.length;
+        }
+        for (const ch of centralHeaders) { result.set(ch, pos); pos += ch.length; }
+        result.set(end, pos);
+        return result;
+    }
+
+    function editorSanitizeFilename(name) {
+        return name.replace(/[^\x20-\x7E]/g, '').replace(/[\/\\:*?"<>|]/g, '').trim() || 'untitled';
+    }
+
+    function editorExtractRaw(panel, block, idx) {
+        const num = String(idx + 1).padStart(3, '0');
+        if (block.blockType === 'header') {
+            const safe = editorSanitizeFilename(block.name);
+            return { name: `${num}_${safe}_header.bin`, data: block.data };
+        }
+        const prev = idx > 0 ? panel.blocks[idx - 1] : null;
+        if (prev && prev.blockType === 'header') {
+            const safe = editorSanitizeFilename(prev.name);
+            let suffix = '';
+            if (prev.headerType === 3 && prev.startAddress !== undefined) {
+                suffix = '_' + hex16(prev.startAddress);
+            } else if (prev.headerType === 0 && prev.autostart !== null) {
+                suffix = '_line' + prev.autostart;
+            }
+            return { name: `${num}_${safe}${suffix}.bin`, data: block.data.slice(1, block.data.length - 1) };
+        }
+        return { name: `${num}_data.bin`, data: block.data.slice(1, block.data.length - 1) };
+    }
+
+    function editorExtractHobeta(panel, block, idx) {
+        // Only data blocks can be exported as Hobeta
+        if (block.blockType === 'header') return null;
+        const rawData = block.data.slice(1, block.data.length - 1); // strip flag + checksum
+        const prev = idx > 0 ? panel.blocks[idx - 1] : null;
+        let fileName = 'data';
+        let headerType = 3;
+        let addr = 0;
+        if (prev && prev.blockType === 'header') {
+            fileName = editorSanitizeFilename(prev.name);
+            headerType = prev.headerType;
+            addr = prev.startAddress || 0;
+        }
+        const hobetaData = buildHobetaGeneric(fileName, headerType, addr, rawData);
+        const ext = trdExtToHobetaExt(headerTypeToTrdExt(headerType));
+        return { name: `${fileName}.${ext}`, data: hobetaData };
+    }
+
+    function editorExtractSelection(panel, format) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        const baseName = (panel.fileName || 'extract').replace(/\.(tap|tzx)$/i, '');
+        const asHobeta = format === 'hobeta';
+
+        // In Hobeta mode, skip header blocks whose data block is also selected
+        // (the data block's Hobeta already contains the header metadata)
+        const files = [];
+        for (const idx of sorted) {
+            const block = panel.blocks[idx];
+            if (asHobeta && block.blockType === 'header' &&
+                idx + 1 < panel.blocks.length && sorted.includes(idx + 1)) {
+                continue;
+            }
+            if (asHobeta) {
+                const hob = editorExtractHobeta(panel, block, idx);
+                if (hob) { files.push(hob); continue; }
+            }
+            files.push(editorExtractRaw(panel, block, idx));
+        }
+        if (files.length === 0) return;
+
+        if (files.length === 1) {
+            const blob = new Blob([files[0].data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = files[0].name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+        const zipData = editorCreateZip(files);
+        const blob = new Blob([zipData], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '_extract.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function editorUpdateHeaderBlock(panel, idx, name, type, param1, param2) {
+        const block = panel.blocks[idx];
+        if (block.blockType !== 'header') return;
+
+        const d = block.data;
+        d[1] = type & 0xFF;
+        const padded = (name + '          ').substring(0, 10);
+        for (let i = 0; i < 10; i++) {
+            d[2 + i] = padded.charCodeAt(i);
+        }
+        d[14] = param1 & 0xFF;
+        d[15] = (param1 >> 8) & 0xFF;
+        d[16] = param2 & 0xFF;
+        d[17] = (param2 >> 8) & 0xFF;
+        editorRecalcChecksum(d);
+
+        const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
+        block.headerType = type;
+        block.typeName = typeNames[type] || 'Unknown';
+        block.name = padded.trim();
+        block.param1 = param1;
+        block.param2 = param2;
+        if (type === 0) {
+            block.autostart = param1 < 32768 ? param1 : null;
+            block.varsOffset = param2;
+            delete block.startAddress;
+        } else if (type === 3) {
+            block.startAddress = param1;
+            delete block.autostart;
+            delete block.varsOffset;
+        } else {
+            delete block.autostart;
+            delete block.varsOffset;
+            delete block.startAddress;
+        }
+        syncPanelToExplorer(panel);
+    }
+
+    function editorAddFileBlocks(panel, fileData, name, type, startAddr, autostart, varLetter, pause) {
+        const header = new Uint8Array(19);
+        header[0] = 0x00;
+        header[1] = type;
+        const padded = (name + '          ').substring(0, 10);
+        for (let i = 0; i < 10; i++) {
+            header[2 + i] = padded.charCodeAt(i);
+        }
+        header[12] = fileData.length & 0xFF;
+        header[13] = (fileData.length >> 8) & 0xFF;
+        let param1 = 0;
+        if (type === 0) {
+            param1 = (autostart !== null && autostart !== undefined && autostart !== '') ? (parseInt(autostart) & 0xFFFF) : 0x8000;
+        } else if (type === 3) {
+            param1 = startAddr & 0xFFFF;
+        } else if (type === 1) {
+            const ch = (varLetter || 'A').toUpperCase().charCodeAt(0) - 0x41;
+            param1 = 0x80 | (ch & 0x1F);
+        } else if (type === 2) {
+            const ch = (varLetter || 'A').toUpperCase().charCodeAt(0) - 0x41;
+            param1 = 0xC0 | (ch & 0x1F);
+        }
+        header[14] = param1 & 0xFF;
+        header[15] = (param1 >> 8) & 0xFF;
+        let param2 = (type === 0) ? fileData.length : 0x8000;
+        header[16] = param2 & 0xFF;
+        header[17] = (param2 >> 8) & 0xFF;
+        editorRecalcChecksum(header);
+
+        const dataBlock = new Uint8Array(fileData.length + 2);
+        dataBlock[0] = 0xFF;
+        dataBlock.set(fileData, 1);
+        editorRecalcChecksum(dataBlock);
+
+        const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
+        const headerInfo = {
+            offset: -1, length: 19, flag: 0, data: header,
+            blockType: 'header', headerType: type,
+            typeName: typeNames[type] || 'Unknown',
+            name: padded.trim(), dataLength: fileData.length,
+            param1: param1, param2: param2
+        };
+        if (pause !== undefined) headerInfo.tzxPause = pause;
+        if (type === 0) {
+            headerInfo.autostart = param1 < 32768 ? param1 : null;
+            headerInfo.varsOffset = param2;
+        } else if (type === 3) {
+            headerInfo.startAddress = param1;
+        }
+
+        const dataInfo = {
+            offset: -1, length: dataBlock.length, flag: 0xFF,
+            data: dataBlock, blockType: 'data'
+        };
+        if (pause !== undefined) dataInfo.tzxPause = pause;
+
+        const newIdx = panel.blocks.length;
+        panel.blocks.push(headerInfo);
+        panel.blocks.push(dataInfo);
+        panel.selection.clear();
+        panel.selection.add(newIdx);
+        panel.selection.add(newIdx + 1);
+        panel.expandedBlock = -1;
+        editorRenderBlockList(panel);
+        panel.dom.fileList.scrollTop = panel.dom.fileList.scrollHeight;
+        syncPanelToExplorer(panel);
+    }
+
+    function editorAddHeaderlessBlock(panel, fileData, flag, pause) {
+        const dataBlock = new Uint8Array(fileData.length + 2);
+        dataBlock[0] = flag;
+        dataBlock.set(fileData, 1);
+        editorRecalcChecksum(dataBlock);
+
+        const blockInfo = {
+            offset: -1, length: dataBlock.length, flag: flag,
+            data: dataBlock, blockType: flag === 0 ? 'header' : 'data'
+        };
+        if (pause !== undefined) blockInfo.tzxPause = pause;
+        const newIdx = panel.blocks.length;
+        panel.blocks.push(blockInfo);
+        panel.selection.clear();
+        panel.selection.add(newIdx);
+        panel.expandedBlock = -1;
+        editorRenderBlockList(panel);
+        panel.dom.fileList.scrollTop = panel.dom.fileList.scrollHeight;
+        syncPanelToExplorer(panel);
+    }
+
+    function editorImportTapData(panel, tapData) {
+        let offset = 0;
+        const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
+        while (offset < tapData.length - 1) {
+            const blockLen = tapData[offset] | (tapData[offset + 1] << 8);
+            if (blockLen === 0 || offset + 2 + blockLen > tapData.length) break;
+
+            const blockData = new Uint8Array(tapData.slice(offset + 2, offset + 2 + blockLen));
+            const flag = blockData[0];
+            let blockInfo = { offset: -1, length: blockLen, flag: flag, data: blockData };
+
+            if (flag === 0 && blockLen === 19) {
+                const type = blockData[1];
+                const name = String.fromCharCode(...blockData.slice(2, 12)).trim();
+                const dataLen = blockData[12] | (blockData[13] << 8);
+                const p1 = blockData[14] | (blockData[15] << 8);
+                const p2 = blockData[16] | (blockData[17] << 8);
+                blockInfo.blockType = 'header';
+                blockInfo.headerType = type;
+                blockInfo.typeName = typeNames[type] || 'Unknown';
+                blockInfo.name = name;
+                blockInfo.dataLength = dataLen;
+                blockInfo.param1 = p1;
+                blockInfo.param2 = p2;
+                if (type === 0) { blockInfo.autostart = p1 < 32768 ? p1 : null; blockInfo.varsOffset = p2; }
+                else if (type === 3) { blockInfo.startAddress = p1; }
+            } else {
+                blockInfo.blockType = 'data';
+            }
+
+            panel.blocks.push(blockInfo);
+            offset += 2 + blockLen;
+        }
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+    }
+
+    function editorNewTap(panel) {
+        panel.blocks = [];
+        panel.parsedFile = { type: 'tap', blocks: panel.blocks, size: 0 };
+        panel.fileType = 'tap';
+        panel.rawData = new Uint8Array(0);
+        panel.fileName = 'new.tap';
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        updatePanelHeader(panel);
+        editorRenderBlockList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function editorBuildTap(panel) {
+        let totalSize = 0;
+        for (const block of panel.blocks) totalSize += 2 + block.data.length;
+        const tap = new Uint8Array(totalSize);
+        let offset = 0;
+        for (const block of panel.blocks) {
+            tap[offset] = block.data.length & 0xFF;
+            tap[offset + 1] = (block.data.length >> 8) & 0xFF;
+            offset += 2;
+            tap.set(block.data, offset);
+            offset += block.data.length;
+        }
+        return tap;
+    }
+
+    function editorSaveTap(panel) {
+        if (!panel.blocks.length) return;
+        const tap = editorBuildTap(panel);
+        const baseName = (panel.fileName || 'output').replace(/\.tap$/i, '');
+        const blob = new Blob([tap], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '.tap';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ========== TZX Editor Functions ==========
+
+    function editorNewTzx(panel) {
+        panel.blocks = [];
+        panel.parsedFile = { type: 'tzx', blocks: panel.blocks, nonStandardBlocks: [], size: 0, version: '1.20' };
+        panel.fileType = 'tzx';
+        panel.rawData = new Uint8Array(0);
+        panel.fileName = 'new.tzx';
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        panel.pendingFileData = null;
+        updatePanelHeader(panel);
+        editorRenderBlockList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function editorImportTzxData(panel, tzxData) {
+        const typeNames = ['Program', 'Number array', 'Character array', 'Bytes'];
+        if (tzxData.length < 10) return;
+        // Validate TZX header: "ZXTape!" + 0x1A
+        const sig = String.fromCharCode(...tzxData.slice(0, 7));
+        if (sig !== 'ZXTape!' || tzxData[7] !== 0x1A) return;
+        const verMajor = tzxData[8];
+        const verMinor = tzxData[9];
+        if (panel.parsedFile) panel.parsedFile.version = `${verMajor}.${String(verMinor).padStart(2, '0')}`;
+
+        let offset = 10;
+        let blockIndex = 0;
+        while (offset < tzxData.length) {
+            const id = tzxData[offset];
+            offset++;
+
+            if (id === 0x10) {
+                // Standard speed data block
+                if (offset + 4 > tzxData.length) break;
+                const pause = tzxData[offset] | (tzxData[offset + 1] << 8);
+                const dataLen = tzxData[offset + 2] | (tzxData[offset + 3] << 8);
+                offset += 4;
+                if (offset + dataLen > tzxData.length) break;
+                const blockData = new Uint8Array(tzxData.slice(offset, offset + dataLen));
+                offset += dataLen;
+
+                const flag = blockData[0];
+                let blockInfo = { offset: -1, length: dataLen, flag: flag, data: blockData, tzxPause: pause };
+
+                if (flag === 0 && dataLen === 19) {
+                    const type = blockData[1];
+                    const name = String.fromCharCode(...blockData.slice(2, 12)).trim();
+                    const dLen = blockData[12] | (blockData[13] << 8);
+                    const p1 = blockData[14] | (blockData[15] << 8);
+                    const p2 = blockData[16] | (blockData[17] << 8);
+                    blockInfo.blockType = 'header';
+                    blockInfo.headerType = type;
+                    blockInfo.typeName = typeNames[type] || 'Unknown';
+                    blockInfo.name = name;
+                    blockInfo.dataLength = dLen;
+                    blockInfo.param1 = p1;
+                    blockInfo.param2 = p2;
+                    if (type === 0) { blockInfo.autostart = p1 < 32768 ? p1 : null; blockInfo.varsOffset = p2; }
+                    else if (type === 3) { blockInfo.startAddress = p1; }
+                } else {
+                    blockInfo.blockType = 'data';
+                }
+
+                blockInfo._tzxOriginalIndex = blockIndex;
+                panel.blocks.push(blockInfo);
+            } else {
+                // Non-standard block — read its full extent, store opaquely
+                const blockStart = offset - 1; // includes ID byte
+                let blockEnd = offset;
+
+                switch (id) {
+                    case 0x11: // Turbo speed data
+                        if (offset + 0x12 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 0x12 + (tzxData[offset + 0x0F] | (tzxData[offset + 0x10] << 8) | (tzxData[offset + 0x11] << 16));
+                        break;
+                    case 0x12: // Pure tone
+                        blockEnd = offset + 4;
+                        break;
+                    case 0x13: // Pulse sequence
+                        if (offset >= tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 1 + tzxData[offset] * 2;
+                        break;
+                    case 0x14: // Pure data
+                        if (offset + 0x0A > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 0x0A + (tzxData[offset + 0x07] | (tzxData[offset + 0x08] << 8) | (tzxData[offset + 0x09] << 16));
+                        break;
+                    case 0x15: // Direct recording
+                        if (offset + 8 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 8 + (tzxData[offset + 0x05] | (tzxData[offset + 0x06] << 8) | (tzxData[offset + 0x07] << 16));
+                        break;
+                    case 0x18: // CSW recording
+                    case 0x19: // Generalized data
+                        if (offset + 4 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 4 + (tzxData[offset] | (tzxData[offset + 1] << 8) | (tzxData[offset + 2] << 16) | (tzxData[offset + 3] << 24));
+                        break;
+                    case 0x20: // Pause
+                        blockEnd = offset + 2;
+                        break;
+                    case 0x21: // Group start
+                        if (offset >= tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 1 + tzxData[offset];
+                        break;
+                    case 0x22: // Group end
+                        blockEnd = offset;
+                        break;
+                    case 0x23: // Jump
+                        blockEnd = offset + 2;
+                        break;
+                    case 0x24: // Loop start
+                        blockEnd = offset + 2;
+                        break;
+                    case 0x25: // Loop end
+                        blockEnd = offset;
+                        break;
+                    case 0x26: // Call sequence
+                        if (offset + 2 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 2 + (tzxData[offset] | (tzxData[offset + 1] << 8)) * 2;
+                        break;
+                    case 0x27: // Return
+                        blockEnd = offset;
+                        break;
+                    case 0x28: // Select
+                        if (offset + 2 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 2 + (tzxData[offset] | (tzxData[offset + 1] << 8));
+                        break;
+                    case 0x2A: // Stop if 48K
+                        blockEnd = offset + 4;
+                        break;
+                    case 0x2B: // Signal level
+                        blockEnd = offset + 5;
+                        break;
+                    case 0x30: // Text description
+                        if (offset >= tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 1 + tzxData[offset];
+                        break;
+                    case 0x31: // Message
+                        if (offset + 1 >= tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 2 + tzxData[offset + 1];
+                        break;
+                    case 0x32: // Archive info
+                        if (offset + 2 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 2 + (tzxData[offset] | (tzxData[offset + 1] << 8));
+                        break;
+                    case 0x33: // Hardware type
+                        if (offset >= tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 1 + tzxData[offset] * 3;
+                        break;
+                    case 0x35: // Custom info
+                        if (offset + 0x14 > tzxData.length) { offset = tzxData.length; break; }
+                        blockEnd = offset + 0x14 + (tzxData[offset + 0x10] | (tzxData[offset + 0x11] << 8) | (tzxData[offset + 0x12] << 16) | (tzxData[offset + 0x13] << 24));
+                        break;
+                    case 0x5A: // Glue
+                        blockEnd = offset + 9;
+                        break;
+                    default:
+                        // Unknown block — try reading 4-byte length at current offset
+                        if (offset + 4 <= tzxData.length) {
+                            blockEnd = offset + 4 + (tzxData[offset] | (tzxData[offset + 1] << 8) | (tzxData[offset + 2] << 16) | (tzxData[offset + 3] << 24));
+                        } else {
+                            blockEnd = tzxData.length;
+                        }
+                        break;
+                }
+
+                if (blockEnd > tzxData.length) blockEnd = tzxData.length;
+                const rawBytes = new Uint8Array(tzxData.slice(blockStart + 1, blockEnd)); // without ID byte
+                const typeName = TZX_BLOCK_NAMES[id] || `Unknown ($${id.toString(16).toUpperCase().padStart(2, '0')})`;
+
+                panel.blocks.push({
+                    blockType: 'nonstandard',
+                    tzxId: id,
+                    typeName: typeName,
+                    rawBytes: rawBytes,
+                    dataLength: rawBytes.length,
+                    _tzxOriginalIndex: blockIndex
+                });
+
+                offset = blockEnd;
+            }
+            blockIndex++;
+        }
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+    }
+
+    function editorBuildTzx(panel) {
+        // TZX header: "ZXTape!" + 0x1A + version 1.20
+        const header = new Uint8Array([0x5A, 0x58, 0x54, 0x61, 0x70, 0x65, 0x21, 0x1A, 0x01, 0x14]);
+
+        // Calculate total size
+        let totalSize = header.length;
+        for (const block of panel.blocks) {
+            if (block.blockType === 'nonstandard') {
+                totalSize += 1 + block.rawBytes.length; // ID byte + raw data
+            } else {
+                // ID 0x10: 1 (ID) + 2 (pause) + 2 (len) + data.length
+                totalSize += 1 + 2 + 2 + block.data.length;
+            }
+        }
+
+        const tzx = new Uint8Array(totalSize);
+        tzx.set(header, 0);
+        let offset = header.length;
+
+        for (let i = 0; i < panel.blocks.length; i++) {
+            const block = panel.blocks[i];
+            if (block.blockType === 'nonstandard') {
+                tzx[offset] = block.tzxId;
+                offset++;
+                tzx.set(block.rawBytes, offset);
+                offset += block.rawBytes.length;
+            } else {
+                // Standard speed data block (ID 0x10)
+                tzx[offset] = 0x10;
+                offset++;
+                // Pause: use stored value, or default 1000ms (0 for last standard block)
+                let pause = block.tzxPause !== undefined ? block.tzxPause : 1000;
+                // Find if this is the last standard block
+                let isLastStandard = true;
+                for (let j = i + 1; j < panel.blocks.length; j++) {
+                    if (panel.blocks[j].blockType !== 'nonstandard') { isLastStandard = false; break; }
+                }
+                if (isLastStandard && block.tzxPause === undefined) pause = 0;
+                tzx[offset] = pause & 0xFF;
+                tzx[offset + 1] = (pause >> 8) & 0xFF;
+                offset += 2;
+                tzx[offset] = block.data.length & 0xFF;
+                tzx[offset + 1] = (block.data.length >> 8) & 0xFF;
+                offset += 2;
+                tzx.set(block.data, offset);
+                offset += block.data.length;
+            }
+        }
+
+        return tzx;
+    }
+
+    function editorSaveTzx(panel) {
+        if (!panel.blocks.length) return;
+        const tzx = editorBuildTzx(panel);
+        const baseName = (panel.fileName || 'output').replace(/\.tzx$/i, '');
+        const blob = new Blob([tzx], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '.tzx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ========== Disk Editor Functions (parameterized) ==========
+
+    function diskEditorExtractFiles(panel) {
+        if (panel.diskFiles.length > 0) return;
+        if (!panel.parsedFile || (panel.parsedFile.type !== 'trd' && panel.parsedFile.type !== 'scl')) return;
+        if (!panel.rawData || panel.rawData.length === 0) return;
+
+        if (panel.parsedFile.type === 'trd') {
+            for (let i = 0; i < 128; i++) {
+                const entryOffset = i * 16;
+                if (panel.rawData[entryOffset] === 0) break;
+                const deleted = panel.rawData[entryOffset] === 1;
+                const name = String.fromCharCode(...panel.rawData.slice(entryOffset, entryOffset + 8));
+                const ext = String.fromCharCode(panel.rawData[entryOffset + 8]);
+                const startAddr = panel.rawData[entryOffset + 9] | (panel.rawData[entryOffset + 10] << 8);
+                const length = panel.rawData[entryOffset + 11] | (panel.rawData[entryOffset + 12] << 8);
+                const sectors = panel.rawData[entryOffset + 13];
+                const startSector = panel.rawData[entryOffset + 14];
+                const startTrack = panel.rawData[entryOffset + 15];
+                const fileOffset = (startTrack * 16 + startSector) * 256;
+                const dataSize = sectors * 256;
+                const data = new Uint8Array(dataSize);
+                data.set(panel.rawData.slice(fileOffset, fileOffset + dataSize));
+                panel.diskFiles.push({
+                    name: (name + '        ').substring(0, 8),
+                    ext: ext,
+                    startAddress: startAddr,
+                    length: length,
+                    sectors: sectors,
+                    data: data,
+                    deleted: deleted
+                });
+            }
+        } else {
+            const files = panel.parsedFile.files;
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const sectors = f.sectors;
+                const dataSize = sectors * 256;
+                const data = new Uint8Array(dataSize);
+                const src = panel.rawData.slice(f.offset, f.offset + dataSize);
+                data.set(src);
+                panel.diskFiles.push({
+                    name: (f.name + '        ').substring(0, 8),
+                    ext: f.ext,
+                    startAddress: f.startAddress,
+                    length: f.length,
+                    sectors: sectors,
+                    data: data,
+                    deleted: false
+                });
+            }
+        }
+
+        if (panel.parsedFile.type === 'trd' && panel.rawData.length >= 0x800 + 0xFD) {
+            const infoOffset = 8 * 256;
+            panel.diskLabel = String.fromCharCode(
+                ...panel.rawData.slice(infoOffset + 0xF5, infoOffset + 0xFD)
+            );
+        } else {
+            panel.diskLabel = '        ';
+        }
+    }
+
+    function diskEditorTotalSectors(panel) {
+        let total = 0;
+        for (const f of panel.diskFiles) total += f.sectors;
+        return total;
+    }
+
+    function diskEditorRenderFileList(panel) {
+        diskEditorExtractFiles(panel);
+
+        if (panel.diskFiles.length === 0) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">Empty disk. Use "Add File" to add files.</span>';
+            panel.dom.statusSpan.textContent = '0 files';
+            editorUpdateToolbar();
+            return;
+        }
+
+        const totalSectors = diskEditorTotalSectors(panel);
+        const freeSectors = 2544 - totalSectors;
+        const activeFiles = panel.diskFiles.filter(f => !f.deleted).length;
+        const deletedFiles = panel.diskFiles.length - activeFiles;
+
+        let html = '';
+
+        html += '<div class="editor-block-row disk-label-row" data-label-row="1">';
+        html += '<span class="editor-block-info">';
+        html += `Label: <span class="name">"${panel.diskLabel.replace(/\s+$/, '')}"</span>`;
+        html += ` \u2014 ${activeFiles} file${activeFiles !== 1 ? 's' : ''}`;
+        if (deletedFiles > 0) html += ` <span class="dim">(+${deletedFiles} deleted)</span>`;
+        html += ` \u2014 ${totalSectors} used, ${freeSectors} free sectors`;
+        html += '</span></div>';
+
+        if (panel.expandedBlock === -2) {
+            html += '<div class="editor-inline-edit" data-edit-idx="-2">';
+            html += `<label>Label:</label><input type="text" maxlength="8" value="${panel.diskLabel.replace(/\s+$/, '')}" data-field="label" style="width:100px">`;
+            html += '<button class="editor-apply-btn" data-action="disk-apply" data-idx="-2">Apply</button>';
+            html += '</div>';
+        }
+
+        for (let i = 0; i < panel.diskFiles.length; i++) {
+            const file = panel.diskFiles[i];
+            const isSel = panel.selection.has(i);
+            const isExpanded = panel.expandedBlock === i;
+
+            let rowClasses = 'editor-block-row disk-row';
+            if (file.deleted) rowClasses += ' disk-deleted';
+            if (isSel) rowClasses += ' selected';
+
+            html += `<div class="${rowClasses}" data-block-idx="${i}">`;
+            html += '<span class="editor-block-info">';
+            html += `<span class="dim">${i + 1}:</span> `;
+            html += `<span class="file-ext">${file.ext}</span>`;
+            html += `<span class="file-name">${file.name.replace(/\s+$/, '')}</span>`;
+            html += ` <span class="file-addr">@ $${hex16(file.startAddress)}</span>`;
+            html += ` <span class="file-size">\u2014 ${file.length} bytes</span>`;
+            html += ` <span class="file-sectors">(${file.sectors} sectors)</span>`;
+            if (file.deleted) html += ' <span class="bad">[DEL]</span>';
+            html += '</span></div>';
+
+            if (isExpanded) {
+                html += `<div class="editor-inline-edit" data-edit-idx="${i}">`;
+                html += `<label>Name:</label><input type="text" maxlength="8" value="${file.name.replace(/\s+$/, '')}" data-field="name" style="width:80px">`;
+                html += `<label>Ext:</label><select data-field="ext">`;
+                for (const e of ['C', 'B', 'D', '#']) {
+                    html += `<option value="${e}"${file.ext === e ? ' selected' : ''}>${e}</option>`;
+                }
+                html += '</select>';
+                html += `<label>Addr:</label><input type="text" value="${hex16(file.startAddress)}" data-field="addr" maxlength="4" style="width:60px">`;
+                html += `<label class="dim">${file.length} bytes, ${file.sectors} sectors</label>`;
+                html += `<button class="editor-apply-btn" data-action="disk-apply" data-idx="${i}">Apply</button>`;
+                html += '</div>';
+            }
+        }
+
+        panel.dom.fileList.innerHTML = html;
+
+        const selCount = panel.selection.size;
+        if (selCount > 0) {
+            panel.dom.statusSpan.textContent = `${activeFiles} files, ${selCount} sel \u2014 ${freeSectors} free`;
+        } else {
+            panel.dom.statusSpan.textContent = `${activeFiles} files \u2014 ${freeSectors} free`;
+        }
+        editorUpdateToolbar();
+    }
+
+    function diskEditorMoveSelection(panel, dir) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        if (dir === -1 && sorted[0] === 0) return;
+        if (dir === 1 && sorted[sorted.length - 1] === panel.diskFiles.length - 1) return;
+
+        const order = dir === -1 ? sorted : sorted.slice().reverse();
+        const newSel = new Set();
+        for (const idx of order) {
+            const newIdx = idx + dir;
+            const temp = panel.diskFiles[idx];
+            panel.diskFiles[idx] = panel.diskFiles[newIdx];
+            panel.diskFiles[newIdx] = temp;
+            newSel.add(newIdx);
+        }
+        panel.selection = newSel;
+        panel.expandedBlock = -1;
+        diskEditorRenderFileList(panel);
+    }
+
+    function diskEditorDeleteSelection(panel) {
+        if (panel.selection.size === 0) return;
+        const sorted = editorSelectedSorted(panel).reverse();
+        for (const idx of sorted) {
+            panel.diskFiles.splice(idx, 1);
+        }
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        diskEditorRenderFileList(panel);
+        diskEditorRefreshExplorer(panel);
+    }
+
+    function diskEditorMarkDeletedSelection(panel) {
+        if (panel.selection.size === 0) return;
+        const sorted = editorSelectedSorted(panel);
+        const allDeleted = sorted.every(idx => panel.diskFiles[idx].deleted);
+        for (const idx of sorted) {
+            panel.diskFiles[idx].deleted = !allDeleted;
+        }
+        panel.expandedBlock = -1;
+        diskEditorRenderFileList(panel);
+    }
+
+    function diskEditorExtractSelection(panel, format) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        const baseName = (panel.fileName || 'extract').replace(/\.(trd|scl)$/i, '');
+        const asHobeta = format === 'hobeta';
+
+        if (sorted.length === 1) {
+            const file = panel.diskFiles[sorted[0]];
+            const trimName = file.name.replace(/\s+$/, '');
+            let name, data;
+            if (asHobeta) {
+                name = trimName + '.' + trdExtToHobetaExt(file.ext);
+                data = buildHobeta(file);
+            } else {
+                name = trimName + '.' + file.ext;
+                data = file.data.slice(0, file.length);
+            }
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+
+        const files = sorted.map(idx => {
+            const file = panel.diskFiles[idx];
+            const trimName = file.name.replace(/\s+$/, '');
+            if (asHobeta) {
+                return {
+                    name: trimName + '.' + trdExtToHobetaExt(file.ext),
+                    data: buildHobeta(file)
+                };
+            }
+            return {
+                name: trimName + '.' + file.ext,
+                data: file.data.slice(0, file.length)
+            };
+        });
+        const zipData = editorCreateZip(files);
+        const blob = new Blob([zipData], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '_extract.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function diskEditorNewTrd(panel) {
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        panel.blocks = [];
+        panel.parsedFile = { type: 'trd', files: [], diskTitle: '', freeSectors: 2544, size: 0 };
+        panel.fileType = 'trd';
+        panel.rawData = new Uint8Array(0);
+        panel.fileName = 'new.trd';
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        updatePanelHeader(panel);
+        diskEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function diskEditorAddFile(panel, data, name, ext, addr) {
+        const length = data.length;
+        const sectors = Math.ceil(length / 256);
+        if (sectors > 255) return 'File too large (max 255 sectors / 65,280 bytes)';
+        if (panel.diskFiles.length >= 128) return 'Directory full (max 128 files)';
+        if (diskEditorTotalSectors(panel) + sectors > 2544) return 'Disk full (not enough free sectors)';
+
+        const paddedData = new Uint8Array(sectors * 256);
+        paddedData.set(data);
+        const paddedName = (name + '        ').substring(0, 8);
+
+        panel.diskFiles.push({
+            name: paddedName,
+            ext: ext,
+            startAddress: addr,
+            length: length,
+            sectors: sectors,
+            data: paddedData,
+            deleted: false
+        });
+        return null;
+    }
+
+    function diskEditorImportDisk(panel, data, filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        let files;
+
+        if (ext === 'scl') {
+            const sig = String.fromCharCode(...data.slice(0, 8));
+            if (sig !== 'SINCLAIR') return 'Invalid SCL signature';
+            const fileCount = data[8];
+            let offset = 9;
+            files = [];
+            for (let i = 0; i < fileCount; i++) {
+                const name = String.fromCharCode(...data.slice(offset, offset + 8));
+                const fext = String.fromCharCode(data[offset + 8]);
+                const startAddr = data[offset + 9] | (data[offset + 10] << 8);
+                const length = data[offset + 11] | (data[offset + 12] << 8);
+                const sectors = data[offset + 13];
+                files.push({ name, ext: fext, startAddress: startAddr, length, sectors });
+                offset += 14;
+            }
+            let dataOffset = offset;
+            for (const f of files) {
+                const dataSize = f.sectors * 256;
+                f.data = new Uint8Array(dataSize);
+                f.data.set(data.slice(dataOffset, dataOffset + dataSize));
+                dataOffset += dataSize;
+            }
+        } else {
+            if (data.length < 4096) return 'File too small for TRD';
+            files = [];
+            for (let i = 0; i < 128; i++) {
+                const entryOffset = i * 16;
+                if (data[entryOffset] === 0) break;
+                if (data[entryOffset] === 1) continue;
+                const name = String.fromCharCode(...data.slice(entryOffset, entryOffset + 8));
+                const fext = String.fromCharCode(data[entryOffset + 8]);
+                const startAddr = data[entryOffset + 9] | (data[entryOffset + 10] << 8);
+                const length = data[entryOffset + 11] | (data[entryOffset + 12] << 8);
+                const sectors = data[entryOffset + 13];
+                const startSector = data[entryOffset + 14];
+                const startTrack = data[entryOffset + 15];
+                const fileOffset = (startTrack * 16 + startSector) * 256;
+                const dataSize = sectors * 256;
+                const fileData = new Uint8Array(dataSize);
+                fileData.set(data.slice(fileOffset, fileOffset + dataSize));
+                files.push({ name, ext: fext, startAddress: startAddr, length, sectors, data: fileData });
+            }
+        }
+
+        let skipped = 0;
+        for (const f of files) {
+            if (panel.diskFiles.length >= 128) { skipped++; continue; }
+            if (diskEditorTotalSectors(panel) + f.sectors > 2544) { skipped++; continue; }
+            panel.diskFiles.push({
+                name: (f.name + '        ').substring(0, 8),
+                ext: f.ext,
+                startAddress: f.startAddress,
+                length: f.length,
+                sectors: f.sectors,
+                data: f.data,
+                deleted: false
+            });
+        }
+        return skipped > 0 ? `Imported ${files.length - skipped} files, ${skipped} skipped (capacity)` : null;
+    }
+
+    function diskEditorBuildTrd(panel) {
+        const trd = new Uint8Array(655360);
+        let trdSector = 16;
+        let activeFileCount = 0;
+
+        for (let i = 0; i < panel.diskFiles.length; i++) {
+            const f = panel.diskFiles[i];
+            const entryOffset = i * 16;
+
+            for (let c = 0; c < 8; c++) {
+                trd[entryOffset + c] = f.name.charCodeAt(c);
+            }
+            if (f.deleted) {
+                trd[entryOffset] = 0x01;
+            } else {
+                activeFileCount++;
+            }
+            trd[entryOffset + 8] = f.ext.charCodeAt(0);
+            trd[entryOffset + 9] = f.startAddress & 0xFF;
+            trd[entryOffset + 10] = (f.startAddress >> 8) & 0xFF;
+            trd[entryOffset + 11] = f.length & 0xFF;
+            trd[entryOffset + 12] = (f.length >> 8) & 0xFF;
+            trd[entryOffset + 13] = f.sectors;
+            const startSector = trdSector % 16;
+            const startTrack = Math.floor(trdSector / 16);
+            trd[entryOffset + 14] = startSector;
+            trd[entryOffset + 15] = startTrack;
+
+            const dataOffset = trdSector * 256;
+            trd.set(f.data.subarray(0, f.sectors * 256), dataOffset);
+            trdSector += f.sectors;
+        }
+
+        const info = 0x800;
+        trd[info + 0xE1] = trdSector % 16;
+        trd[info + 0xE2] = Math.floor(trdSector / 16);
+        trd[info + 0xE3] = 0x16;
+        trd[info + 0xE4] = activeFileCount;
+        const freeSectors = 2560 - trdSector;
+        trd[info + 0xE5] = freeSectors & 0xFF;
+        trd[info + 0xE6] = (freeSectors >> 8) & 0xFF;
+        trd[info + 0xE7] = 0x10;
+
+        for (let c = 0; c < 8; c++) {
+            trd[info + 0xF5 + c] = panel.diskLabel.charCodeAt(c) || 0x20;
+        }
+
+        return trd;
+    }
+
+    function diskEditorBuildScl(panel) {
+        const activeFiles = panel.diskFiles.filter(f => !f.deleted);
+
+        let totalDataSize = 0;
+        for (const f of activeFiles) totalDataSize += f.sectors * 256;
+        const headerSize = 9 + activeFiles.length * 14;
+        const scl = new Uint8Array(headerSize + totalDataSize);
+
+        const sig = 'SINCLAIR';
+        for (let i = 0; i < 8; i++) scl[i] = sig.charCodeAt(i);
+        scl[8] = activeFiles.length;
+
+        let offset = 9;
+        for (const f of activeFiles) {
+            for (let c = 0; c < 8; c++) {
+                scl[offset + c] = f.name.charCodeAt(c) || 0x20;
+            }
+            scl[offset + 8] = f.ext.charCodeAt(0);
+            scl[offset + 9] = f.startAddress & 0xFF;
+            scl[offset + 10] = (f.startAddress >> 8) & 0xFF;
+            scl[offset + 11] = f.length & 0xFF;
+            scl[offset + 12] = (f.length >> 8) & 0xFF;
+            scl[offset + 13] = f.sectors;
+            offset += 14;
+        }
+
+        for (const f of activeFiles) {
+            scl.set(f.data.subarray(0, f.sectors * 256), offset);
+            offset += f.sectors * 256;
+        }
+
+        return scl;
+    }
+
+    function diskEditorSaveDisk(panel) {
+        if (panel.diskFiles.length === 0) return;
+        const isSCL = panel.fileType === 'scl';
+        const data = isSCL ? diskEditorBuildScl(panel) : diskEditorBuildTrd(panel);
+        const ext = isSCL ? '.scl' : '.trd';
+        const baseName = (panel.fileName || 'output').replace(/\.(trd|scl)$/i, '');
+        const blob = new Blob([data], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + ext;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function diskEditorApplyInlineEdit(panel, idx) {
+        if (idx === -2) {
+            const editRow = panel.dom.fileList.querySelector('.editor-inline-edit[data-edit-idx="-2"]');
+            if (!editRow) return;
+            const labelInput = editRow.querySelector('[data-field="label"]');
+            const raw = labelInput ? labelInput.value : '';
+            panel.diskLabel = (raw + '        ').substring(0, 8);
+            panel.expandedBlock = -1;
+            diskEditorRenderFileList(panel);
+            diskEditorRefreshExplorer(panel);
+            return;
+        }
+
+        if (idx < 0 || idx >= panel.diskFiles.length) return;
+        const editRow = panel.dom.fileList.querySelector(`.editor-inline-edit[data-edit-idx="${idx}"]`);
+        if (!editRow) return;
+
+        const nameInput = editRow.querySelector('[data-field="name"]');
+        const extSelect = editRow.querySelector('[data-field="ext"]');
+        const addrInput = editRow.querySelector('[data-field="addr"]');
+
+        const file = panel.diskFiles[idx];
+        if (nameInput) {
+            file.name = (nameInput.value + '        ').substring(0, 8);
+        }
+        if (extSelect) {
+            file.ext = extSelect.value;
+        }
+        if (addrInput) {
+            file.startAddress = parseInt(addrInput.value, 16) || 0;
+        }
+
+        panel.expandedBlock = -1;
+        diskEditorRenderFileList(panel);
+        diskEditorRefreshExplorer(panel);
+    }
+
+    function diskEditorRefreshExplorer(panel) {
+        const trd = diskEditorBuildTrd(panel);
+        panel.rawData = trd;
+        panel.parsedFile = explorerParseTRD(trd);
+        syncPanelToExplorer(panel);
+    }
+
+    // ========== DSK (CP/M +3DOS) Editor Functions (parameterized) ==========
+
+    function dskEditorRefreshState(panel) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+        const buf = panel.parsedFile.dskImage.toBuffer();
+        panel.rawData = buf;
+        let files = [];
+        try {
+            files = DSKLoader.listFiles(panel.parsedFile.dskImage);
+        } catch (e) { /* non-CP/M */ }
+        panel.parsedFile.files = files;
+        panel.blocks = files;
+        syncPanelToExplorer(panel);
+    }
+
+    function dskEditorRenderFileList(panel) {
+        if (!panel.parsedFile || panel.parsedFile.type !== 'dsk') return;
+        const dskImage = panel.parsedFile.dskImage;
+        if (!dskImage) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">No valid DSK image loaded</span>';
+            panel.dom.statusSpan.textContent = '';
+            editorUpdateToolbar();
+            return;
+        }
+
+        const spec = DSKLoader.getDiskSpec(dskImage);
+        const files = panel.parsedFile.files || [];
+
+        if (!spec.valid && files.length === 0) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">Non-CP/M disk \u2014 editing not supported for this format</span>';
+            panel.dom.statusSpan.textContent = 'Non-CP/M disk';
+            editorUpdateToolbar();
+            return;
+        }
+
+        const allocMap = DSKLoader.getBlockAllocationMap(dskImage, spec);
+
+        if (files.length === 0) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">Empty disk. Use "Add File" to add files.</span>';
+            panel.dom.statusSpan.textContent = `0 files \u2014 ${allocMap.freeBlocks} free blocks (${allocMap.freeBlocks * spec.blockSize} bytes)`;
+            editorUpdateToolbar();
+            return;
+        }
+
+        let html = '';
+        const typeNames = { 0: 'BASIC', 1: 'Num array', 2: 'Char array', 3: 'CODE' };
+        html += '<div class="editor-block-row dsk-info-row">';
+        html += '<span class="editor-block-info">';
+        html += `${files.length} file${files.length !== 1 ? 's' : ''} \u2014 `;
+        html += `${allocMap.totalBlocks} blocks (${allocMap.totalBlocks - allocMap.freeBlocks} used, ${allocMap.freeBlocks} free) \u2014 `;
+        html += `${allocMap.freeBlocks * spec.blockSize} bytes free`;
+        html += '</span></div>';
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const isSel = panel.selection.has(i);
+            const isExpanded = panel.expandedBlock === i;
+
+            let rowClasses = 'editor-block-row dsk-row';
+            if (isSel) rowClasses += ' selected';
+
+            html += `<div class="${rowClasses}" data-block-idx="${i}">`;
+            html += '<span class="editor-block-info">';
+            html += `<span class="dim">${i + 1}:</span> `;
+            if (file.user > 0) html += `<span class="file-user">[U${file.user}]</span> `;
+            const typeName = file.hasPlus3Header ? (typeNames[file.plus3Type] || '?') : '';
+            if (typeName) html += `<span class="file-plus3type">${typeName}</span>`;
+            html += `<span class="file-name">${file.name}</span>`;
+            if (file.ext) html += `<span class="dim">.${file.ext}</span>`;
+            if (file.loadAddress !== undefined) {
+                html += ` <span class="file-addr">@ $${hex16(file.loadAddress)}</span>`;
+            }
+            html += ` <span class="file-size">\u2014 ${file.size} bytes</span>`;
+            html += ` <span class="file-sectors">(${file.blocks} blocks)</span>`;
+            if (file.plus3Type === 0 && file.autostart !== undefined && file.autostart < 0x8000) {
+                html += ` <span class="dim">autostart ${file.autostart}</span>`;
+            }
+            html += '</span></div>';
+
+            if (isExpanded) {
+                html += `<div class="editor-inline-edit" data-edit-idx="${i}">`;
+                html += `<label>Name:</label><input type="text" maxlength="8" value="${file.name}" data-field="name" style="width:80px">`;
+                html += `<label>Ext:</label><input type="text" maxlength="3" value="${file.ext}" data-field="ext" style="width:40px">`;
+                html += `<label class="dim">${file.size} bytes, ${file.blocks} blocks</label>`;
+                html += `<button class="editor-apply-btn" data-action="dsk-apply" data-idx="${i}">Apply</button>`;
+                html += '</div>';
+            }
+        }
+
+        panel.dom.fileList.innerHTML = html;
+
+        const selCount = panel.selection.size;
+        if (selCount > 0) {
+            panel.dom.statusSpan.textContent = `${files.length} files, ${selCount} sel \u2014 ${allocMap.freeBlocks * spec.blockSize} bytes free`;
+        } else {
+            panel.dom.statusSpan.textContent = `${files.length} files \u2014 ${allocMap.freeBlocks * spec.blockSize} bytes free`;
+        }
+        editorUpdateToolbar();
+    }
+
+    function dskEditorDeleteFiles(panel) {
+        if (panel.selection.size === 0) return;
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+
+        const dskImage = panel.parsedFile.dskImage;
+        const spec = DSKLoader.getDiskSpec(dskImage);
+        const dir = DSKLoader._readDirectory(dskImage, spec);
+        if (!dir) return;
+
+        const { dirData } = dir;
+        const files = panel.parsedFile.files;
+        const maxEntries = Math.floor(dirData.length / 32);
+
+        const toDelete = new Set();
+        for (const idx of panel.selection) {
+            if (idx >= 0 && idx < files.length) {
+                const f = files[idx];
+                toDelete.add(`${f.user}:${f.name}:${f.ext}`);
+            }
+        }
+
+        for (let i = 0; i < maxEntries; i++) {
+            const entryBase = i * 32;
+            const user = dirData[entryBase];
+            if (user === 0xE5 || user > 15) continue;
+
+            let name = '';
+            for (let j = 1; j <= 8; j++) {
+                const ch = dirData[entryBase + j] & 0x7F;
+                if (ch >= 0x20) name += String.fromCharCode(ch);
+            }
+            name = name.trimEnd();
+
+            let ext = '';
+            for (let j = 9; j <= 11; j++) {
+                const ch = dirData[entryBase + j] & 0x7F;
+                if (ch >= 0x20) ext += String.fromCharCode(ch);
+            }
+            ext = ext.trimEnd();
+
+            if (toDelete.has(`${user}:${name}:${ext}`)) {
+                dirData[entryBase] = 0xE5;
+            }
+        }
+
+        DSKLoader.writeDirectory(dskImage, spec, dirData);
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        dskEditorRefreshState(panel);
+        dskEditorRenderFileList(panel);
+    }
+
+    function dskEditorAddFile(panel, data, name, ext, type, addr, autostart) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return 'No DSK image loaded';
+        const dskImage = panel.parsedFile.dskImage;
+        const spec = DSKLoader.getDiskSpec(dskImage);
+
+        const blockSize = spec.blockSize;
+        const sectorSize = spec.sectorSize || 512;
+        const sectorsPerBlock = Math.max(1, Math.round(blockSize / sectorSize));
+        const sectorsPerTrack = spec.sectorsPerTrack || 9;
+        const baseSectorId = spec.firstSectorId !== undefined ? spec.firstSectorId : 0xC1;
+        const reservedTracks = spec.reservedTracks;
+
+        let fullData;
+        if (type >= 0) {
+            const header = new Uint8Array(128);
+            const sig = 'PLUS3DOS';
+            for (let i = 0; i < sig.length; i++) header[i] = sig.charCodeAt(i);
+            header[8] = 0x1A;
+            header[9] = 1;
+            header[10] = 0;
+            const totalLen = data.length + 128;
+            header[11] = totalLen & 0xFF;
+            header[12] = (totalLen >> 8) & 0xFF;
+            header[13] = (totalLen >> 16) & 0xFF;
+            header[14] = (totalLen >> 24) & 0xFF;
+            header[15] = type & 0xFF;
+            if (type === 3) {
+                header[16] = addr & 0xFF;
+                header[17] = (addr >> 8) & 0xFF;
+                header[18] = data.length & 0xFF;
+                header[19] = (data.length >> 8) & 0xFF;
+            } else if (type === 0) {
+                header[16] = data.length & 0xFF;
+                header[17] = (data.length >> 8) & 0xFF;
+                const auto = (autostart !== undefined && autostart !== null && autostart !== '') ?
+                    (parseInt(autostart) & 0xFFFF) : 0x8000;
+                header[18] = auto & 0xFF;
+                header[19] = (auto >> 8) & 0xFF;
+            }
+            let hdrSum = 0;
+            for (let i = 0; i < 127; i++) hdrSum = (hdrSum + header[i]) & 0xFF;
+            header[127] = hdrSum;
+
+            fullData = new Uint8Array(128 + data.length);
+            fullData.set(header);
+            fullData.set(data, 128);
+        } else {
+            fullData = data;
+        }
+
+        const requiredBlocks = Math.ceil(fullData.length / blockSize);
+        if (requiredBlocks === 0) return 'File is empty';
+
+        const allocMap = DSKLoader.getBlockAllocationMap(dskImage, spec);
+        if (requiredBlocks > allocMap.freeBlocks) {
+            return `Not enough space: need ${requiredBlocks} blocks, ${allocMap.freeBlocks} free`;
+        }
+
+        const dir = DSKLoader._readDirectory(dskImage, spec);
+        if (!dir) return 'Cannot read directory';
+        const { dirData } = dir;
+        const maxEntries = Math.floor(dirData.length / 32);
+
+        const requiredExtents = Math.ceil(requiredBlocks / 16);
+        let freeSlots = 0;
+        for (let i = 0; i < maxEntries; i++) {
+            if (dirData[i * 32] === 0xE5) freeSlots++;
+        }
+        if (requiredExtents > freeSlots) {
+            return `Directory full: need ${requiredExtents} entries, ${freeSlots} free`;
+        }
+
+        const freeBlockNums = [];
+        for (let b = 0; b < allocMap.totalBlocks && freeBlockNums.length < requiredBlocks; b++) {
+            if (!allocMap.used.has(b)) freeBlockNums.push(b);
+        }
+
+        for (let bi = 0; bi < freeBlockNums.length; bi++) {
+            const blockNum = freeBlockNums[bi];
+            const absoluteSector = blockNum * sectorsPerBlock;
+            const dataOffset = bi * blockSize;
+
+            for (let s = 0; s < sectorsPerBlock; s++) {
+                const curSectorInTrack = (absoluteSector + s) % sectorsPerTrack;
+                const curTrack = reservedTracks + Math.floor((absoluteSector + s) / sectorsPerTrack);
+                const sectorId = baseSectorId + curSectorInTrack;
+
+                const sectorData = new Uint8Array(sectorSize);
+                const srcOffset = dataOffset + s * sectorSize;
+                if (srcOffset < fullData.length) {
+                    const copyLen = Math.min(sectorSize, fullData.length - srcOffset);
+                    sectorData.set(fullData.subarray(srcOffset, srcOffset + copyLen));
+                }
+                dskImage.writeSector(curTrack, 0, sectorId, sectorData);
+            }
+        }
+
+        const paddedName = (name + '        ').substring(0, 8);
+        const paddedExt = (ext + '   ').substring(0, 3);
+        let freeSlotIdx = 0;
+        for (let extNum = 0; extNum < requiredExtents; extNum++) {
+            while (freeSlotIdx < maxEntries && dirData[freeSlotIdx * 32] !== 0xE5) freeSlotIdx++;
+            if (freeSlotIdx >= maxEntries) return 'Directory full (internal error)';
+
+            const entryBase = freeSlotIdx * 32;
+            dirData[entryBase] = 0;
+
+            for (let j = 0; j < 8; j++) {
+                dirData[entryBase + 1 + j] = j < paddedName.length ? paddedName.charCodeAt(j) & 0x7F : 0x20;
+            }
+            for (let j = 0; j < 3; j++) {
+                dirData[entryBase + 9 + j] = j < paddedExt.length ? paddedExt.charCodeAt(j) & 0x7F : 0x20;
+            }
+
+            dirData[entryBase + 12] = extNum & 0x1F;
+            dirData[entryBase + 13] = 0;
+            dirData[entryBase + 14] = (extNum >> 5) & 0x3F;
+
+            const startBlock = extNum * 16;
+            const endBlock = Math.min(startBlock + 16, requiredBlocks);
+            const blocksInExtent = endBlock - startBlock;
+
+            for (let j = 0; j < 16; j++) {
+                dirData[entryBase + 16 + j] = (j < blocksInExtent) ? freeBlockNums[startBlock + j] : 0;
+            }
+
+            if (extNum === requiredExtents - 1) {
+                const bytesInExtent = fullData.length - startBlock * blockSize;
+                const records = Math.ceil(bytesInExtent / 128);
+                dirData[entryBase + 15] = Math.min(records, 128);
+            } else {
+                dirData[entryBase + 15] = 128;
+            }
+
+            freeSlotIdx++;
+        }
+
+        DSKLoader.writeDirectory(dskImage, spec, dirData);
+        return null;
+    }
+
+    function dskEditorRenameFile(panel, idx, newName, newExt) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+        const dskImage = panel.parsedFile.dskImage;
+        const spec = DSKLoader.getDiskSpec(dskImage);
+        const dir = DSKLoader._readDirectory(dskImage, spec);
+        if (!dir) return;
+
+        const { dirData } = dir;
+        const files = panel.parsedFile.files;
+        if (idx < 0 || idx >= files.length) return;
+
+        const file = files[idx];
+        const maxEntries = Math.floor(dirData.length / 32);
+
+        const paddedName = (newName + '        ').substring(0, 8);
+        const paddedExt = (newExt + '   ').substring(0, 3);
+
+        for (let i = 0; i < maxEntries; i++) {
+            const entryBase = i * 32;
+            const user = dirData[entryBase];
+            if (user === 0xE5 || user > 15) continue;
+            if (user !== file.user) continue;
+
+            let name = '';
+            for (let j = 1; j <= 8; j++) {
+                const ch = dirData[entryBase + j] & 0x7F;
+                if (ch >= 0x20) name += String.fromCharCode(ch);
+            }
+            name = name.trimEnd();
+
+            let ext = '';
+            for (let j = 9; j <= 11; j++) {
+                const ch = dirData[entryBase + j] & 0x7F;
+                if (ch >= 0x20) ext += String.fromCharCode(ch);
+            }
+            ext = ext.trimEnd();
+
+            if (name !== file.name || ext !== file.ext) continue;
+
+            for (let j = 0; j < 8; j++) {
+                const highBit = dirData[entryBase + 1 + j] & 0x80;
+                dirData[entryBase + 1 + j] = highBit | (j < paddedName.length ? paddedName.charCodeAt(j) & 0x7F : 0x20);
+            }
+            for (let j = 0; j < 3; j++) {
+                const highBit = dirData[entryBase + 9 + j] & 0x80;
+                dirData[entryBase + 9 + j] = highBit | (j < paddedExt.length ? paddedExt.charCodeAt(j) & 0x7F : 0x20);
+            }
+        }
+
+        DSKLoader.writeDirectory(dskImage, spec, dirData);
+    }
+
+    function dskEditorExtractFiles(panel, format) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+        const asHobeta = format === 'hobeta';
+
+        const dskImage = panel.parsedFile.dskImage;
+        const files = panel.parsedFile.files;
+        const baseName = (panel.fileName || 'extract').replace(/\.dsk$/i, '');
+
+        const extractDskFile = (file) => {
+            const data = DSKLoader.readFileData(dskImage, file.name, file.ext, file.user, file.rawSize);
+            if (!data) return null;
+            const fileData = (file.hasPlus3Header && data.length >= 128) ? data.slice(128, 128 + file.size) : data.slice(0, file.size);
+            const trimName = file.name.trimEnd();
+            if (asHobeta) {
+                const hdrType = file.hasPlus3Header ? file.plus3Type : 3;
+                const addr = file.loadAddress || 0;
+                const hobData = buildHobetaGeneric(trimName, hdrType, addr, fileData);
+                const ext = trdExtToHobetaExt(headerTypeToTrdExt(hdrType));
+                return { name: trimName + '.' + ext, data: hobData };
+            }
+            const name = trimName + (file.ext ? '.' + file.ext.trimEnd() : '');
+            return { name, data: fileData };
+        };
+
+        if (sorted.length === 1) {
+            const file = files[sorted[0]];
+            if (!file) return;
+            const result = extractDskFile(file);
+            if (!result) return;
+            const blob = new Blob([result.data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+
+        const zipFiles = [];
+        for (const idx of sorted) {
+            const file = files[idx];
+            if (!file) continue;
+            const result = extractDskFile(file);
+            if (result) zipFiles.push(result);
+        }
+        if (zipFiles.length === 0) return;
+        const zipData = editorCreateZip(zipFiles);
+        const blob = new Blob([zipData], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '_extract.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function dskEditorNewDsk(panel) {
+        const dskImage = DSKLoader.createBlankDSK();
+        const spec = DSKLoader.getDiskSpec(dskImage);
+        panel.parsedFile = {
+            type: 'dsk',
+            dskImage: dskImage,
+            diskSpec: spec,
+            files: [],
+            isExtended: true,
+            numTracks: 40,
+            numSides: 1,
+            size: 0
+        };
+        panel.blocks = [];
+        panel.fileType = 'dsk';
+        panel.rawData = dskImage.toBuffer();
+        panel.fileName = 'new.dsk';
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        updatePanelHeader(panel);
+        dskEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function dskEditorImportDsk(panel, data) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return 'No target DSK loaded';
+        let srcImage;
+        try {
+            srcImage = DSKLoader.parse(data);
+        } catch (e) {
+            return 'Invalid DSK file: ' + e.message;
+        }
+
+        let srcFiles;
+        try {
+            srcFiles = DSKLoader.listFiles(srcImage);
+        } catch (e) {
+            return 'Cannot read source disk files: ' + e.message;
+        }
+
+        if (srcFiles.length === 0) return 'Source disk has no files';
+
+        let added = 0, skipped = 0;
+        for (const file of srcFiles) {
+            const rawData = DSKLoader.readFileData(srcImage, file.name, file.ext, file.user, file.rawSize);
+            if (!rawData) { skipped++; continue; }
+
+            const err = dskEditorAddFile(panel, rawData, file.name, file.ext, -1, 0, null);
+            if (err) { skipped++; continue; }
+            added++;
+        }
+
+        dskEditorRefreshState(panel);
+        return skipped > 0 ?
+            `Imported ${added} files, ${skipped} skipped` :
+            (added > 0 ? null : 'No files imported');
+    }
+
+    function dskEditorSaveDsk(panel) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+        const buf = panel.parsedFile.dskImage.toBuffer();
+        const baseName = (panel.fileName || 'output').replace(/\.dsk$/i, '');
+        const blob = new Blob([buf], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '.dsk';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function dskEditorApplyInlineEdit(panel, idx) {
+        if (!panel.parsedFile || !panel.parsedFile.dskImage) return;
+        const files = panel.parsedFile.files;
+        if (idx < 0 || idx >= files.length) return;
+
+        const editRow = panel.dom.fileList.querySelector(`.editor-inline-edit[data-edit-idx="${idx}"]`);
+        if (!editRow) return;
+
+        const nameInput = editRow.querySelector('[data-field="name"]');
+        const extInput = editRow.querySelector('[data-field="ext"]');
+
+        const newName = nameInput ? nameInput.value.trimEnd() : files[idx].name;
+        const newExt = extInput ? extInput.value.trimEnd() : files[idx].ext;
+
+        dskEditorRenameFile(panel, idx, newName, newExt);
+        panel.expandedBlock = -1;
+        dskEditorRefreshState(panel);
+        dskEditorRenderFileList(panel);
+    }
+
+    // ========== ZIP Transparent Unwrap ==========
+
+    function zipParseInnerFile(innerData, innerExt) {
+        let parsed = null;
+        if (innerExt === 'tap') {
+            parsed = { type: 'tap', blocks: [], size: innerData.length };
+        } else if (innerExt === 'tzx') {
+            parsed = { type: 'tzx', blocks: [], nonStandardBlocks: [], size: innerData.length };
+        } else if (innerExt === 'trd') {
+            parsed = explorerParseTRD(innerData);
+        } else if (innerExt === 'scl') {
+            parsed = { type: 'scl', files: [], size: innerData.length };
+            const sig = String.fromCharCode(...innerData.slice(0, 8));
+            if (sig === 'SINCLAIR') {
+                const fileCount = innerData[8];
+                let off = 9;
+                for (let i = 0; i < fileCount; i++) {
+                    const name = String.fromCharCode(...innerData.slice(off, off + 8));
+                    const fext = String.fromCharCode(innerData[off + 8]);
+                    const startAddr = innerData[off + 9] | (innerData[off + 10] << 8);
+                    const length = innerData[off + 11] | (innerData[off + 12] << 8);
+                    const sectors = innerData[off + 13];
+                    parsed.files.push({ name, ext: fext, startAddress: startAddr, length, sectors, offset: 0 });
+                    off += 14;
+                }
+                let dataOff = off;
+                for (const f of parsed.files) { f.offset = dataOff; dataOff += f.sectors * 256; }
+            }
+        } else if (innerExt === 'dsk') {
+            try {
+                const dskImage = DSKLoader.parse(innerData);
+                const spec = DSKLoader.getDiskSpec(dskImage);
+                let dskFiles = [];
+                try { dskFiles = DSKLoader.listFiles(dskImage); } catch (e) { /* non-CP/M */ }
+                parsed = { type: 'dsk', dskImage, diskSpec: spec, files: dskFiles, size: innerData.length };
+            } catch (e) { /* invalid DSK */ }
+        }
+        return parsed;
+    }
+
+    async function zipLoadInnerFile(panel, zipEntry) {
+        const innerExt = zipEntry.name.split('.').pop().toLowerCase();
+        const innerData = new Uint8Array(zipEntry.data);
+        const parsed = zipParseInnerFile(innerData, innerExt);
+        if (parsed) {
+            await loadFileIntoPanel(panel, innerData, zipEntry.name, innerExt, parsed);
+        }
+    }
+
+    const zipPickDialog = document.getElementById('zipPickDialog');
+    const zipPickList = document.getElementById('zipPickList');
+    const btnZipPickCancel = document.getElementById('btnZipPickCancel');
+
+    function zipShowPickDialog(panel, candidates) {
+        let html = '';
+        for (let i = 0; i < candidates.length; i++) {
+            const f = candidates[i];
+            const ext = f.name.split('.').pop().toLowerCase().toUpperCase();
+            const size = f.data ? f.data.length : 0;
+            html += `<div class="editor-block-row zip-row" data-zip-idx="${i}" style="cursor:pointer">`;
+            html += '<span class="editor-block-info">';
+            html += `<span class="file-ext">${ext}</span>`;
+            html += `<span class="file-name">${f.name}</span>`;
+            html += ` <span class="file-size">\u2014 ${size.toLocaleString()} bytes</span>`;
+            html += '</span></div>';
+        }
+        zipPickList.innerHTML = html;
+        zipPickDialog._panel = panel;
+        zipPickDialog._candidates = candidates;
+        zipPickDialog.classList.remove('hidden');
+    }
+
+    zipPickList.addEventListener('click', (e) => {
+        const row = e.target.closest('[data-zip-idx]');
+        if (!row) return;
+        const idx = parseInt(row.dataset.zipIdx);
+        const panel = zipPickDialog._panel;
+        const candidates = zipPickDialog._candidates;
+        if (idx >= 0 && idx < candidates.length && panel) {
+            zipPickDialog.classList.add('hidden');
+            zipLoadInnerFile(panel, candidates[idx]);
+        }
+    });
+
+    btnZipPickCancel.addEventListener('click', () => {
+        zipPickDialog.classList.add('hidden');
+    });
+
+    // ========== ZIP Editor Functions (unused — ZIP is unwrapped transparently) ==========
+
+    function zipEditorNewZip(panel) {
+        panel.blocks = [];
+        panel.parsedFile = { type: 'zip', files: [], size: 0 };
+        panel.fileType = 'zip';
+        panel.rawData = new Uint8Array(0);
+        panel.fileName = 'new.zip';
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        panel.pendingFileData = null;
+        updatePanelHeader(panel);
+        zipEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    async function zipEditorImportZip(panel, data, filename) {
+        const rawCopy = new Uint8Array(data);
+        const files = await ZipLoader.extract(rawCopy.buffer);
+        const supported = ['tap', 'tzx', 'trd', 'scl', 'dsk'];
+        const zxFiles = files.filter(f => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            return supported.includes(ext);
+        });
+        panel.parsedFile = { type: 'zip', files: zxFiles, size: data.length };
+        panel.blocks = zxFiles;
+        panel.fileType = 'zip';
+        panel.rawData = rawCopy;
+        panel.fileName = filename;
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        updatePanelHeader(panel);
+        zipEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function zipEditorRenderFileList(panel) {
+        const files = (panel.parsedFile && panel.parsedFile.files) || [];
+
+        if (files.length === 0) {
+            panel.dom.fileList.innerHTML = '<span class="explorer-empty">Empty ZIP. Use "Add File" to add container files.</span>';
+            panel.dom.statusSpan.textContent = '0 files';
+            editorUpdateToolbar();
+            return;
+        }
+
+        let totalSize = 0;
+        let html = '';
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const isSel = panel.selection.has(i);
+            const ext = file.name.split('.').pop().toLowerCase();
+            const badge = ext.toUpperCase();
+            const size = file.data ? file.data.length : 0;
+            totalSize += size;
+
+            let rowClasses = 'editor-block-row zip-row';
+            if (isSel) rowClasses += ' selected';
+
+            html += `<div class="${rowClasses}" data-block-idx="${i}">`;
+            html += '<span class="editor-block-info">';
+            html += `<span class="dim">${i + 1}:</span> `;
+            html += `<span class="file-ext">${badge}</span>`;
+            html += `<span class="file-name">${file.name}</span>`;
+            html += ` <span class="file-size">\u2014 ${size.toLocaleString()} bytes</span>`;
+            html += '</span></div>';
+        }
+
+        panel.dom.fileList.innerHTML = html;
+
+        const selCount = panel.selection.size;
+        if (selCount > 0) {
+            panel.dom.statusSpan.textContent = `${files.length} files, ${selCount} sel \u2014 ${totalSize.toLocaleString()} bytes`;
+        } else {
+            panel.dom.statusSpan.textContent = `${files.length} files \u2014 ${totalSize.toLocaleString()} bytes`;
+        }
+        editorUpdateToolbar();
+    }
+
+    function zipEditorAddFile(panel, fileData, fileName) {
+        panel.parsedFile.files.push({ name: fileName, data: new Uint8Array(fileData) });
+        panel.blocks = panel.parsedFile.files;
+        zipEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function zipEditorDeleteFiles(panel) {
+        if (panel.selection.size === 0) return;
+        const sorted = editorSelectedSorted(panel).reverse();
+        for (const idx of sorted) {
+            panel.parsedFile.files.splice(idx, 1);
+        }
+        panel.blocks = panel.parsedFile.files;
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        zipEditorRenderFileList(panel);
+        syncPanelToExplorer(panel);
+    }
+
+    function zipEditorExtractFiles(panel, format) {
+        const sorted = editorSelectedSorted(panel);
+        if (sorted.length === 0) return;
+        const files = panel.parsedFile.files;
+        const baseName = (panel.fileName || 'extract').replace(/\.zip$/i, '');
+
+        if (sorted.length === 1) {
+            const file = files[sorted[0]];
+            if (!file) return;
+            const blob = new Blob([file.data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+
+        const zipFiles = sorted.map(idx => files[idx]).filter(f => f);
+        if (zipFiles.length === 0) return;
+        const zipData = editorCreateZip(zipFiles.map(f => ({ name: f.name, data: f.data })));
+        const blob = new Blob([zipData], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '_extract.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function zipEditorSaveZip(panel) {
+        const files = (panel.parsedFile && panel.parsedFile.files) || [];
+        if (files.length === 0) return;
+        const zipData = editorCreateZip(files.map(f => ({ name: f.name, data: f.data })));
+        const baseName = (panel.fileName || 'output').replace(/\.zip$/i, '');
+        const blob = new Blob([zipData], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function buildSingleFileTap(file) {
+        // Build header block: flag(0x00) + type + name(10) + length + param1 + param2
+        const header = new Uint8Array(19);
+        header[0] = 0x00; // flag
+        header[1] = file.type & 0xFF;
+        const padded = ((file.name || 'untitled') + '          ').substring(0, 10);
+        for (let i = 0; i < 10; i++) {
+            header[2 + i] = padded.charCodeAt(i);
+        }
+        header[12] = file.rawData.length & 0xFF;
+        header[13] = (file.rawData.length >> 8) & 0xFF;
+        let param1 = 0;
+        if (file.type === 0) {
+            param1 = (file.autostart !== null && file.autostart !== undefined && file.autostart !== '') ? (parseInt(file.autostart) & 0xFFFF) : 0x8000;
+        } else if (file.type === 3) {
+            param1 = (file.addr || 0) & 0xFFFF;
+        }
+        header[14] = param1 & 0xFF;
+        header[15] = (param1 >> 8) & 0xFF;
+        let param2 = (file.type === 0) ? file.rawData.length : 0x8000;
+        header[16] = param2 & 0xFF;
+        header[17] = (param2 >> 8) & 0xFF;
+        editorRecalcChecksum(header);
+
+        // Build data block: flag(0xFF) + rawData + checksum
+        const dataBlock = new Uint8Array(file.rawData.length + 2);
+        dataBlock[0] = 0xFF;
+        dataBlock.set(file.rawData, 1);
+        editorRecalcChecksum(dataBlock);
+
+        // Wrap in TAP format: length prefix + block data
+        const totalSize = 2 + header.length + 2 + dataBlock.length;
+        const tap = new Uint8Array(totalSize);
+        let offset = 0;
+        tap[offset] = header.length & 0xFF;
+        tap[offset + 1] = (header.length >> 8) & 0xFF;
+        offset += 2;
+        tap.set(header, offset);
+        offset += header.length;
+        tap[offset] = dataBlock.length & 0xFF;
+        tap[offset + 1] = (dataBlock.length >> 8) & 0xFF;
+        offset += 2;
+        tap.set(dataBlock, offset);
+        return tap;
+    }
+
+    // ========== Load file into panel ==========
+
+    async function loadFileIntoPanel(panel, data, filename, ext, parsed) {
+        panel.rawData = new Uint8Array(data);
+        panel.fileName = filename;
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        panel.lastClickIdx = -1;
+        panel.lastClickTime = 0;
+        panel.diskFiles = [];
+        panel.diskLabel = '        ';
+        panel.pendingFileData = null;
+
+        if (ext === 'tap') {
+            panel.fileType = 'tap';
+            panel.blocks = [];
+            panel.parsedFile = parsed ? { ...parsed, blocks: panel.blocks } : { type: 'tap', blocks: panel.blocks, size: data.length };
+            editorImportTapData(panel, data);
+            updatePanelHeader(panel);
+            editorRenderBlockList(panel);
+        } else if (ext === 'tzx') {
+            panel.fileType = 'tzx';
+            panel.blocks = [];
+            panel.parsedFile = parsed ? { ...parsed, blocks: panel.blocks, nonStandardBlocks: [] }
+                                      : { type: 'tzx', blocks: panel.blocks, nonStandardBlocks: [], size: data.length };
+            editorImportTzxData(panel, data);
+            updatePanelHeader(panel);
+            editorRenderBlockList(panel);
+        } else if (ext === 'trd' || ext === 'scl') {
+            panel.fileType = ext;
+            panel.blocks = [];
+            panel.parsedFile = parsed || { type: ext, files: [], size: data.length };
+            updatePanelHeader(panel);
+            diskEditorRenderFileList(panel);
+        } else if (ext === 'dsk') {
+            panel.fileType = 'dsk';
+            if (parsed && parsed.dskImage) {
+                // Deep-copy DSKImage for right panel independence
+                if (panel === editorPanels.right) {
+                    const buf = parsed.dskImage.toBuffer();
+                    const copy = DSKLoader.parse(buf);
+                    let files = [];
+                    try { files = DSKLoader.listFiles(copy); } catch (e) { /* non-CP/M */ }
+                    panel.parsedFile = { ...parsed, dskImage: copy, files: files };
+                    panel.blocks = files;
+                } else {
+                    panel.parsedFile = parsed;
+                    panel.blocks = parsed.files || [];
+                }
+            } else {
+                panel.parsedFile = { type: 'dsk', files: [], size: data.length };
+                panel.blocks = [];
+            }
+            updatePanelHeader(panel);
+            dskEditorRenderFileList(panel);
+        } else if (ext === 'zip') {
+            // Transparently unwrap ZIP — extract supported container files
+            const rawCopy = new Uint8Array(data);
+            const zipFiles = await ZipLoader.extract(rawCopy.buffer);
+            const supportedExts = ['tap', 'tzx', 'trd', 'scl', 'dsk'];
+            const candidates = zipFiles.filter(f => supportedExts.includes(f.name.split('.').pop().toLowerCase()));
+            if (candidates.length === 1) {
+                await zipLoadInnerFile(panel, candidates[0]);
+                return;
+            } else if (candidates.length > 1) {
+                zipShowPickDialog(panel, candidates);
+                return;
+            }
+            // No editor-supported files in ZIP — leave panel unchanged
+            return;
+        }
+        syncPanelToExplorer(panel);
+    }
+
+    // ========== Cross-Format Copy ==========
+
+    function extractFilesFromPanel(panel) {
+        const sorted = editorSelectedSorted(panel);
+        const result = [];
+
+        if (isTapOrTzx(panel.fileType)) {
+            // Group header+data pairs
+            const processed = new Set();
+            for (const idx of sorted) {
+                if (processed.has(idx)) continue;
+                const block = panel.blocks[idx];
+                if (block.blockType === 'header' && idx + 1 < panel.blocks.length && panel.blocks[idx + 1].blockType === 'data') {
+                    const dataBlock = panel.blocks[idx + 1];
+                    const rawData = dataBlock.data.slice(1, dataBlock.data.length - 1); // strip flag + checksum
+                    result.push({
+                        name: block.name || 'untitled',
+                        ext: '',
+                        type: block.headerType,
+                        addr: block.headerType === 3 ? (block.startAddress || 0) : 0,
+                        autostart: block.headerType === 0 ? block.autostart : null,
+                        rawData: rawData
+                    });
+                    processed.add(idx);
+                    processed.add(idx + 1);
+                } else if (block.blockType === 'data') {
+                    // Standalone data block
+                    result.push({
+                        name: 'data',
+                        ext: '',
+                        type: 3,
+                        addr: 0,
+                        autostart: null,
+                        rawData: block.data.slice(1, block.data.length - 1)
+                    });
+                    processed.add(idx);
+                }
+            }
+        } else if (panel.fileType === 'trd' || panel.fileType === 'scl') {
+            for (const idx of sorted) {
+                if (idx < 0 || idx >= panel.diskFiles.length) continue;
+                const f = panel.diskFiles[idx];
+                const isBASIC = f.ext === 'B';
+                result.push({
+                    name: f.name.replace(/\s+$/, ''),
+                    ext: f.ext,
+                    type: isBASIC ? 0 : 3,
+                    addr: isBASIC ? 0 : (f.startAddress || 0),
+                    autostart: null, // TR-DOS doesn't store autostart; it's embedded in BASIC data
+                    rawData: f.data.slice(0, f.length)
+                });
+            }
+        } else if (panel.fileType === 'dsk') {
+            if (!panel.parsedFile || !panel.parsedFile.dskImage) return result;
+            const dskImage = panel.parsedFile.dskImage;
+            const files = panel.parsedFile.files || [];
+            for (const idx of sorted) {
+                if (idx < 0 || idx >= files.length) continue;
+                const file = files[idx];
+                const data = DSKLoader.readFileData(dskImage, file.name, file.ext, file.user, file.rawSize);
+                if (!data) continue;
+                const fileData = (file.hasPlus3Header && data.length >= 128) ? data.slice(128, 128 + file.size) : data.slice(0, file.size);
+                result.push({
+                    name: file.name.trimEnd(),
+                    ext: file.ext ? file.ext.trimEnd() : '',
+                    type: file.hasPlus3Header ? file.plus3Type : 3,
+                    addr: file.loadAddress || 0,
+                    autostart: file.autostart,
+                    rawData: fileData
+                });
+            }
+        } else if (panel.fileType === 'zip') {
+            const zipFiles = panel.parsedFile.files || [];
+            for (const idx of sorted) {
+                if (idx < 0 || idx >= zipFiles.length) continue;
+                const zipEntry = zipFiles[idx];
+                if (!zipEntry) continue;
+                const entryExt = zipEntry.name.split('.').pop().toLowerCase();
+                const entryData = new Uint8Array(zipEntry.data);
+
+                if (entryExt === 'tap' || entryExt === 'tzx') {
+                    // Parse TAP/TZX blocks and extract header+data pairs
+                    const tmpPanel = { blocks: [], selection: new Set(), expandedBlock: -1, parsedFile: { type: entryExt, nonStandardBlocks: [] } };
+                    if (entryExt === 'tzx') editorImportTzxData(tmpPanel, entryData);
+                    else editorImportTapData(tmpPanel, entryData);
+                    for (let i = 0; i < tmpPanel.blocks.length; i++) {
+                        const block = tmpPanel.blocks[i];
+                        if (block.blockType === 'header' && i + 1 < tmpPanel.blocks.length && tmpPanel.blocks[i + 1].blockType === 'data') {
+                            const dataBlock = tmpPanel.blocks[i + 1];
+                            const rawData = dataBlock.data.slice(1, dataBlock.data.length - 1);
+                            result.push({
+                                name: block.name || 'untitled',
+                                ext: '',
+                                type: block.headerType,
+                                addr: block.headerType === 3 ? (block.startAddress || 0) : 0,
+                                autostart: block.headerType === 0 ? block.autostart : null,
+                                rawData: rawData
+                            });
+                            i++; // skip data block
+                        } else if (block.blockType === 'data') {
+                            result.push({
+                                name: 'data',
+                                ext: '',
+                                type: 3,
+                                addr: 0,
+                                autostart: null,
+                                rawData: block.data.slice(1, block.data.length - 1)
+                            });
+                        }
+                    }
+                } else if (entryExt === 'trd') {
+                    // Parse TRD disk and extract files
+                    for (let i = 0; i < 128; i++) {
+                        const entryOffset = i * 16;
+                        if (entryData[entryOffset] === 0) break;
+                        if (entryData[entryOffset] === 1) continue; // deleted
+                        const name = String.fromCharCode(...entryData.slice(entryOffset, entryOffset + 8));
+                        const fext = String.fromCharCode(entryData[entryOffset + 8]);
+                        const startAddr = entryData[entryOffset + 9] | (entryData[entryOffset + 10] << 8);
+                        const length = entryData[entryOffset + 11] | (entryData[entryOffset + 12] << 8);
+                        const sectors = entryData[entryOffset + 13];
+                        const startSector = entryData[entryOffset + 14];
+                        const startTrack = entryData[entryOffset + 15];
+                        const fileOffset = (startTrack * 16 + startSector) * 256;
+                        const fileData = entryData.slice(fileOffset, fileOffset + length);
+                        result.push({
+                            name: name.replace(/\s+$/, ''),
+                            ext: fext,
+                            type: fext === 'B' ? 0 : 3,
+                            addr: startAddr,
+                            autostart: null,
+                            rawData: fileData
+                        });
+                    }
+                } else if (entryExt === 'scl') {
+                    // Parse SCL and extract files
+                    const sig = String.fromCharCode(...entryData.slice(0, 8));
+                    if (sig === 'SINCLAIR') {
+                        const fileCount = entryData[8];
+                        let offset = 9;
+                        const sclFiles = [];
+                        for (let i = 0; i < fileCount; i++) {
+                            const name = String.fromCharCode(...entryData.slice(offset, offset + 8));
+                            const fext = String.fromCharCode(entryData[offset + 8]);
+                            const startAddr = entryData[offset + 9] | (entryData[offset + 10] << 8);
+                            const length = entryData[offset + 11] | (entryData[offset + 12] << 8);
+                            const sectors = entryData[offset + 13];
+                            sclFiles.push({ name, ext: fext, startAddr, length, sectors });
+                            offset += 14;
+                        }
+                        for (const f of sclFiles) {
+                            const fileData = entryData.slice(offset, offset + f.length);
+                            result.push({
+                                name: f.name.replace(/\s+$/, ''),
+                                ext: f.ext,
+                                type: f.ext === 'B' ? 0 : 3,
+                                addr: f.startAddr,
+                                autostart: null,
+                                rawData: fileData
+                            });
+                            offset += f.sectors * 256;
+                        }
+                    }
+                } else if (entryExt === 'dsk') {
+                    // Parse DSK and extract files
+                    try {
+                        const dskImg = DSKLoader.parse(entryData);
+                        let dskFiles = [];
+                        try { dskFiles = DSKLoader.listFiles(dskImg); } catch (e) { /* non-CP/M */ }
+                        for (const file of dskFiles) {
+                            const data = DSKLoader.readFileData(dskImg, file.name, file.ext, file.user, file.rawSize);
+                            if (!data) continue;
+                            const fileData = (file.hasPlus3Header && data.length >= 128) ? data.slice(128, 128 + file.size) : data.slice(0, file.size);
+                            result.push({
+                                name: file.name.trimEnd(),
+                                ext: file.ext ? file.ext.trimEnd() : '',
+                                type: file.hasPlus3Header ? file.plus3Type : 3,
+                                addr: file.loadAddress || 0,
+                                autostart: file.autostart,
+                                rawData: fileData
+                            });
+                        }
+                    } catch (e) { /* invalid DSK */ }
+                }
+            }
+        }
+        return result;
+    }
+
+    function convertFileForPanel(srcFile, srcType, dstType) {
+        if (srcType === dstType || (srcType === 'scl' && dstType === 'trd') || (srcType === 'trd' && dstType === 'scl')
+            || (srcType === 'tap' && dstType === 'tzx') || (srcType === 'tzx' && dstType === 'tap')) {
+            return { ...srcFile };
+        }
+        const f = { ...srcFile };
+
+        if (dstType === 'trd' || dstType === 'scl') {
+            f.name = (f.name + '        ').substring(0, 8).replace(/\s+$/, '') || 'untitled';
+            // Map +3DOS/TAP extensions to TR-DOS single-char conventions
+            if (f.ext && f.ext.length > 1) {
+                const el = f.ext.toUpperCase();
+                if (el === 'BAS') f.ext = 'B';
+                else if (el === 'BIN') f.ext = 'C';
+                else if (el === 'DAT') f.ext = 'D';
+                else if (el === 'SEQ') f.ext = '#';
+                else f.ext = f.type === 0 ? 'B' : 'C';
+            }
+            if (!f.ext || f.ext.length === 0) {
+                f.ext = f.type === 0 ? 'B' : 'C';
+            }
+        } else if (isTapOrTzx(dstType)) {
+            f.name = (f.name + '          ').substring(0, 10).replace(/\s+$/, '') || 'untitled';
+            // Map ext to TAP type if not already set from source
+            if (srcType === 'trd' || srcType === 'scl') {
+                f.type = f.ext === 'B' ? 0 : 3;
+            } else if (srcType === 'dsk' && f.type === undefined) {
+                const el = (f.ext || '').toUpperCase();
+                f.type = el === 'BAS' ? 0 : 3;
+            }
+        } else if (dstType === 'dsk') {
+            f.name = (f.name + '        ').substring(0, 8).replace(/\s+$/, '') || 'untitled';
+            // Map TR-DOS single-char extensions to +3DOS conventions
+            if (srcType === 'trd' || srcType === 'scl') {
+                if (f.ext === 'B') f.ext = 'BAS';
+                else if (f.ext === 'C') f.ext = 'BIN';
+                else if (f.ext === 'D') f.ext = 'DAT';
+                else if (f.ext === '#') f.ext = 'SEQ';
+            }
+            if (!f.ext || f.ext.length === 0) {
+                f.ext = f.type === 0 ? 'BAS' : 'BIN';
+            }
+        }
+
+        return f;
+    }
+
+    function addConvertedFile(panel, file) {
+        if (isTapOrTzx(panel.fileType)) {
+            editorAddFileBlocks(panel, file.rawData, file.name, file.type, file.addr, file.autostart, null);
+            return null;
+        } else if (panel.fileType === 'trd' || panel.fileType === 'scl') {
+            return diskEditorAddFile(panel, file.rawData, file.name, file.ext || 'C', file.addr);
+        } else if (panel.fileType === 'dsk') {
+            return dskEditorAddFile(panel, file.rawData, file.name, file.ext || '', file.type, file.addr, file.autostart);
+        } else if (panel.fileType === 'zip') {
+            // Build a minimal TAP containing this single file and add as ZIP entry
+            const tapData = buildSingleFileTap(file);
+            zipEditorAddFile(panel, tapData, (file.name || 'file') + '.tap');
+            return null;
+        }
+        return 'Unknown format';
+    }
+
+    function editorCopySelection() {
+        const src = getActivePanel();
+        const dstId = activePanel === 'left' ? 'right' : 'left';
+        const dst = editorPanels[dstId];
+
+        if (src.selection.size === 0) return;
+
+        // Auto-create destination if empty
+        if (!dst.fileType) {
+            switch (src.fileType) {
+                case 'tap': editorNewTap(dst); break;
+                case 'tzx': editorNewTzx(dst); break;
+                case 'trd': case 'scl': diskEditorNewTrd(dst); break;
+                case 'dsk': dskEditorNewDsk(dst); break;
+                case 'zip': zipEditorNewZip(dst); break;
+            }
+        }
+
+        const files = extractFilesFromPanel(src);
+
+        let added = 0, errors = [];
+        for (const f of files) {
+            const converted = convertFileForPanel(f, src.fileType, dst.fileType);
+            const err = addConvertedFile(dst, converted);
+            if (err) errors.push(`${f.name}: ${err}`);
+            else added++;
+        }
+
+        // Refresh destination rendering
+        if (dst.fileType === 'trd' || dst.fileType === 'scl') {
+            diskEditorRenderFileList(dst);
+            diskEditorRefreshExplorer(dst);
+        } else if (dst.fileType === 'dsk') {
+            dskEditorRefreshState(dst);
+            dskEditorRenderFileList(dst);
+        } else if (isTapOrTzx(dst.fileType)) {
+            editorRenderBlockList(dst);
+            syncPanelToExplorer(dst);
+        } else if (dst.fileType === 'zip') {
+            zipEditorRenderFileList(dst);
+            syncPanelToExplorer(dst);
+        }
+
+        const statusMsg = errors.length > 0
+            ? `Copied ${added}, ${errors.length} failed`
+            : `Copied ${added} file${added !== 1 ? 's' : ''}`;
+        dst.dom.statusSpan.textContent = statusMsg;
+    }
+
+    // ========== Panel file list click handler (delegated) ==========
+
+    function handlePanelFileListClick(panel, e) {
+        const isDisk = panel.fileType === 'trd' || panel.fileType === 'scl';
+        const isDsk = panel.fileType === 'dsk';
+        const isZip = panel.fileType === 'zip';
+
+        // Handle DSK Apply button
+        const dskApplyBtn = e.target.closest('[data-action="dsk-apply"]');
+        if (dskApplyBtn) {
+            const idx = parseInt(dskApplyBtn.dataset.idx);
+            dskEditorApplyInlineEdit(panel, idx);
+            return;
+        }
+
+        // Handle disk Apply button
+        const diskApplyBtn = e.target.closest('[data-action="disk-apply"]');
+        if (diskApplyBtn) {
+            const idx = parseInt(diskApplyBtn.dataset.idx);
+            diskEditorApplyInlineEdit(panel, idx);
+            return;
+        }
+
+        // Handle TAP Apply button
+        const applyBtn = e.target.closest('[data-action="apply"]');
+        if (applyBtn) {
+            const idx = parseInt(applyBtn.dataset.idx);
+            const editRow = panel.dom.fileList.querySelector(`.editor-inline-edit[data-edit-idx="${idx}"]`);
+            if (!editRow) return;
+            const nameInput = editRow.querySelector('[data-field="name"]');
+            const typeSelect = editRow.querySelector('[data-field="type"]');
+            const newName = nameInput ? nameInput.value : '';
+            const newType = typeSelect ? parseInt(typeSelect.value) : 3;
+            let param1 = 0, param2 = 0x8000;
+            if (newType === 0) {
+                const autoInput = editRow.querySelector('[data-field="autostart"]');
+                const autoVal = autoInput ? autoInput.value : '';
+                param1 = (autoVal !== '' && !isNaN(parseInt(autoVal))) ? (parseInt(autoVal) & 0xFFFF) : 0x8000;
+                param2 = panel.blocks[idx].dataLength;
+            } else if (newType === 3) {
+                const addrInput = editRow.querySelector('[data-field="addr"]');
+                param1 = addrInput ? parseInt(addrInput.value, 16) || 0 : 0;
+            }
+            editorUpdateHeaderBlock(panel, idx, newName, newType, param1, param2);
+            if (panel.fileType === 'tzx') {
+                const pauseInput = editRow.querySelector('[data-field="pause"]');
+                if (pauseInput) {
+                    const pauseVal = parseInt(pauseInput.value) || 1000;
+                    panel.blocks[idx].tzxPause = Math.max(0, Math.min(65535, pauseVal));
+                    // Apply same pause to paired data block
+                    if (idx + 1 < panel.blocks.length && panel.blocks[idx + 1].blockType === 'data') {
+                        panel.blocks[idx + 1].tzxPause = panel.blocks[idx].tzxPause;
+                    }
+                }
+            }
+            panel.expandedBlock = -1;
+            editorRenderBlockList(panel);
+            return;
+        }
+
+        // Don't change selection when clicking inside inline edit inputs
+        if (e.target.closest('.editor-inline-edit')) return;
+
+        // Row click: select/multi-select + double-click detection
+        const row = e.target.closest('.editor-block-row');
+        if (row) {
+            // Handle disk label row double-click
+            if (isDisk && row.dataset.labelRow) {
+                const now = Date.now();
+                if (panel.lastClickIdx === -2 && now - panel.lastClickTime < 400) {
+                    panel.lastClickIdx = -1;
+                    panel.lastClickTime = 0;
+                    panel.expandedBlock = panel.expandedBlock === -2 ? -1 : -2;
+                    editorRenderBlockList(panel);
+                    return;
+                }
+                panel.lastClickIdx = -2;
+                panel.lastClickTime = now;
+                return;
+            }
+
+            const idx = parseInt(row.dataset.blockIdx);
+            const maxIdx = isDisk ? panel.diskFiles.length :
+                           isDsk ? (panel.parsedFile.files || []).length :
+                           isZip ? (panel.parsedFile.files || []).length :
+                           panel.blocks.length;
+            if (isNaN(idx) || idx < 0 || idx >= maxIdx) return;
+            const now = Date.now();
+            if (panel.lastClickIdx === idx && now - panel.lastClickTime < 400) {
+                panel.lastClickIdx = -1;
+                panel.lastClickTime = 0;
+                if (isZip) {
+                    // ZIP rows don't have inline edit — just ignore double-click
+                    return;
+                }
+                if (isDisk || isDsk) {
+                    panel.expandedBlock = panel.expandedBlock === idx ? -1 : idx;
+                    editorRenderBlockList(panel);
+                } else if (panel.blocks[idx].blockType === 'header') {
+                    panel.expandedBlock = panel.expandedBlock === idx ? -1 : idx;
+                    editorRenderBlockList(panel);
+                }
+                return;
+            }
+            panel.lastClickIdx = idx;
+            panel.lastClickTime = now;
+            editorSelectBlock(panel, idx, e.ctrlKey || e.metaKey);
+        }
+    }
+
+    // Wire delegated click handlers for both panels
+    editorPanels.left.dom.fileList.addEventListener('click', (e) => {
+        activatePanel('left');
+        handlePanelFileListClick(editorPanels.left, e);
+    });
+    editorPanels.right.dom.fileList.addEventListener('click', (e) => {
+        activatePanel('right');
+        handlePanelFileListClick(editorPanels.right, e);
+    });
+
+    // Panel header click to activate
+    document.getElementById('editorPanels').addEventListener('mousedown', (e) => {
+        const panelEl = e.target.closest('.editor-panel');
+        if (panelEl) activatePanel(panelEl.dataset.panel);
+    });
+
+    // ========== Shared Toolbar Button Handlers ==========
+
+    editorNewFormat.addEventListener('change', () => {
+        const panel = getActivePanel();
+        const fmt = editorNewFormat.value;
+        editorNewFormat.selectedIndex = 0; // reset to "New" placeholder
+        switch (fmt) {
+            case 'tap': editorNewTap(panel); break;
+            case 'tzx': editorNewTzx(panel); break;
+            case 'trd': diskEditorNewTrd(panel); break;
+            case 'scl': diskEditorNewTrd(panel); panel.fileType = 'scl'; panel.fileName = 'new.scl'; panel.parsedFile.type = 'scl'; updatePanelHeader(panel); break;
+            case 'dsk': dskEditorNewDsk(panel); break;
+            case 'zip': zipEditorNewZip(panel); break;
+        }
+    });
+
+    btnEditorAddFile.addEventListener('click', () => {
+        dialogTargetPanel = activePanel;
+        editorPanelFileInput.click();
+    });
+
+    editorPanelFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        file.arrayBuffer().then(buf => {
+            const panel = editorPanels[dialogTargetPanel];
+            panel.pendingFileData = new Uint8Array(buf);
+
+            if (panel.fileType === 'zip') {
+                // ZIP panel: add container files directly
+                const ext = file.name.split('.').pop().toLowerCase();
+                const supported = ['tap', 'tzx', 'trd', 'scl', 'dsk'];
+                if (!supported.includes(ext)) {
+                    panel.dom.statusSpan.textContent = 'Only .tap/.tzx/.trd/.scl/.dsk files';
+                    panel.pendingFileData = null;
+                    return;
+                }
+                zipEditorAddFile(panel, panel.pendingFileData, file.name);
+                panel.pendingFileData = null;
+                return;
+            }
+
+            if (panel.fileType === 'trd' || panel.fileType === 'scl') {
+                // Check for Hobeta file — auto-extract metadata from header
+                const inputExt = file.name.split('.').pop().toLowerCase();
+                const hobetaFile = isHobetaExt(inputExt) ? parseHobeta(panel.pendingFileData) : null;
+                if (hobetaFile) {
+                    panel.pendingFileData = hobetaFile.data;
+                }
+                // Open disk add dialog
+                const maxSize = 65280;
+                const fileData = panel.pendingFileData;
+                const tooLarge = fileData.length > maxSize;
+                const sectors = Math.ceil(fileData.length / 256);
+                const baseName = hobetaFile
+                    ? hobetaFile.name.replace(/\s+$/, '').substring(0, 8)
+                    : file.name.replace(/\.[^.]+$/, '').substring(0, 8);
+                diskAddName.value = baseName;
+                diskAddAddr.value = hobetaFile ? hex16(hobetaFile.startAddress) : '8000';
+                diskAddExt.value = hobetaFile ? hobetaFile.ext : 'C';
+                diskAddFileInfo.textContent = `${fileData.length.toLocaleString()} bytes (${sectors} sector${sectors !== 1 ? 's' : ''})` +
+                    (hobetaFile ? ' [Hobeta]' : '') +
+                    (tooLarge ? ` \u2014 max ${maxSize.toLocaleString()}` : '');
+                diskAddFileInfo.style.color = tooLarge ? 'var(--accent)' : '';
+                btnDiskAddOk.disabled = tooLarge;
+                diskAddDialog.classList.remove('hidden');
+            } else if (panel.fileType === 'dsk') {
+                // Open DSK add dialog
+                const baseName = file.name.replace(/\.[^.]+$/, '').substring(0, 8);
+                const ext = file.name.includes('.') ? file.name.split('.').pop().substring(0, 3) : '';
+                dskAddName.value = baseName;
+                dskAddExt.value = ext;
+                dskAddType.value = '3';
+                dskAddAddr.value = '8000';
+                dskAddAuto.value = '';
+                dskAddAddrRow.style.display = '';
+                dskAddAutoRow.style.display = 'none';
+                dskAddFileInfo.textContent = `${panel.pendingFileData.length.toLocaleString()} bytes`;
+                dskAddFileInfo.style.color = '';
+                btnDskAddOk.disabled = false;
+                dskAddDialog.classList.remove('hidden');
+            } else {
+                // TAP/TZX or empty (auto-create TAP)
+                if (!panel.fileType) editorNewTap(panel);
+                const maxPayload = 65533;
+                const tooLarge = panel.pendingFileData.length > maxPayload;
+                const baseName = file.name.replace(/\.[^.]+$/, '').substring(0, 10);
+                tapAddName.value = baseName;
+                tapAddFileInfo.textContent = `${panel.pendingFileData.length.toLocaleString()} bytes` +
+                    (tooLarge ? ` (max ${maxPayload.toLocaleString()})` : '');
+                tapAddFileInfo.style.color = tooLarge ? 'var(--accent)' : '';
+                btnTapAddOk.disabled = tooLarge;
+                tapAddType.value = '3';
+                tapAddNameRow.style.display = '';
+                tapAddAddrRow.style.display = '';
+                tapAddAutoRow.style.display = 'none';
+                tapAddVarRow.style.display = 'none';
+                tapAddFlagRow.style.display = 'none';
+                tapAddPauseRow.style.display = panel.fileType === 'tzx' ? '' : 'none';
+                tapAddPause.value = '1000';
+                tapAddAddr.value = '8000';
+                tapAddAuto.value = '';
+                tapAddVar.value = 'A';
+                tapAddFlag.value = 'FF';
+                tapAddDialog.classList.remove('hidden');
+            }
+        });
+        e.target.value = '';
+    });
+
+    btnEditorSave.addEventListener('click', () => {
+        const panel = getActivePanel();
+        if (panel.fileType === 'tap') editorSaveTap(panel);
+        else if (panel.fileType === 'tzx') editorSaveTzx(panel);
+        else if (panel.fileType === 'trd' || panel.fileType === 'scl') diskEditorSaveDisk(panel);
+        else if (panel.fileType === 'dsk') dskEditorSaveDsk(panel);
+        else if (panel.fileType === 'zip') zipEditorSaveZip(panel);
+    });
+
+
+
+    btnEditorMoveUp.addEventListener('click', () => {
+        const panel = getActivePanel();
+        if (isTapOrTzx(panel.fileType)) editorMoveSelection(panel, -1);
+        else if (panel.fileType === 'trd' || panel.fileType === 'scl') diskEditorMoveSelection(panel, -1);
+    });
+
+    btnEditorMoveDown.addEventListener('click', () => {
+        const panel = getActivePanel();
+        if (isTapOrTzx(panel.fileType)) editorMoveSelection(panel, 1);
+        else if (panel.fileType === 'trd' || panel.fileType === 'scl') diskEditorMoveSelection(panel, 1);
+    });
+
+    btnEditorDel.addEventListener('click', () => {
+        const panel = getActivePanel();
+        if (isTapOrTzx(panel.fileType)) editorDeleteSelection(panel);
+        else if (panel.fileType === 'trd' || panel.fileType === 'scl') diskEditorDeleteSelection(panel);
+        else if (panel.fileType === 'dsk') dskEditorDeleteFiles(panel);
+        else if (panel.fileType === 'zip') zipEditorDeleteFiles(panel);
+    });
+
+    btnEditorMarkDel.addEventListener('click', () => {
+        const panel = getActivePanel();
+        if (panel.fileType === 'trd' || panel.fileType === 'scl') diskEditorMarkDeletedSelection(panel);
+    });
+
+    editorExtractDisk.addEventListener('change', () => {
+        const fmt = editorExtractDisk.value;
+        if (!fmt) return;
+        const panel = getActivePanel();
+        const t = panel.fileType;
+        if (isTapOrTzx(t)) editorExtractSelection(panel, fmt);
+        else if (t === 'trd' || t === 'scl') diskEditorExtractSelection(panel, fmt);
+        else if (t === 'dsk') dskEditorExtractFiles(panel, fmt);
+        else if (t === 'zip') zipEditorExtractFiles(panel, fmt);
+        editorExtractDisk.value = '';
+    });
+
+    btnEditorCopy.addEventListener('click', () => editorCopySelection());
+
+    // ========== Dialog handlers (target dialogTargetPanel) ==========
+
+    tapAddType.addEventListener('change', () => {
+        const v = tapAddType.value;
+        tapAddNameRow.style.display = v === '-1' ? 'none' : '';
+        tapAddAddrRow.style.display = v === '3' ? '' : 'none';
+        tapAddAutoRow.style.display = v === '0' ? '' : 'none';
+        tapAddVarRow.style.display = (v === '1' || v === '2') ? '' : 'none';
+        tapAddFlagRow.style.display = v === '-1' ? '' : 'none';
+    });
+
+    btnTapAddOk.addEventListener('click', () => {
+        const panel = editorPanels[dialogTargetPanel];
+        if (!panel.pendingFileData) return;
+        if (!panel.parsedFile || !isTapOrTzx(panel.parsedFile.type)) editorNewTap(panel);
+        const type = parseInt(tapAddType.value);
+        const pause = panel.fileType === 'tzx' ? (parseInt(tapAddPause.value) || 1000) : undefined;
+        if (type === -1) {
+            const flag = parseInt(tapAddFlag.value, 16) || 0xFF;
+            editorAddHeaderlessBlock(panel, panel.pendingFileData, flag & 0xFF, pause);
+        } else {
+            const name = tapAddName.value || 'untitled';
+            const startAddr = parseInt(tapAddAddr.value, 16) || 0;
+            const autostart = tapAddAuto.value;
+            const varLetter = tapAddVar.value;
+            editorAddFileBlocks(panel, panel.pendingFileData, name, type, startAddr, autostart, varLetter, pause);
+        }
+        panel.pendingFileData = null;
+        tapAddDialog.classList.add('hidden');
+        if (panel === editorPanels.left) explorerRenderFileInfo(false);
+    });
+
+    btnTapAddCancel.addEventListener('click', () => {
+        editorPanels[dialogTargetPanel].pendingFileData = null;
+        tapAddDialog.classList.add('hidden');
+    });
+
+    btnDiskAddOk.addEventListener('click', () => {
+        const panel = editorPanels[dialogTargetPanel];
+        if (!panel.pendingFileData) return;
+        const isDisk = panel.fileType === 'trd' || panel.fileType === 'scl';
+        if (!isDisk) diskEditorNewTrd(panel);
+        const name = diskAddName.value || 'untitled';
+        const ext = diskAddExt.value || 'C';
+        const addr = parseInt(diskAddAddr.value, 16) || 0;
+        const err = diskEditorAddFile(panel, panel.pendingFileData, name, ext, addr);
+        if (err) {
+            diskAddFileInfo.textContent = err;
+            diskAddFileInfo.style.color = 'var(--accent)';
+            return;
+        }
+        panel.pendingFileData = null;
+        diskAddDialog.classList.add('hidden');
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        diskEditorRenderFileList(panel);
+        diskEditorRefreshExplorer(panel);
+    });
+
+    btnDiskAddCancel.addEventListener('click', () => {
+        editorPanels[dialogTargetPanel].pendingFileData = null;
+        diskAddDialog.classList.add('hidden');
+    });
+
+    dskAddType.addEventListener('change', () => {
+        const v = dskAddType.value;
+        dskAddAddrRow.style.display = v === '3' ? '' : 'none';
+        dskAddAutoRow.style.display = v === '0' ? '' : 'none';
+    });
+
+    btnDskAddOk.addEventListener('click', () => {
+        const panel = editorPanels[dialogTargetPanel];
+        if (!panel.pendingFileData) return;
+        if (!panel.parsedFile || panel.parsedFile.type !== 'dsk') dskEditorNewDsk(panel);
+        const name = dskAddName.value || 'untitled';
+        const ext = dskAddExt.value || '';
+        const type = parseInt(dskAddType.value);
+        const addr = parseInt(dskAddAddr.value, 16) || 0;
+        const autostart = dskAddAuto.value;
+        const err = dskEditorAddFile(panel, panel.pendingFileData, name, ext, type, addr, autostart);
+        if (err) {
+            dskAddFileInfo.textContent = err;
+            dskAddFileInfo.style.color = 'var(--accent)';
+            return;
+        }
+        panel.pendingFileData = null;
+        dskAddDialog.classList.add('hidden');
+        panel.selection.clear();
+        panel.expandedBlock = -1;
+        dskEditorRefreshState(panel);
+        dskEditorRenderFileList(panel);
+    });
+
+    btnDskAddCancel.addEventListener('click', () => {
+        editorPanels[dialogTargetPanel].pendingFileData = null;
+        dskAddDialog.classList.add('hidden');
+    });
+
+    // Auto-render edit tab when switched to
+    const editSubtabBtn = document.querySelector('.explorer-subtab[data-subtab="edit"]');
+    if (editSubtabBtn) {
+        editSubtabBtn.addEventListener('click', () => {
+            editorRenderBlockList(editorPanels.left);
+            editorRenderBlockList(editorPanels.right);
+            editorUpdateToolbar();
+        });
+    }
+
+
+    /**
+     * Load raw file data into Explorer programmatically
+     * @param {Uint8Array} data - Raw file bytes
+     * @param {string} filename - File name with extension
+     */
+    async function loadData(data, filename) {
+        explorerData = new Uint8Array(data);
+        explorerFileName.textContent = filename;
+        explorerFileSize.textContent = `(${explorerData.length.toLocaleString()} bytes)`;
+
+        const ext = filename.split('.').pop().toLowerCase();
+        explorerFileType = ext;
+
+        await explorerParseFile(filename, ext);
+
+        explorerBasicOutput.innerHTML = '<div class="explorer-empty">Select a BASIC program source</div>';
+        explorerDisasmOutput.innerHTML = '<div class="explorer-empty">Select a source to disassemble</div>';
+        explorerHexOutput.innerHTML = '';
+
+        explorerRenderFileInfo();
+        document.querySelector('.explorer-subtab[data-subtab="info"]').click();
+    }
+
+    return { loadData };
 
 } // end of initExplorer

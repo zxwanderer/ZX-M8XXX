@@ -1,6 +1,6 @@
         <div class="fullhelp-content">
             <div class="fullhelp-header">
-                <h3>ZX-M8XXX <span class="help-version">v0.9.50</span> Help</h3>
+                <h3>ZX-M8XXX <span class="help-version">v0.9.6</span> Help</h3>
                 <button class="fullhelp-close" id="btnFullHelpClose">&times;</button>
             </div>
             <div class="fullhelp-body">
@@ -374,6 +374,14 @@
                     </ul>
                     <h5>Port Breakpoints</h5>
                     <p>Break on I/O port access (IN/OUT instructions).</p>
+                    <h5>Screen Region Breakpoints</h5>
+                    <p>Break on writes to rectangular screen regions:</p>
+                    <ul>
+                        <li><strong>Write Bitmap</strong>: Break when pixel data is written to the specified region</li>
+                        <li><strong>Write Attr</strong>: Break when attribute data is written to the specified region</li>
+                    </ul>
+                    <p>Enter coordinates as <code>C,R,W,H</code> (column, row, width, height in character cells 0-31, 0-23). For bitmap triggers, tick the <strong>px</strong> checkbox for pixel coordinates (<code>X,Y,W,H</code> with x 0-255, y 0-191).</p>
+                    <p>The <strong>Screen</strong> dropdown selects the target: Normal (page 5 at $4000), Shadow (page 7 at $C000), or Both.</p>
                     <h5>Tape &amp; Disk Triggers</h5>
                     <ul>
                         <li><strong>Tape Block</strong>: Break after a tape block is loaded (flash or real-time). Use the skip count to break after N blocks (e.g. skip=4 breaks after the 5th block).</li>
@@ -534,7 +542,7 @@
                 <div class="fullhelp-section hidden" id="help-files">
                     <h4>File Formats</h4>
                     <h5>Snapshots (Load &amp; Save)</h5>
-                    <p>Use the <strong>Save</strong> dropdown to choose format (SNA/Z80/SZX).</p>
+                    <p>Use the <strong>Save</strong> dropdown to choose format (SNA/Z80/SZX/DSK).</p>
                     <table>
                         <tr><td><strong>SNA</strong></td><td>48K/128K - simple format, widely supported</td></tr>
                         <tr><td><strong>SZX</strong></td><td>Spectaculator format with zlib compression</td></tr>
@@ -568,6 +576,7 @@
                         <tr><td><strong>SCL</strong></td><td>TR-DOS file archive (more compact format)</td></tr>
                         <tr><td><strong>DSK</strong></td><td>+3 disk image (standard and extended CPC DSK format)</td></tr>
                     </table>
+                    <p><strong>DSK Write Persistence:</strong> Games on the +3 can save to disk. All FDC writes (sector writes, Format Track) are preserved in-memory and included in project saves. Use <strong>Save &rarr; DSK</strong> to download the current disk image with all modifications (EDSK format).</p>
                     <h5>Boot File Injection</h5>
                     <p>Automatically add a boot loader to TRD disk images via Settings в†’ Media в†’ Boot File:</p>
                     <ol>
@@ -921,11 +930,14 @@
                     <h5>Supported Formats</h5>
                     <table>
                         <tr><th>Format</th><th>Description</th></tr>
+                        <tr><td>DSK</td><td>+3 CP/M disk images (standard and extended)</td></tr>
+                        <tr><td>Hobeta</td><td>Single TR-DOS file containers (.$B, .$C, .$D, .$#, .hobeta)</td></tr>
                         <tr><td>RZX</td><td>Input recordings</td></tr>
                         <tr><td>SCL</td><td>TR-DOS file archives</td></tr>
                         <tr><td>SNA</td><td>48K/128K snapshots with registers</td></tr>
                         <tr><td>SZX</td><td>Spectaculator snapshots</td></tr>
                         <tr><td>TAP</td><td>Tape files with block structure</td></tr>
+                        <tr><td>TZX</td><td>Extended tape format (standard speed blocks: BASIC, disasm, hex, editing)</td></tr>
                         <tr><td>TRD</td><td>TR-DOS disk images</td></tr>
                         <tr><td>Z80</td><td>Compressed snapshots (v1, v2, v3)</td></tr>
                         <tr><td>ZIP</td><td>Archives containing above formats</td></tr>
@@ -936,16 +948,85 @@
                         <li><strong>BASIC</strong> - Decode and display BASIC programs with syntax highlighting</li>
                         <li><strong>Disasm</strong> - Z80 disassembly with ROM labels, click addresses in BASIC to jump</li>
                         <li><strong>Hex Dump</strong> - Raw hex view with ASCII column</li>
+                        <li><strong>Edit</strong> - Dual-panel file editor for TAP, TZX, TRD/SCL, and DSK formats (see below)</li>
                     </ul>
                     <h5>Features</h5>
                     <ul>
                         <li>Screen preview for snapshots and screen files</li>
+                        <li>Click on TAP/TZX blocks to view: Program headers open BASIC decoder, Bytes headers open disassembly, data blocks open hex dump</li>
                         <li>Click on TRD/SCL files to view: BASIC files open decoder, CODE files open disassembly</li>
                         <li>Click USR addresses in BASIC to jump to disassembly</li>
                         <li>Disassembly shows blank lines after JP, JR, CALL, RET, RST, DJNZ, HALT</li>
                         <li>Copy-friendly output format (text copies correctly to clipboard)</li>
                         <li>ROM routine labels shown in disassembly</li>
+                        <li>Double-click tape blocks or disk files in Settings &rarr; Media catalog to open in Explorer</li>
                     </ul>
+                    <h5>Dual-Panel Editor (Edit tab)</h5>
+                    <p>The Edit tab uses a two-panel layout inspired by orthodox file managers (Norton Commander, Total Commander). Each panel independently holds a file in any supported format &mdash; TAP, TZX, TRD, SCL, or DSK. The toolbar between the panels adapts to the active panel's format.</p>
+                    <ul>
+                        <li><strong>Active panel</strong> - Click a panel to make it active. The toolbar, Load File button, and New dropdown all operate on the active panel</li>
+                        <li><strong>New</strong> - Dropdown to create an empty file in the active panel: New TAP, New TZX, New TRD, or New DSK</li>
+                        <li><strong>Load File</strong> - Loads a file into the active panel (and into the Explorer for analysis). Supports loading from local files and from ZIP archives</li>
+                        <li><strong>Copy &raquo; / &laquo; Copy</strong> - Copy selected blocks/files from the active panel to the other panel. Works across different formats &mdash; tape blocks can be copied to disk and vice versa, with automatic format conversion (header fields mapped to disk attributes, filenames truncated to fit). If the destination panel is empty, a matching format is auto-created</li>
+                        <li><strong>Link Header</strong> - For tape panels (TAP/TZX): auto-selects header+data block pairs together for all operations</li>
+                    </ul>
+                    <h5>TAP Editor (Edit tab)</h5>
+                    <p>Edit TAP tape files: add, delete, reorder blocks, rename files, and save modified tapes.</p>
+                    <ul>
+                        <li><strong>New TAP</strong> - Create an empty tape from scratch</li>
+                        <li><strong>Add File</strong> - Import a binary file as a new block. Choose type: Bytes (CODE), Program (BASIC), Number array, Character array, or Headerless with custom flag byte</li>
+                        <li><strong>Append TAP</strong> - Append all blocks from another TAP file</li>
+                        <li><strong>Save TAP</strong> - Rebuild and download the modified tape</li>
+                        <li><strong>Selection</strong> - Click to select, Ctrl+click for multi-select. "Link header" checkbox auto-selects header+data pairs together</li>
+                        <li><strong>&#9650; &#9660;</strong> - Move selected blocks up/down</li>
+                        <li><strong>Delete</strong> - Remove selected blocks</li>
+                        <li><strong>Extract</strong> - Download data from selected blocks. Choose "Extract bin" for raw binary or "Extract Hobeta" for Hobeta format (17-byte header with name, type, start address, CRC + data). When Link Header is on, a header+data pair produces a single Hobeta file. Multiple blocks are zipped</li>
+                        <li><strong>Inline edit</strong> - Double-click a header block to edit filename, type, address, or autostart</li>
+                    </ul>
+                    <h5>TZX Editor (Edit tab)</h5>
+                    <p>Edit TZX tape files with full round-trip support. Standard speed blocks (ID 0x10) use the same editing workflow as TAP. Non-standard blocks (turbo, pure tone, metadata, etc.) are shown as dimmed info rows and preserved on save.</p>
+                    <ul>
+                        <li><strong>New TZX</strong> - Create an empty TZX tape from scratch</li>
+                        <li><strong>Add File</strong> - Import a binary file as a new block, with configurable pause duration (ms)</li>
+                        <li><strong>Append TZX</strong> - Append all blocks from another TZX file</li>
+                        <li><strong>Save TZX</strong> - Rebuild and download the modified TZX with all blocks (standard + non-standard) preserved</li>
+                        <li><strong>Pause</strong> - Per-block pause in milliseconds. Editable when adding files and via inline edit. Non-default pauses shown in block list</li>
+                        <li><strong>Non-standard blocks</strong> - Turbo data, pure tone, pulse sequences, metadata, and other TZX block types are displayed as read-only info rows. They cannot be edited or selected but are preserved in their original position on save</li>
+                    </ul>
+                    <h5>TRD/SCL Disk Editor (Edit tab)</h5>
+                    <p>Edit TRD and SCL disk images: add, delete, reorder files, rename, change attributes, and save. The toolbar switches automatically when a TRD or SCL file is loaded.</p>
+                    <ul>
+                        <li><strong>New TRD</strong> - Create an empty TRD disk from scratch</li>
+                        <li><strong>Add File</strong> - Import a binary file as a new disk entry. Set filename (8 chars), extension (C/B/D/#), and start address</li>
+                        <li><strong>Import TRD/SCL</strong> - Append files from another disk image</li>
+                        <li><strong>Save TRD</strong> - Rebuild and download as a full TRD disk image</li>
+                        <li><strong>Save SCL</strong> - Export as SCL archive (deleted files are stripped)</li>
+                        <li><strong>Selection</strong> - Click to select, Ctrl+click for multi-select</li>
+                        <li><strong>&#9650; &#9660;</strong> - Move selected files up/down in the directory</li>
+                        <li><strong>Delete</strong> - Remove selected files and reclaim sectors (compact delete)</li>
+                        <li><strong>Mark Del</strong> - Toggle TR-DOS soft delete. Marks directory entry with 0x01 but keeps file data on disk. Click again to undelete. Note: TR-DOS overwrites the first character of the filename on erase &mdash; files loaded from disk with this damage need their name fixed via inline edit after undeleting</li>
+                        <li><strong>Extract</strong> - Download file data. Choose "Extract bin" for raw binary or "Extract Hobeta" for Hobeta format with TR-DOS metadata. Multiple files are zipped</li>
+                        <li><strong>Add File (Hobeta)</strong> - Hobeta files (.$B, .$C, .$D, .$#, .hobeta) are auto-detected when adding &mdash; the header is stripped and filename, extension, and start address are pre-filled</li>
+                        <li><strong>Inline edit</strong> - Double-click a file to edit name, extension, and start address</li>
+                        <li><strong>Label edit</strong> - Double-click the disk label row to edit the 8-character disk label</li>
+                    </ul>
+                    <p>Capacity limits: 128 files, 2544 data sectors, 255 sectors (65,280 bytes) per file.</p>
+                    <h5>DSK Editor (Edit tab)</h5>
+                    <p>Edit +3 DSK disk images: add, delete files, rename, and save. The toolbar switches automatically when a DSK file is loaded.</p>
+                    <ul>
+                        <li><strong>New DSK</strong> - Create an empty +3 DSK disk from scratch</li>
+                        <li><strong>Add File</strong> - Import a binary file as a new CP/M directory entry</li>
+                        <li><strong>Import DSK</strong> - Append files from another DSK image</li>
+                        <li><strong>Save DSK</strong> - Rebuild and download as an EDSK disk image</li>
+                        <li><strong>Selection</strong> - Click to select, Ctrl+click for multi-select</li>
+                        <li><strong>Delete</strong> - Remove selected files from the directory</li>
+                        <li><strong>Extract</strong> - Download file data (+3DOS header stripped). Choose "Extract bin" for raw binary or "Extract Hobeta" for Hobeta format. Multiple files are zipped</li>
+                        <li><strong>Inline edit</strong> - Double-click a file to edit name and extension</li>
+                    </ul>
+                    <h5>ZIP Archives</h5>
+                    <p>ZIP files containing ZX container files (.tap, .tzx, .trd, .scl, .dsk) are transparently unwrapped. A single-file ZIP loads the inner file directly in its native format. Multi-file ZIPs show a picker dialog to choose which file to open.</p>
+                    <h5>Loading Files</h5>
+                    <p>When the Edit tab is already active, loading a file keeps the Edit tab visible instead of switching to File Info.</p>
                     <h5>TR-DOS File Types</h5>
                     <table>
                         <tr><th>Ext</th><th>Type</th></tr>

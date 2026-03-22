@@ -14,10 +14,21 @@ export function initTriggerHandlers({
     const triggerCondInput = document.getElementById('triggerCondInput');
     const btnAddTrigger = document.getElementById('btnAddTrigger');
     const btnClearTriggers = document.getElementById('btnClearTriggers');
+    const triggerScreenSelect = document.getElementById('triggerScreenSelect');
+    const triggerPxLabel = document.getElementById('triggerPxLabel');
+    const triggerPxMode = document.getElementById('triggerPxMode');
+
+    function updateScreenControls(type) {
+        const isScreen = type === 'screen_bitmap' || type === 'screen_attr';
+        triggerScreenSelect.classList.toggle('hidden', !isScreen);
+        triggerPxLabel.classList.toggle('hidden', type !== 'screen_bitmap');
+        if (type !== 'screen_bitmap') triggerPxMode.checked = false;
+    }
 
     // Trigger type change handler
     triggerType.addEventListener('change', () => {
         const type = triggerType.value;
+        updateScreenControls(type);
         if (type === 'tape_block') {
             triggerAddrInput.placeholder = 'TAPE';
             triggerAddrInput.disabled = true;
@@ -32,9 +43,22 @@ export function initTriggerHandlers({
         } else if (type.startsWith('port')) {
             triggerAddrInput.placeholder = 'PORT[&MASK]';
             triggerAddrInput.disabled = false;
+        } else if (type === 'screen_bitmap') {
+            triggerAddrInput.placeholder = triggerPxMode.checked ? 'X,Y,W,H' : 'C,R,W,H';
+            triggerAddrInput.disabled = false;
+        } else if (type === 'screen_attr') {
+            triggerAddrInput.placeholder = 'C,R,W,H';
+            triggerAddrInput.disabled = false;
         } else {
             triggerAddrInput.placeholder = '[P:]ADDR[-END]';
             triggerAddrInput.disabled = false;
+        }
+    });
+
+    // Pixel mode checkbox toggles placeholder
+    triggerPxMode.addEventListener('change', () => {
+        if (triggerType.value === 'screen_bitmap') {
+            triggerAddrInput.placeholder = triggerPxMode.checked ? 'X,Y,W,H' : 'C,R,W,H';
         }
     });
 
@@ -62,6 +86,36 @@ export function initTriggerHandlers({
                 return;
             }
             triggerSpec = { type, start: track, end: sector };
+        } else if (type === 'screen_bitmap' || type === 'screen_attr') {
+            if (!addrStr) return;
+            const parts = addrStr.split(',').map(s => parseInt(s.trim(), 10));
+            if (parts.length !== 4 || parts.some(isNaN)) {
+                showMessage('Invalid format (use C,R,W,H or X,Y,W,H)', 'error');
+                return;
+            }
+            let [col, row, w, h] = parts;
+            const isPixel = type === 'screen_bitmap' && triggerPxMode.checked;
+            if (isPixel) {
+                // Pixel mode bounds: x 0-255, y 0-191, w 1-256, h 1-192
+                if (col < 0 || col > 255 || row < 0 || row > 191) {
+                    showMessage('Pixel X must be 0-255, Y must be 0-191', 'error');
+                    return;
+                }
+                if (w < 1 || h < 1) { showMessage('Width and height must be >= 1', 'error'); return; }
+                if (col + w > 256) w = 256 - col;
+                if (row + h > 192) h = 192 - row;
+            } else {
+                // Cell mode bounds: col 0-31, row 0-23, w 1-32, h 1-24
+                if (col < 0 || col > 31 || row < 0 || row > 23) {
+                    showMessage('Column must be 0-31, row must be 0-23', 'error');
+                    return;
+                }
+                if (w < 1 || h < 1) { showMessage('Width and height must be >= 1', 'error'); return; }
+                if (col + w > 32) w = 32 - col;
+                if (row + h > 24) h = 24 - row;
+            }
+            const screen = triggerScreenSelect.value;
+            triggerSpec = { type, col, row, w, h, pixelMode: isPixel, screen, start: 0, end: 0 };
         } else if (type.startsWith('port')) {
             if (!addrStr) return;
             const parsed = spectrum.parsePortSpec(addrStr);
@@ -143,7 +197,7 @@ export function initTriggerHandlers({
             // Navigate to address
             const triggers = spectrum.getTriggers();
             const t = triggers.find(tr => tr.index === index);
-            if (t && !t.type.startsWith('port') &&
+            if (t && !t.type.startsWith('port') && !t.type.startsWith('screen') &&
                 t.type !== 'tape_block' && t.type !== 'disk_read' && t.type !== 'disk_sector') {
                 goToAddress(t.start);
                 goToMemoryAddress(t.start);
